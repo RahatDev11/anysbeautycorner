@@ -56,7 +56,7 @@ function hideSocialMediaIcons() {
  * @param {object} orderData - অর্ডারের সমস্ত তথ্য
  */
 async function sendTelegramNotification(orderData) {
-    const url = '/.netlify/functions/telegram-notifier'; 
+    const url = '/.netlify/functions/telegram_notifier'; 
     
     try {
         console.log("Submitting order data to Telegram notifier...");
