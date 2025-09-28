@@ -56,32 +56,28 @@ function hideSocialMediaIcons() {
  * @param {object} orderData - অর্ডারের সমস্ত তথ্য
  */
 async function sendTelegramNotification(orderData) {
-    // Netlify Function কে কল করা হচ্ছে, যেটি Telegram এ মেসেজ পাঠাবে
+    const url = '/.netlify/functions/telegram-notifier'; 
+    
     try {
-        const response = await fetch('/.netlify/functions/telegram_notifier', { 
+        console.log("Submitting order data to Telegram notifier...");
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(orderData) 
+            body: JSON.stringify(orderData)
         });
 
-        const result = await response.json();
-        
-        if (response.ok && result.success) {
-            console.log("Telegram notification sent successfully.");
-            // showToast(`নোটিফিকেশন পাঠানো হয়েছে (ID: ${orderData.orderId})`, "success"); 
-            return { success: true };
+        if (!response.ok) {
+            // যদি error আসে, শুধু warning দেবে, কিন্তু অর্ডার সেভ হওয়া বন্ধ করবে না।
+            console.warn(`Telegram notification failed: ${response.status} (${response.statusText}). The order is saved to the database.`);
         } else {
-            console.error("Failed to send Telegram notification. Error:", result.message || "Unknown error");
-            // showToast(`নোটিফিকেশন পাঠানো যায়নি। Error: ${result.message}`, "error"); 
-            return { success: false, message: result.message };
+            console.log("Telegram notification sent successfully.");
         }
-
+        
     } catch (error) {
-        console.error("Network error calling Netlify Function:", error);
-        // showToast("নোটিফিকেশন সিস্টেমে নেটওয়ার্ক ত্রুটি।", "error"); 
-        return { success: false, message: "Network or Server error" };
+        // Network error হলেও, error throw করবে না।
+        console.error("Telegram notification fetch error:", error);
     }
 }
 // === END: TELEGRAM NOTIFICATION FUNCTION (NEW CODE) ===
@@ -1012,6 +1008,7 @@ function main() {
         initializeOrderTrackPage();
     }
     if (currentPage.includes('order-form.html')) {
+        // --- Order Form Listener (এই অংশটি main()
         initializeOrderFormPage();
     }
 
@@ -1057,7 +1054,7 @@ function initializeOrderFormPage() {
         radio.addEventListener('change', handleDeliveryLocationChange);
     });
     document.getElementById('deliveryPaymentMethod')?.addEventListener('change', handleDeliveryPaymentMethodChange);
-    checkoutForm.addEventListener('submit', handleOrderSubmit);
+    checkoutForm.addEventListener('submit', window.placeOrder);
 }
 
 function calculateAndDisplayPrices(items) {
@@ -1189,94 +1186,73 @@ function handleDeliveryPaymentMethodChange() {
     document.getElementById('transactionId').required = shouldShow;
 }
 
-async function handleOrderSubmit(event) {
-    event.preventDefault();
-    showToast("Processing your order...", "info"); // Debug Toast 1
+window.placeOrder = async function(event) {
+    if (event) event.preventDefault();
 
+    // Re-read cart from localStorage just in case
+    const itemsToOrder = JSON.parse(localStorage.getItem('anyBeautyCart')) || [];
+    
     const submitButton = document.getElementById('submitButton');
-
-    if (checkoutCart.length === 0) {
-         showToast("অর্ডার করার জন্য কার্টে কোনো প্রোডাক্ট নেই।", "warning");
-         return;
-    }
-
     submitButton.disabled = true;
-    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> অর্ডার সাবমিট হচ্ছে...';
-
-    const location = document.querySelector('input[name="deliveryLocation"]:checked').value;
-    const isOutsideDhaka = location === 'outsideDhaka';
-
-    const formData = {
-        customerName: document.getElementById('customerName').value,
-        phoneNumber: document.getElementById('phoneNumber').value,
-        address: document.getElementById('address').value,
-        deliveryLocation: location,
-        outsideDhakaLocation: isOutsideDhaka ? document.getElementById('outsideDhakaLocation').value : null,
-        deliveryNote: document.getElementById('deliveryNote').value,
-        productPaymentMethod: document.getElementById('productPaymentMethod').value,
-        deliveryPaymentMethod: isOutsideDhaka ? document.getElementById('deliveryPaymentMethod').value : null,
-        paymentNumber: isOutsideDhaka ? document.getElementById('paymentNumber').value : null,
-        transactionId: isOutsideDhaka ? document.getElementById('transactionId').value : null,
-        isGuest: window.currentUserId.startsWith('GUEST_')
-    };
-
-    const { subTotal, deliveryFee, totalAmount } = calculateAndDisplayPrices(checkoutCart);
-
-    const cleanedItems = checkoutCart.map(item => ({
-        id: item.id || null,
-        name: item.name || 'N/A',
-        price: item.price || 0,
-        quantity: item.quantity || 1,
-        image: item.image || '',
-        variant: item.variant || null
-    }));
-
-    const orderData = {
-        ...formData,
-        items: cleanedItems,
-        subTotal,
-        deliveryFee,
-        totalAmount,
-        userId: window.currentUserId,
-        userEmail: window.currentUserEmail,
-        orderStatus: 'Pending',
-        isBuyNow: isBuyNowMode,
-        timestamp: Date.now()
-    };
-
-    console.log("Submitting order data:", orderData); // For debugging
-    showToast("Submitting to database...", "info"); // Debug Toast 2
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>অর্ডার কনফার্ম হচ্ছে...';
 
     try {
-        const ordersCollectionRef = collection(db, 'orders');
-        const newOrderDocRef = await addDoc(ordersCollectionRef, orderData); // Add document to Firestore
-
-        const orderId = newOrderDocRef.id; // Get the auto-generated ID from Firestore
-        await updateDoc(newOrderDocRef, { orderId: orderId }); // Update the document with its own ID
-        orderData.orderId = orderId;
-
-        sendTelegramNotification(orderData);
-
-        if (orderData.isGuest) {
-            let myOrders = JSON.parse(localStorage.getItem('myOrders')) || [];
-            myOrders.push(orderId);
-            localStorage.setItem('myOrders', JSON.stringify(myOrders));
+        // ফর্ম থেকে ডেটা সংগ্রহ (আপনার order-form.html অনুযায়ী)
+        const customerName = document.getElementById('customerName').value.trim();
+        const phoneNumber = document.getElementById('phoneNumber').value.trim();
+        const address = document.getElementById('address').value.trim();
+        const deliveryLocationElement = document.querySelector('input[name="deliveryLocation"]:checked');
+        const deliveryLocation = deliveryLocationElement ? deliveryLocationElement.value : 'insideDhaka';
+        const deliveryNote = document.getElementById('deliveryNote').value.trim();
+        
+        if (itemsToOrder.length === 0) {
+            throw new Error("আপনার কার্ট খালি। অর্ডার করা সম্ভব নয়।");
         }
+        
+        // টোটাল মূল্য হিসাব (আপনার সেটিং অনুযায়ী)
+        const deliveryFee = deliveryLocation === 'insideDhaka' ? 70 : 160;
+        const subTotal = itemsToOrder.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
+        const totalAmount = subTotal + deliveryFee;
+        
+        const orderData = {
+            customerName,
+            phoneNumber,
+            address,
+            deliveryLocation: deliveryLocation === 'insideDhaka' ? 'ঢাকার ভেতরে' : 'ঢাকার বাইরে',
+            deliveryFee,
+            subTotal: totalAmount.toFixed(2), // মোট দাম
+            totalAmount: totalAmount.toFixed(2),
+            cartItems: itemsToOrder,
+            orderDate: new Date().toISOString(),
+            status: 'Pending',
+            userId: getUserId(),
+            deliveryNote: deliveryNote || 'N/A',
+            outsideDhakaLocation: deliveryLocation === 'outsideDhaka' ? document.getElementById('outsideDhakaLocation').value : 'N/A',
+            paymentNumber: deliveryLocation === 'outsideDhaka' ? document.getElementById('paymentNumber').value : 'N/A',
+            transactionId: deliveryLocation === 'outsideDhaka' ? document.getElementById('transactionId').value : 'N/A',
+        };
 
-        if (orderData.isGuest && !isBuyNowMode) {
-            localStorage.removeItem('anyBeautyCart');
-            cart = [];
-            updateAllCartUIs();
-        } else if (!orderData.isGuest && !isBuyNowMode) {
-            await set(ref(database, `carts/${window.currentUserId}`), null);
-        }
+        // ১. Firebase ডাটাবেজে সেভ করা (গুরুত্বপূর্ণ)
+        const ordersRef = ref(database, 'orders');
+        const newOrderRef = push(ordersRef);
+        const orderId = newOrderRef.key;
+        
+        await set(newOrderRef, { ...orderData, orderId });
+        
+        // ২. Cart এবং Local Storage খালি করা
+        localStorage.removeItem('anyBeautyCart'); 
+        window.cart = [];
+        saveCart();
 
+        // ৩. Telegram Notification পাঠানো (Non-Blocking)
+        await sendTelegramNotification({ ...orderData, orderId }); 
+
+        // ৪. সফলতার বার্তা এবং রিডাইরেক্ট
         showToast(`অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে! অর্ডার আইডি: ${orderId}`, "success");
-
         window.location.href = `index.html?orderId=${orderId}`;
 
     } catch (error) {
-        console.error("Error placing order:", error.code, error.message, error); // Log specific error details
+        console.error("Error placing order:", error); 
         showToast(`অর্ডার সাবমিট করতে সমস্যা হয়েছে: ${error.message || 'Unknown Error'}। অনুগ্রহ করে আবার চেষ্টা করুন।`, "error");
         submitButton.disabled = false;
         submitButton.innerHTML = 'অর্ডার কনফার্ম করুন';
