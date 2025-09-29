@@ -16,7 +16,7 @@ const firebaseConfig = {
 
 // Firebase SDK imports
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, onValue, set, get, query, orderByChild, equalTo, update, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, onValue, set, get, query, orderByChild, equalTo, update, push, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, getRedirectResult } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, addDoc, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added for Firestore
 
@@ -583,35 +583,19 @@ function updateModalImage() { document.getElementById('modalImage').src = galler
 // =================================================================
 
 async function initializeOrderTrackPage() {
-    // Order tracking by ID logic
-    const orderIdInput = document.getElementById('orderIdInput');
-    const trackOrderButton = document.getElementById('trackOrderButton');
-    const orderIdError = document.getElementById('orderIdError');
     const orderListContainer = document.getElementById('orderListContainer');
     const orderListDiv = document.getElementById('orderList'); // Assuming this is where individual orders will be rendered
-
-    trackOrderButton.addEventListener('click', async () => {
-        const orderId = orderIdInput.value.trim();
-        if (!orderId) {
-            orderIdError.textContent = 'অনুগ্রহ করে একটি অর্ডার আইডি দিন।';
-            orderIdError.style.display = 'block';
-            orderListContainer.style.display = 'none';
-            return;
-        }
-        orderIdError.style.display = 'none';
-        await trackOrderById(orderId);
-    });
 
     async function trackOrderById(orderId) {
         orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-4">অর্ডার লোড হচ্ছে...</p>';
         orderListContainer.style.display = 'block'; // Show container while loading
 
         try {
-            const orderDocRef = doc(db, 'orders', orderId);
-            const orderDocSnap = await getDoc(orderDocRef);
+            const orderRef = ref(database, 'orders/' + orderId);
+            const orderSnapshot = await get(orderRef);
 
-            if (orderDocSnap.exists()) {
-                const orderData = orderDocSnap.data();
+            if (orderSnapshot.exists()) {
+                const orderData = orderSnapshot.val();
                 renderOrderDetails(orderData, orderId); // Function to render details
             } else {
                 orderListDiv.innerHTML = '<p class="text-center text-red-500 italic p-4">এই আইডি দিয়ে কোনো অর্ডার খুঁজে পাওয়া যায়নি।</p>';
@@ -630,22 +614,19 @@ async function initializeOrderTrackPage() {
         orderCard.className = 'bg-white p-4 rounded-lg shadow-md mb-4';
         orderCard.innerHTML = `
             <h3 class="text-xl font-semibold text-lipstick mb-2">অর্ডার আইডি: ${orderId}</h3>
-            <p><strong>তারিখ:</strong> ${new Date(order.timestamp.toDate()).toLocaleString()}</p>
+            <p><strong>তারিখ:</strong> ${new Date(order.orderDate).toLocaleString()}</p>
             <p><strong>নাম:</strong> ${order.customerName}</p>
             <p><strong>ফোন:</strong> ${order.phoneNumber}</p>
-            <p><strong>ঠিকানা:</strong> ${order.address}, ${order.deliveryLocation === 'outsideDhaka' ? order.outsideDhakaLocation : 'ঢাকা'}</p>
+            <p><strong>ঠিকানা:</strong> ${order.address}, ${order.deliveryLocation === 'ঢাকার বাইরে' ? order.outsideDhakaLocation : 'ঢাকা'}</p>
             <p><strong>মোট মূল্য:</strong> ${order.totalAmount} টাকা</p>
             <p><strong>স্ট্যাটাস:</strong> <span class="font-bold text-green-600">${order.status || 'Pending'}</span></p>
             <h4 class="font-semibold mt-3 mb-1">অর্ডারকৃত পণ্যসমূহ:</h4>
             <ul class="list-disc pl-5">
-                ${order.items.map(item => `<li>${item.name} (পরিমাণ: ${item.quantity}, মূল্য: ${item.price} টাকা)</li>`).join('')}
+                ${order.cartItems.map(item => `<li>${item.name} (পরিমাণ: ${item.quantity}, মূল্য: ${item.price} টাকা)</li>`).join('')}
             </ul>
         `;
         orderListDiv.appendChild(orderCard);
     }
-
-    // Hide login prompt as it's no longer needed for order tracking
-    document.getElementById('loginPrompt').style.display = 'none';
 
     const urlParams = new URLSearchParams(window.location.search);
     const urlOrderId = urlParams.get('orderId');
@@ -662,9 +643,7 @@ async function initializeOrderTrackPage() {
 async function loadLocalOrders() {
     const localOrderKeys = JSON.parse(localStorage.getItem('myOrders') || '[]'); // Use the correct key 'myOrders'
     const orderListContainer = document.getElementById('orderListContainer');
-    const loginPrompt = document.getElementById('loginPrompt');
 
-    if (loginPrompt) loginPrompt.style.display = 'none'; // Always hide login prompt
     if (!orderListContainer) return;
 
     if (localOrderKeys.length === 0) {
@@ -699,15 +678,15 @@ function displayOrderCards(orders) {
     if (!container) return;
     container.innerHTML = '';
     orders.forEach(order => {
-        const productSummary = order.items?.map(item => `${item.name} (x${item.quantity})`).join(', ') || 'N/A';
-        const statusText = getStatusText(order.orderStatus);
+        const productSummary = order.cartItems?.map(item => `${item.name} (x${item.quantity})`).join(', ') || 'N/A';
+        const statusText = getStatusText(order.status);
         const card = document.createElement('div');
         card.className = 'order-item';
         card.innerHTML = `
             <p><strong>অর্ডার আইডি:</strong> ${order.orderId || 'N/A'}</p>
             <p><strong>প্রোডাক্ট:</strong> ${productSummary}</p>
-            <p><strong>স্ট্যাটাস:</strong> <span class="status-${order.orderStatus}">${statusText}</span></p>
-            <p><strong>অর্ডারের তারিখ:</strong> ${order.timestamp ? new Date(order.timestamp).toLocaleString('bn-BD') : 'N/A'}</p>
+            <p><strong>স্ট্যাটাস:</strong> <span class="status-${order.status}">${statusText}</span></p>
+            <p><strong>অর্ডারের তারিখ:</strong> ${order.orderDate ? new Date(order.orderDate).toLocaleString('bn-BD') : 'N/A'}</p>
         `;
         card.onclick = () => showOrderDetailsModal(order);
         container.appendChild(card);
@@ -729,14 +708,22 @@ function showOrderDetailsModal(order) {
         <h4 class="text-lg font-semibold mb-2">প্রোডাক্টস</h4>
     `;
 
-    order.items.forEach(item => {
-        detailsHTML += `<p>${item.name} - ${item.quantity} x ${item.price} টাকা</p>`;
+    order.cartItems.forEach(item => {
+        detailsHTML += `
+            <div class="flex items-center mb-2">
+                <img src="${item.image}" alt="${item.name}" class="w-16 h-16 object-cover rounded mr-4">
+                <div>
+                    <p>${item.name}</p>
+                    <p>${item.quantity} x ${item.price} টাকা</p>
+                </div>
+            </div>
+        `;
     });
 
     detailsHTML += `
         <hr class="my-4">
         <p><strong>মোট মূল্য:</strong> ${order.totalAmount || 0} টাকা</p>
-        <p><strong>স্ট্যাটাস:</strong> ${getStatusText(order.orderStatus)}</p>
+        <p><strong>স্ট্যাটাস:</strong> ${getStatusText(order.status)}</p>
     `;
 
     modalContent.innerHTML = detailsHTML;
@@ -1187,7 +1174,7 @@ window.placeOrder = async function(event) {
     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>অর্ডার কনফার্ম হচ্ছে...';
 
     try {
-        // ফর্ম থেকে ডেটা সংগ্রহ (আপনার order-form.html অনুযায়ী)
+        // Form data collection
         const customerName = document.getElementById('customerName').value.trim();
         const phoneNumber = document.getElementById('phoneNumber').value.trim();
         const address = document.getElementById('address').value.trim();
@@ -1199,49 +1186,76 @@ window.placeOrder = async function(event) {
             throw new Error("আপনার কার্ট খালি। অর্ডার করা সম্ভব নয়।");
         }
         
-        // টোটাল মূল্য হিসাব (আপনার সেটিং অনুযায়ী)
+        // Price calculation
         const deliveryFee = deliveryLocation === 'insideDhaka' ? 70 : 160;
         const subTotal = itemsToOrder.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
         const totalAmount = subTotal + deliveryFee;
         
-        const orderData = {
-            customerName,
-            phoneNumber,
-            address,
-            deliveryLocation: deliveryLocation === 'insideDhaka' ? 'ঢাকার ভেতরে' : 'ঢাকার বাইরে',
-            deliveryFee,
-            subTotal: totalAmount.toFixed(2), // মোট দাম
-            totalAmount: totalAmount.toFixed(2),
-            cartItems: itemsToOrder,
-            orderDate: new Date().toISOString(),
-            status: 'Pending',
-            userId: getUserId(),
-            deliveryNote: deliveryNote || 'N/A',
-            outsideDhakaLocation: deliveryLocation === 'outsideDhaka' ? document.getElementById('outsideDhakaLocation').value : 'N/A',
-            paymentNumber: deliveryLocation === 'outsideDhaka' ? document.getElementById('paymentNumber').value : 'N/A',
-            transactionId: deliveryLocation === 'outsideDhaka' ? document.getElementById('transactionId').value : 'N/A',
-        };
-
-        // ১. Firebase ডাটাবেজে সেভ করা (গুরুত্বপূর্ণ)
-        const ordersRef = ref(database, 'orders');
-        const newOrderRef = push(ordersRef);
-        const orderId = newOrderRef.key;
+        // Generate Custom Order ID
+        const today = new Date();
+        const year = today.getFullYear().toString().slice(-2);
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1); // Month is 0-indexed
+        const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${day}`;
         
-        await set(newOrderRef, { ...orderData, orderId });
+        const counterRef = ref(database, `counters/${dateString}`);
+        let orderNumber;
         
-        // ২. Cart এবং Local Storage খালি করা
-        localStorage.removeItem('anyBeautyCart'); 
-        window.cart = [];
-        saveCart();
+        await runTransaction(counterRef, (currentData) => {
+            if (currentData === null) {
+                return 1;
+            } else {
+                return currentData + 1;
+            }
+        }).then(async (result) => {
+            if (result.committed) {
+                orderNumber = result.snapshot.val();
+                const paddedOrderNumber = String(orderNumber).padStart(3, '0');
+                const orderId = `${year}${day}${month}${paddedOrderNumber}`;
 
-        // ৩. Telegram Notification পাঠানো (Non-Blocking)
-        await sendTelegramNotification({ ...orderData, orderId });
-        console.log("Order Data sent to Telegram:", { ...orderData, orderId });
-        console.log("Items to Order:", itemsToOrder); 
+                const orderData = {
+                    customerName,
+                    phoneNumber,
+                    address,
+                    deliveryLocation: deliveryLocation === 'insideDhaka' ? 'ঢাকার ভেতরে' : 'ঢাকার বাইরে',
+                    deliveryFee,
+                    subTotal: totalAmount.toFixed(2),
+                    totalAmount: totalAmount.toFixed(2),
+                    cartItems: itemsToOrder,
+                    orderDate: new Date().toISOString(),
+                    status: 'Pending',
+                    userId: getUserId(),
+                    deliveryNote: deliveryNote || 'N/A',
+                    outsideDhakaLocation: deliveryLocation === 'outsideDhaka' ? document.getElementById('outsideDhakaLocation').value : 'N/A',
+                    paymentNumber: deliveryLocation === 'outsideDhaka' ? document.getElementById('paymentNumber').value : 'N/A',
+                    transactionId: deliveryLocation === 'outsideDhaka' ? document.getElementById('transactionId').value : 'N/A',
+                    orderId: orderId
+                };
 
-        // ৪. সফলতার বার্তা এবং রিডাইরেক্ট
-        showToast(`অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে! অর্ডার আইডি: ${orderId}`, "success");
-        window.location.href = `index.html?orderId=${orderId}`;
+                // Save order with custom ID
+                const newOrderRef = ref(database, 'orders/' + orderId);
+                await set(newOrderRef, orderData);
+
+                // Save order ID to localStorage
+                const myOrders = JSON.parse(localStorage.getItem('myOrders')) || [];
+                myOrders.push(orderId);
+                localStorage.setItem('myOrders', JSON.stringify(myOrders));
+
+                // Clear cart
+                localStorage.removeItem('anyBeautyCart');
+                window.cart = [];
+                saveCart();
+
+                // Send notification
+                await sendTelegramNotification({ ...orderData, orderId });
+
+                // Redirect with success message
+                showToast(`অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে! অর্ডার আইডি: ${orderId}`, "success");
+                window.location.href = `order-track.html?orderId=${orderId}`;
+            } else {
+                throw new Error("Failed to commit transaction for order counter.");
+            }
+        });
 
     } catch (error) {
         console.error("Error placing order:", error); 
