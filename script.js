@@ -628,6 +628,37 @@ async function initializeOrderTrackPage() {
         orderListDiv.appendChild(orderCard);
     }
 
+    async function loadUserOrders(userId) {
+        const orderListContainer = document.getElementById('orderListContainer');
+        const orderListDiv = document.getElementById('orderList');
+
+        if (!orderListContainer) return;
+
+        orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-4">অর্ডার লোড হচ্ছে...</p>';
+        orderListContainer.style.display = 'block';
+
+        try {
+            const ordersRef = ref(database, 'orders');
+            const userOrdersQuery = query(ordersRef, orderByChild('userId'), equalTo(userId));
+            const snapshot = await get(userOrdersQuery);
+
+            const orders = [];
+            snapshot.forEach(childSnapshot => {
+                orders.push({ key: childSnapshot.key, ...childSnapshot.val() });
+            });
+
+            if (orders.length > 0) {
+                orders.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate)); // Sort by orderDate
+                displayOrderCards(orders);
+            } else {
+                orderListDiv.innerHTML = '<p class="text-center text-gray-600">আপনার কোনো অর্ডার এখনো নেই।</p>';
+            }
+        } catch (error) {
+            console.error("Error loading user orders:", error);
+            showToast("আপনার অর্ডারগুলো লোড করতে সমস্যা হয়েছে!", 'error');
+        }
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const urlOrderId = urlParams.get('orderId');
 
@@ -635,8 +666,14 @@ async function initializeOrderTrackPage() {
         // If an orderId is in the URL, fetch and display that single order
         await trackOrderById(urlOrderId); // Use the new trackOrderById function
     } else {
-        // Otherwise, load orders from localStorage
-        await loadLocalOrders();
+        // Check if user is logged in
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                await loadUserOrders(user.uid);
+            } else {
+                await loadLocalOrders();
+            }
+        });
     }
 }
 
