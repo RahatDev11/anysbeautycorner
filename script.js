@@ -243,21 +243,11 @@ function buyNow(productId) { // Removed quantity parameter
 // SECTION: AUTHENTICATION
 // =================================================================
 
-function openLoginModal() {
-    hideSocialMediaIcons();
-    document.getElementById('loginModal')?.classList.remove('hidden');
-}
-
-function closeModal(modalId) {
-    document.getElementById(modalId)?.classList.add('hidden');
-}
-
 function loginWithGmail() {
     signInWithPopup(auth, provider).then(result => {
         const user = result.user;
         showToast(`স্বাগতম, ${user.displayName}`);
         saveUserToFirebase(user);
-        closeModal('loginModal');
     }).catch(error => console.error("Login Error:", error.message));
 };
 
@@ -272,8 +262,8 @@ function updateLoginButton(user) {
         mobileBtn.innerHTML = html;
         desktopBtn.innerHTML = html;
     } else {
-        const html = `<button class="flex items-center" onclick="window.openLoginModal()"><i class="fas fa-user-circle mr-2"></i><span class="text-black">লগইন</span></button>`;
-        mobileBtn.innerHTML = `<button class="flex items-center w-full" onclick="window.openLoginModal()"><i class="fas fa-user-circle mr-2"></i><span class="text-black font-semibold">লগইন</span></button>`;
+        const html = `<button class="flex items-center" onclick="window.loginWithGmail()"><i class="fas fa-user-circle mr-2"></i><span class="text-black">লগইন</span></button>`;
+        mobileBtn.innerHTML = `<button class="flex items-center w-full" onclick="window.loginWithGmail()"><i class="fas fa-user-circle mr-2"></i><span class="text-black font-semibold">লগইন</span></button>`;
         desktopBtn.innerHTML = html;
     }
 };
@@ -867,7 +857,7 @@ Object.assign(window, {
     openSidebar, closeSidebar, toggleSubMenuMobile, handleSubMenuItemClick,
     toggleSubMenuDesktop, openCartSidebar, closeCartSidebar, focusMobileSearch,
     // Auth
-    openLoginModal, closeModal, loginWithGmail, confirmLogout, logout,
+    loginWithGmail, confirmLogout, logout,
     // Cart & Checkout
     filterProducts, searchProductsMobile, searchProductsDesktop, checkout,
     buyNow, addToCart, updateQuantity, removeFromCart,
