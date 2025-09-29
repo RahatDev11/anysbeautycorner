@@ -647,7 +647,7 @@ async function loadLocalOrders() {
     if (!orderListContainer) return;
 
     if (localOrderKeys.length === 0) {
-        orderListContainer.innerHTML = '<p class="text-center text-gray-600">আপনার কোনো অর্ডার এখনো নেই।</p>';
+        orderListContainer.innerHTML = '<p class="text-center text-gray-600">আপনি কোনো প্রোডাক্ট এখনো অর্ডার করেননি।</p>';
         orderListContainer.style.display = 'block';
         return;
     }
@@ -664,7 +664,7 @@ async function loadLocalOrders() {
             displayOrderCards(orders);
             orderListContainer.style.display = 'block';
         } else {
-            orderListContainer.innerHTML = '<p class="text-center text-gray-600">আপনার কোনো অর্ডার পাওয়া যায়নি।</p>';
+            orderListContainer.innerHTML = '<p class="text-center text-gray-600">আপনি কোনো প্রোডাক্ট এখনো অর্ডার করেননি।</p>';
             orderListContainer.style.display = 'block';
         }
     } catch (error) {
@@ -677,9 +677,9 @@ function displayOrderCards(orders) {
     const container = document.getElementById('orderList');
     if (!container) return;
     container.innerHTML = `
-        <div class="hidden md:grid md:grid-cols-4 gap-4 font-bold p-4 bg-gray-200 rounded-t-lg">
+        <div class="grid grid-cols-3 md:grid-cols-4 gap-4 font-bold p-4 bg-gray-200 rounded-t-lg text-sm">
             <div>অর্ডার আইডি</div>
-            <div>অর্ডারের তারিখ</div>
+            <div class="hidden md:block">অর্ডারের তারিখ</div>
             <div>মোট মূল্য</div>
             <div>স্ট্যাটাস</div>
         </div>
@@ -688,18 +688,11 @@ function displayOrderCards(orders) {
         const statusText = getStatusText(order.status);
         const statusColor = getStatusColor(order.status);
         const card = document.createElement('div');
-        card.className = 'grid grid-cols-2 md:grid-cols-4 gap-4 p-4 border-b cursor-pointer hover:bg-gray-50';
+        card.className = 'grid grid-cols-3 md:grid-cols-4 gap-4 p-4 border-b cursor-pointer hover:bg-gray-50 text-sm';
         card.innerHTML = `
-            <div class="md:hidden font-bold">অর্ডার আইডি</div>
             <div>${order.orderId || 'N/A'}</div>
-            
-            <div class="md:hidden font-bold">অর্ডারের তারিখ</div>
-            <div>${order.orderDate ? new Date(order.orderDate).toLocaleDateString('bn-BD') : 'N/A'}</div>
-            
-            <div class="md:hidden font-bold">মোট মূল্য</div>
+            <div class="hidden md:block">${order.orderDate ? new Date(order.orderDate).toLocaleString('bn-BD') : 'N/A'}</div>
             <div>${order.totalAmount || 0} টাকা</div>
-            
-            <div class="md:hidden font-bold">স্ট্যাটাস</div>
             <div><span class="px-2 py-1 text-xs font-semibold rounded-full ${statusColor.bg} ${statusColor.text}">${statusText}</span></div>
         `;
         card.onclick = () => showOrderDetailsModal(order);
@@ -715,6 +708,7 @@ function showOrderDetailsModal(order) {
 
     let detailsHTML = `
         <p><strong>অর্ডার আইডি:</strong> ${order.orderId || 'N/A'}</p>
+        <p><strong>তারিখ:</strong> ${order.orderDate ? new Date(order.orderDate).toLocaleString('bn-BD') : 'N/A'}</p>
         <p><strong>নাম:</strong> ${order.customerName || 'N/A'}</p>
         <p><strong>ফোন:</strong> ${order.phoneNumber || 'N/A'}</p>
         <p><strong>ঠিকানা:</strong> ${order.address || 'N/A'}</p>
