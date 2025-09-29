@@ -1190,7 +1190,7 @@ window.placeOrder = async function(event) {
     if (event) event.preventDefault();
 
     // Re-read cart from localStorage just in case
-    const itemsToOrder = JSON.parse(localStorage.getItem('anyBeautyCart')) || [];
+    const itemsToOrder = isBuyNowMode ? checkoutCart : (JSON.parse(localStorage.getItem('anyBeautyCart')) || []);
     
     const submitButton = document.getElementById('submitButton');
     submitButton.disabled = true;
