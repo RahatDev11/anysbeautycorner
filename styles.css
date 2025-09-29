@@ -1,4 +1,6 @@
 /* Order Form Page Styles */
+/* Add any custom styles here */
+@import url("loading-spinner.css");
 /* কাস্টম কালার */
 .bg-brushstroke { background-color: #F4A7B9; }
 .text-lipstick { color: #A52A2A; }

@@ -149,17 +149,21 @@ function getUserId() {
 };
 
 function loadCart() {
-    const userId = getUserId();
-    if (auth && auth.currentUser) {
-        onValue(ref(database, `carts/${userId}`), (snapshot) => {
-            cart = snapshot.val() || [];
+    return new Promise(resolve => {
+        const userId = getUserId();
+        if (auth && auth.currentUser) {
+            onValue(ref(database, `carts/${userId}`), (snapshot) => {
+                cart = snapshot.val() || [];
+                updateAllCartUIs();
+                resolve();
+            }, { onlyOnce: true }); // Listen only once for initial load
+        } else {
+            const localCart = localStorage.getItem("anyBeautyCart");
+            cart = localCart ? JSON.parse(localCart) : [];
             updateAllCartUIs();
-        });
-    } else {
-        const localCart = localStorage.getItem("anyBeautyCart");
-        cart = localCart ? JSON.parse(localCart) : [];
-        updateAllCartUIs();
-    }
+            resolve();
+        }
+    });
 };
 
 function saveCart() {
@@ -341,25 +345,31 @@ function initializeProductSlider(sliderProducts) {
     }
 }
 
-function displayEvents() {
-    const wrapper = document.getElementById('event-slider-wrapper');
-    if (!wrapper) return;
-    onValue(ref(database, 'events'), (snapshot) => {
-        const activeEvents = [];
-        if (snapshot.exists()) {
-            snapshot.forEach(child => { if (child.val().isActive) activeEvents.push(child.val()); });
+async function displayEvents() {
+    return new Promise(resolve => {
+        const wrapper = document.getElementById('event-slider-wrapper');
+        if (!wrapper) {
+            resolve();
+            return;
         }
-        wrapper.innerHTML = activeEvents.length > 0
-            ? activeEvents.slice(0, 3).map(event => event.imageUrl
-                ? `<div class="swiper-slide rounded-lg shadow-lg bg-cover bg-center" style="height: 160px; background-image: url(${event.imageUrl});"><div class="w-full h-full bg-black bg-opacity-50 rounded-lg p-6 flex flex-col justify-center items-center text-center text-white"><h3 class="text-xl font-bold">${event.title || ''}</h3><p class="mt-1">${event.description || ''}</p></div></div>`
-                : `<div class="swiper-slide bg-white p-6 flex flex-col justify-center items-center text-center rounded-lg shadow-lg" style="height: 160px;"><h3 class="text-xl font-bold text-lipstick-dark">${event.title || ''}</h3><p class="text-gray-600 mt-1">${event.description || ''}</p></div>`
-            ).join('')
-            : '<div class="swiper-slide text-center p-6 bg-white rounded-lg">কোনো নতুন ইভেন্ট নেই।</div>';
+        onValue(ref(database, 'events'), (snapshot) => {
+            const activeEvents = [];
+            if (snapshot.exists()) {
+                snapshot.forEach(child => { if (child.val().isActive) activeEvents.push(child.val()); });
+            }
+            wrapper.innerHTML = activeEvents.length > 0
+                ? activeEvents.slice(0, 3).map(event => event.imageUrl
+                    ? `<div class="swiper-slide rounded-lg shadow-lg bg-cover bg-center" style="height: 160px; background-image: url(${event.imageUrl});"><div class="w-full h-full bg-black bg-opacity-50 rounded-lg p-6 flex flex-col justify-center items-center text-center text-white"><h3 class="text-xl font-bold">${event.title || ''}</h3><p class="mt-1">${event.description || ''}</p></div></div>`
+                    : `<div class="swiper-slide bg-white p-6 flex flex-col justify-center items-center text-center rounded-lg shadow-lg" style="height: 160px;"><h3 class="text-xl font-bold text-lipstick-dark">${event.title || ''}</h3><p class="text-gray-600 mt-1">${event.description || ''}</p></div>`
+                ).join('')
+                : '<div class="swiper-slide text-center p-6 bg-white rounded-lg">কোনো নতুন ইভেন্ট নেই।</div>';
 
-        if (typeof Swiper !== 'undefined') {
-            if (eventSlider) eventSlider.destroy(true, true);
-            eventSlider = new Swiper('.event-slider', { loop: activeEvents.length > 1, autoplay: { delay: 3500 }, pagination: { el: '.swiper-pagination', clickable: true } });
-        }
+            if (typeof Swiper !== 'undefined') {
+                if (eventSlider) eventSlider.destroy(true, true);
+                eventSlider = new Swiper('.event-slider', { loop: activeEvents.length > 1, autoplay: { delay: 3500 }, pagination: { el: '.swiper-pagination', clickable: true } });
+            }
+            resolve(); // Resolve the promise after events are displayed
+        }, { onlyOnce: true }); // Listen only once
     });
 }
 
@@ -467,7 +477,7 @@ function focusMobileSearch() {
 async function initializeProductDetailPage() {
     const productContent = document.getElementById('productContent');
     const loadingSpinner = document.getElementById('loadingSpinner');
-    if (!productContent) return; 
+    if (!productContent) return Promise.resolve(); // Resolve immediately if element not found
 
     const params = new URLSearchParams(window.location.search);
     const productId = params.get('id');
@@ -475,7 +485,7 @@ async function initializeProductDetailPage() {
     if (!productId) {
         showToast('প্রোডাক্ট আইডি পাওয়া যায়নি!', 'error');
         if (loadingSpinner) loadingSpinner.innerHTML = '<p class="text-red-500">প্রোডাক্ট আইডি পাওয়া যায়নি।</p>';
-        return;
+        return Promise.resolve(); // Resolve immediately if no product ID
     }
 
     try {
@@ -492,9 +502,11 @@ async function initializeProductDetailPage() {
             if (loadingSpinner) loadingSpinner.innerHTML = '<p class="text-red-500">দুঃখিত, এই প্রোডাক্টটি পাওয়া যায়নি।</p>';
         }
     } catch (error) {
+        console.error("Error loading product detail:", error);
         showToast('প্রোডাক্ট লোড করতে সমস্যা হয়েছে!', 'error');
         if (loadingSpinner) loadingSpinner.innerHTML = `<p class="text-red-500">ত্রুটি: ${error.message}</p>`;
     }
+    return Promise.resolve(); // Ensure a promise is always returned and resolved
 }
 
 function displayProductDetails(product) {
@@ -584,11 +596,13 @@ function updateModalImage() { document.getElementById('modalImage').src = galler
 
 async function initializeOrderTrackPage() {
     const orderListContainer = document.getElementById('orderListContainer');
-    const orderListDiv = document.getElementById('orderList'); // Assuming this is where individual orders will be rendered
+    const orderListDiv = document.getElementById('orderList');
+
+    if (!orderListContainer) return Promise.resolve(); // Resolve immediately if element not found
 
     async function trackOrderById(orderId) {
         orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-4">অর্ডার লোড হচ্ছে...</p>';
-        orderListContainer.style.display = 'block'; // Show container while loading
+        orderListContainer.style.display = 'block';
 
         try {
             const orderRef = ref(database, 'orders/' + orderId);
@@ -596,7 +610,7 @@ async function initializeOrderTrackPage() {
 
             if (orderSnapshot.exists()) {
                 const orderData = orderSnapshot.val();
-                renderOrderDetails(orderData, orderId); // Function to render details
+                renderOrderDetails(orderData, orderId);
             } else {
                 orderListDiv.innerHTML = '<p class="text-center text-red-500 italic p-4">এই আইডি দিয়ে কোনো অর্ডার খুঁজে পাওয়া যায়নি।</p>';
             }
@@ -606,9 +620,8 @@ async function initializeOrderTrackPage() {
         }
     }
 
-    // Function to render order details (needs to be defined)
     function renderOrderDetails(order, orderId) {
-        orderListDiv.innerHTML = ''; // Clear previous content
+        orderListDiv.innerHTML = '';
 
         const orderCard = document.createElement('div');
         orderCard.className = 'bg-white p-4 rounded-lg shadow-md mb-4';
@@ -648,7 +661,7 @@ async function initializeOrderTrackPage() {
             });
 
             if (orders.length > 0) {
-                orders.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate)); // Sort by orderDate
+                orders.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
                 displayOrderCards(orders);
             } else {
                 orderListDiv.innerHTML = '<p class="text-center text-gray-600">আপনার কোনো অর্ডার এখনো নেই।</p>';
@@ -663,18 +676,20 @@ async function initializeOrderTrackPage() {
     const urlOrderId = urlParams.get('orderId');
 
     if (urlOrderId) {
-        // If an orderId is in the URL, fetch and display that single order
-        await trackOrderById(urlOrderId); // Use the new trackOrderById function
+        await trackOrderById(urlOrderId);
     } else {
-        // Check if user is logged in
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                await loadUserOrders(user.uid);
-            } else {
-                await loadLocalOrders();
-            }
+        await new Promise(resolve => {
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    await loadUserOrders(user.uid);
+                } else {
+                    await loadLocalOrders();
+                }
+                resolve();
+            });
         });
     }
+    return Promise.resolve(); // Ensure a promise is always returned and resolved
 }
 
 async function loadLocalOrders() {
@@ -838,6 +853,8 @@ async function loadMyOrders() {
     const noOrdersMessage = document.getElementById('noOrdersMessage');
     const orderListContainer = document.getElementById('orderListContainer');
 
+    if (!orderListContainer) return Promise.resolve(); // Resolve immediately if element not found
+
     if (loadingIndicator) loadingIndicator.classList.remove('hidden');
     if (noOrdersMessage) noOrdersMessage.classList.add('hidden');
     if (orderListContainer) orderListContainer.innerHTML = ''; // Clear previous orders
@@ -847,7 +864,7 @@ async function loadMyOrders() {
     if (myOrderIds.length === 0) {
         if (loadingIndicator) loadingIndicator.classList.add('hidden');
         if (noOrdersMessage) noOrdersMessage.classList.remove('hidden');
-        return;
+        return Promise.resolve(); // Resolve immediately if no orders
     }
 
     try {
@@ -859,9 +876,9 @@ async function loadMyOrders() {
         const orderSnapshots = await Promise.all(orderPromises);
 
         const orders = orderSnapshots
-            .map(snapshot => snapshot.exists() ? { key: snapshot.key, ...snapshot.val() } : null) // Include key
+            .map(snapshot => snapshot.exists() ? { key: snapshot.key, ...snapshot.val() } : null)
             .filter(order => order !== null)
-            .sort((a, b) => b.timestamp - a.timestamp); // Newest first
+            .sort((a, b) => b.timestamp - a.timestamp);
 
         if (orders.length > 0) {
             orders.forEach(order => displayOrder(order));
@@ -875,6 +892,7 @@ async function loadMyOrders() {
     } finally {
         if (loadingIndicator) loadingIndicator.classList.add('hidden');
     }
+    return Promise.resolve(); // Ensure a promise is always returned and resolved
 }
 
 // =================================================================
@@ -901,50 +919,58 @@ Object.assign(window, {
 });
 
 async function loadHeaderAndSetup() {
-    try {
-        const response = await fetch('header.html');
-        if (!response.ok) {
-            console.error('Failed to load header.html');
-            return;
-        }
-        const headerHTML = await response.text();
-        const headerEl = document.getElementById('header');
-        if (headerEl) {
-            headerEl.innerHTML = headerHTML;
-        }
+    return new Promise(async (resolve, reject) => {
+        try {
+            const response = await fetch('header.html');
+            if (!response.ok) {
+                console.error('Failed to load header.html');
+                reject('Failed to load header.html');
+                return;
+            }
+            const headerHTML = await response.text();
+            const headerEl = document.getElementById('header');
+            if (headerEl) {
+                headerEl.innerHTML = headerHTML;
+            }
 
-        // Now that the header is loaded, set up all listeners and dynamic content
-        onAuthStateChanged(auth, user => updateLoginButton(user));
-        loadCart();
-
-        document.getElementById('mobileMenuButton')?.addEventListener('click', openSidebar);
-        document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);
-        document.getElementById('closeSidebarButton')?.addEventListener('click', closeSidebar);
-        
-        const sidebar = document.getElementById('sidebar');
-        if (sidebar) {
-            sidebar.addEventListener('click', (event) => {
-                // Prevent clicks inside the sidebar from closing it
-                event.stopPropagation();
+            // Wait for initial auth state to be determined and login button updated
+            await new Promise(authResolve => {
+                const unsubscribe = onAuthStateChanged(auth, user => {
+                    updateLoginButton(user);
+                    unsubscribe(); // Unsubscribe after the first state change
+                    authResolve();
+                });
             });
-        }
-        
-        // Make cart sidebar functional
-        document.getElementById('cartButton')?.addEventListener('click', openCartSidebar);
-        document.getElementById('cartOverlay')?.addEventListener('click', closeCartSidebar);
-        
-        // Ensure checkout button in cart sidebar works
-        const checkoutBtn = document.querySelector('#cartSidebar button[onclick="checkout()"]');
-        if(checkoutBtn) {
-            checkoutBtn.addEventListener('click', checkout);
-        }
+            
+            await loadCart(); // Await the loadCart promise
 
-        // Setup social media buttons
-        setupSocialMediaButtons();
+            document.getElementById('mobileMenuButton')?.addEventListener('click', openSidebar);
+            document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);
+            document.getElementById('closeSidebarButton')?.addEventListener('click', closeSidebar);
+            
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                });
+            }
+            
+            document.getElementById('cartButton')?.addEventListener('click', openCartSidebar);
+            document.getElementById('cartOverlay')?.addEventListener('click', closeCartSidebar);
+            
+            const checkoutBtn = document.querySelector('#cartSidebar button[onclick="checkout()"]');
+            if(checkoutBtn) {
+                checkoutBtn.addEventListener('click', checkout);
+            }
 
-    } catch (error) {
-        console.error('Error loading or setting up header:', error);
-    }
+            setupSocialMediaButtons();
+            resolve();
+
+        } catch (error) {
+            console.error('Error loading or setting up header:', error);
+            reject(error);
+        }
+    });
 }
 
 function setupSocialMediaButtons() {
@@ -991,52 +1017,70 @@ async function loadFooter() {
 // SECTION: MAIN INITIALIZATION
 // =================================================================
 
+function hideGlobalLoadingSpinner() {
+    const spinner = document.getElementById('global-loading-spinner');
+    if (spinner) {
+        spinner.classList.add('hidden');
+    }
+}
+
 function main() {
+    let pageLoadPromises = [];
     // Load header and footer and set up their functionality
-    loadHeaderAndSetup();
-    loadFooter();
+    pageLoadPromises.push(loadHeaderAndSetup());
+    pageLoadPromises.push(loadFooter());
 
     // সব প্রোডাক্ট লোড করা
     const productsRef = ref(database, "products/");
-    onValue(productsRef, snapshot => {
-        if (snapshot.exists()) {
-            products = Object.keys(snapshot.val()).map(key => ({ id: key, ...snapshot.val()[key] }));
+    const productsLoadPromise = new Promise(resolve => {
+        onValue(productsRef, snapshot => {
+            if (snapshot.exists()) {
+                products = Object.keys(snapshot.val()).map(key => ({ id: key, ...snapshot.val()[key] }));
 
-            const currentPage = window.location.pathname;
-            if (currentPage.endsWith('/') || currentPage.endsWith('index.html')) {
-                const urlParams = new URLSearchParams(window.location.search);
-                const filterCategory = urlParams.get('filter');
-                if (filterCategory) {
-                    filterProducts(filterCategory);
-                } else {
-                    displayProductsAsCards(products);
+                const currentPage = window.location.pathname;
+                if (currentPage.endsWith('/') || currentPage.endsWith('index.html')) {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const filterCategory = urlParams.get('filter');
+                    if (filterCategory) {
+                        filterProducts(filterCategory);
+                    } else {
+                        displayProductsAsCards(products);
+                    }
+                    const sliderProducts = products.filter(p => p.isInSlider).sort((a, b) => (a.sliderOrder || 99) - (b.sliderOrder || 99));
+                    initializeProductSlider(sliderProducts);
                 }
-                const sliderProducts = products.filter(p => p.isInSlider).sort((a, b) => (a.sliderOrder || 99) - (b.sliderOrder || 99));
-                initializeProductSlider(sliderProducts);
             }
-        }
+            resolve(); // Resolve after products are loaded and displayed
+        }, { onlyOnce: true }); // Listen only once
     });
+    pageLoadPromises.push(productsLoadPromise);
 
     // পেজ অনুযায়ী নির্দিষ্ট ফাংশন চালানো
     const currentPage = window.location.pathname;
     if (currentPage.endsWith('/') || currentPage.endsWith('index.html')) {
-        showLoadingSpinner();
-        displayEvents();
+        showLoadingSpinner(); // This is for productList spinner, not global
+        pageLoadPromises.push(displayEvents()); // Assuming displayEvents returns a promise or is async
     }
     if (currentPage.includes('product-detail.html')) {
-        initializeProductDetailPage();
+        pageLoadPromises.push(initializeProductDetailPage());
     }
     if (currentPage.includes('order-track.html')) {
-        initializeOrderTrackPage();
+        pageLoadPromises.push(initializeOrderTrackPage());
     }
     if (currentPage.includes('order-form.html')) {
-        // --- Order Form Listener (এই অংশটি main()
-        initializeOrderFormPage();
+        pageLoadPromises.push(initializeOrderFormPage());
     }
 
     if (currentPage.includes('order-list.html')) {
-        loadMyOrders();
+        pageLoadPromises.push(loadMyOrders());
     }
+
+    Promise.all(pageLoadPromises).then(() => {
+        hideGlobalLoadingSpinner();
+    }).catch(error => {
+        console.error("Error during page initialization:", error);
+        hideGlobalLoadingSpinner(); // Hide even if there's an error
+    });
 
 }
 
@@ -1048,35 +1092,41 @@ function main() {
 let checkoutCart = [];
 let isBuyNowMode = false;
 
-function initializeOrderFormPage() {
-    const checkoutForm = document.getElementById('checkoutForm');
-    if (!checkoutForm) return;
-
-    // Show form and hide loader
-    document.getElementById('loadingIndicator')?.classList.add('hidden');
-    checkoutForm.classList.remove('hidden');
-
-    // Initialize checkout process
-    onAuthStateChanged(auth, user => {
-        if (user) {
-            window.currentUserId = user.uid;
-            window.currentUserEmail = user.email;
-            fetchUserProfile(user.uid);
-            initializeCheckout(user);
-        } else {
-            window.currentUserId = 'GUEST_' + Date.now();
-            window.currentUserEmail = 'guest@checkout.com';
-            initializeCheckout(null);
-            handleDeliveryLocationChange();
+async function initializeOrderFormPage() {
+    return new Promise(resolve => {
+        const checkoutForm = document.getElementById('checkoutForm');
+        if (!checkoutForm) {
+            resolve();
+            return;
         }
-    });
 
-    // Add event listeners
-    document.querySelectorAll('input[name="deliveryLocation"]').forEach(radio => {
-        radio.addEventListener('change', handleDeliveryLocationChange);
+        // Show form and hide loader
+        document.getElementById('loadingIndicator')?.classList.add('hidden');
+        checkoutForm.classList.remove('hidden');
+
+        // Initialize checkout process
+        onAuthStateChanged(auth, async user => {
+            if (user) {
+                window.currentUserId = user.uid;
+                window.currentUserEmail = user.email;
+                await fetchUserProfile(user.uid);
+                initializeCheckout(user);
+            } else {
+                window.currentUserId = 'GUEST_' + Date.now();
+                window.currentUserEmail = 'guest@checkout.com';
+                initializeCheckout(null);
+                handleDeliveryLocationChange();
+            }
+            resolve(); // Resolve the promise after auth state is handled and checkout initialized
+        });
+
+        // Add event listeners
+        document.querySelectorAll('input[name="deliveryLocation"]').forEach(radio => {
+            radio.addEventListener('change', handleDeliveryLocationChange);
+        });
+        document.getElementById('deliveryPaymentMethod')?.addEventListener('change', handleDeliveryPaymentMethodChange);
+        checkoutForm.addEventListener('submit', window.placeOrder);
     });
-    document.getElementById('deliveryPaymentMethod')?.addEventListener('change', handleDeliveryPaymentMethodChange);
-    checkoutForm.addEventListener('submit', window.placeOrder);
 }
 
 function calculateAndDisplayPrices(items) {
