@@ -62,23 +62,23 @@
 
         <!-- মোবাইল সাইডবার ওভারলে -->
         <div class="fixed inset-0 z-40 hidden" id="sidebarOverlay">
-            <div class="fixed top-0 left-0 h-full w-4/5 bg-white/5 backdrop-blur-lg shadow-lg transform -translate-x-full transition-transform duration-500 ease-in-out" id="sidebar">
+            <div class="fixed top-0 left-0 h-full w-4/5 bg-white/5 shadow-lg transform -translate-x-full transition-transform duration-500 ease-in-out" id="sidebar">
                 <div class="p-4 h-full flex flex-col">
                     <button id="closeSidebarButton" class="text-gray-600 hover:text-gray-900">
                         <i class="fas fa-times"></i>
                     </button>
                     <ul class="mt-4 flex-1 overflow-y-auto">
-                        <li id="mobileLoginButton">
+                        <li id="mobileLoginButton" class="border-b border-gray-200 py-2">
                             <button class="flex items-center w-full" onclick="openLoginModal()">
                                 <i class="fas fa-user-circle mr-2 bg-red-500 text-white p-1 rounded-full"></i>
                                 <span><span class="text-black">লগইন</span></span>
                             </button>
                         </li>
-                        <li>
-                            <a class="block py-2 text-gray-800 hover:bg-gray-100" href="index.html#home" onclick="handleMenuItemClick()">হোম</a>
+                        <li class="border-b border-gray-200 py-2">
+                            <a class="block text-gray-800 hover:bg-gray-100" href="index.html#home" onclick="handleMenuItemClick()">হোম</a>
                         </li>
 
-                        <li>
+                        <li class="border-b border-gray-200 py-2">
                             <button class="flex items-center justify-between w-full text-left text-gray-800 hover:bg-gray-100" onclick="toggleSubMenuMobile(event)">
                                 <span>পণ্য সমূহ</span>
                                 <i class="fas fa-chevron-down ml-2 transition-transform duration-300" id="arrowIcon"></i>
@@ -92,8 +92,8 @@
                                 <a class="block px-4 py-2 text-gray-800 hover:bg-gray-200" href="#mehandi" onclick="handleSubMenuItemClick('mehandi')">মেহেদী</a>
                             </div>
                         </li>
-                        <li>
-                            <a id="mobileOrderTrackButton" class="block py-2 text-gray-800 hover:bg-gray-100" href="order-track.html" onclick="handleOrderTrackClick(event)">অর্ডার ট্র্যাক</a>
+                        <li class="py-2"> <!-- No bottom border for the last item -->
+                            <a id="mobileOrderTrackButton" class="block text-gray-800 hover:bg-gray-100" href="order-track.html" onclick="handleOrderTrackClick(event)">অর্ডার ট্র্যাক</a>
                         </li>
                     </ul>
                 </div>
