@@ -660,7 +660,7 @@ async function loadLocalOrders() {
             .map(snapshot => ({ key: snapshot.key, ...snapshot.val() }));
 
         if (orders.length > 0) {
-            orders.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)); // Sort by timestamp
+            orders.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate)); // Sort by orderDate
             displayOrderCards(orders);
             orderListContainer.style.display = 'block';
         } else {
@@ -676,17 +676,31 @@ async function loadLocalOrders() {
 function displayOrderCards(orders) {
     const container = document.getElementById('orderList');
     if (!container) return;
-    container.innerHTML = '';
+    container.innerHTML = `
+        <div class="hidden md:grid md:grid-cols-4 gap-4 font-bold p-4 bg-gray-200 rounded-t-lg">
+            <div>অর্ডার আইডি</div>
+            <div>অর্ডারের তারিখ</div>
+            <div>মোট মূল্য</div>
+            <div>স্ট্যাটাস</div>
+        </div>
+    `;
     orders.forEach(order => {
-        const productSummary = order.cartItems?.map(item => `${item.name} (x${item.quantity})`).join(', ') || 'N/A';
         const statusText = getStatusText(order.status);
+        const statusColor = getStatusColor(order.status);
         const card = document.createElement('div');
-        card.className = 'order-item';
+        card.className = 'grid grid-cols-2 md:grid-cols-4 gap-4 p-4 border-b cursor-pointer hover:bg-gray-50';
         card.innerHTML = `
-            <p><strong>অর্ডার আইডি:</strong> ${order.orderId || 'N/A'}</p>
-            <p><strong>প্রোডাক্ট:</strong> ${productSummary}</p>
-            <p><strong>স্ট্যাটাস:</strong> <span class="status-${order.status}">${statusText}</span></p>
-            <p><strong>অর্ডারের তারিখ:</strong> ${order.orderDate ? new Date(order.orderDate).toLocaleString('bn-BD') : 'N/A'}</p>
+            <div class="md:hidden font-bold">অর্ডার আইডি</div>
+            <div>${order.orderId || 'N/A'}</div>
+            
+            <div class="md:hidden font-bold">অর্ডারের তারিখ</div>
+            <div>${order.orderDate ? new Date(order.orderDate).toLocaleDateString('bn-BD') : 'N/A'}</div>
+            
+            <div class="md:hidden font-bold">মোট মূল্য</div>
+            <div>${order.totalAmount || 0} টাকা</div>
+            
+            <div class="md:hidden font-bold">স্ট্যাটাস</div>
+            <div><span class="px-2 py-1 text-xs font-semibold rounded-full ${statusColor.bg} ${statusColor.text}">${statusText}</span></div>
         `;
         card.onclick = () => showOrderDetailsModal(order);
         container.appendChild(card);
@@ -1166,14 +1180,18 @@ function handleDeliveryPaymentMethodChange() {
 window.placeOrder = async function(event) {
     if (event) event.preventDefault();
 
-    // Re-read cart from localStorage just in case
-    const itemsToOrder = isBuyNowMode ? checkoutCart : (JSON.parse(localStorage.getItem('anyBeautyCart')) || []);
-    
     const submitButton = document.getElementById('submitButton');
     submitButton.disabled = true;
     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>অর্ডার কনফার্ম হচ্ছে...';
 
     try {
+        console.log("Starting order placement...");
+        const itemsToOrder = isBuyNowMode ? checkoutCart : (JSON.parse(localStorage.getItem('anyBeautyCart')) || []);
+        
+        if (itemsToOrder.length === 0) {
+            throw new Error("আপনার কার্ট খালি। অর্ডার করা সম্ভব নয়।");
+        }
+
         // Form data collection
         const customerName = document.getElementById('customerName').value.trim();
         const phoneNumber = document.getElementById('phoneNumber').value.trim();
@@ -1181,10 +1199,6 @@ window.placeOrder = async function(event) {
         const deliveryLocationElement = document.querySelector('input[name="deliveryLocation"]:checked');
         const deliveryLocation = deliveryLocationElement ? deliveryLocationElement.value : 'insideDhaka';
         const deliveryNote = document.getElementById('deliveryNote').value.trim();
-        
-        if (itemsToOrder.length === 0) {
-            throw new Error("আপনার কার্ট খালি। অর্ডার করা সম্ভব নয়।");
-        }
         
         // Price calculation
         const deliveryFee = deliveryLocation === 'insideDhaka' ? 70 : 160;
@@ -1195,21 +1209,23 @@ window.placeOrder = async function(event) {
         const today = new Date();
         const year = today.getFullYear().toString().slice(-2);
         const day = String(today.getDate()).padStart(2, '0');
-        const month = String(today.getMonth() + 1); // Month is 0-indexed
+        const month = String(today.getMonth() + 1);
         const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${day}`;
         
         const counterRef = ref(database, `counters/${dateString}`);
-        let orderNumber;
+        console.log("Running transaction on counter:", `counters/${dateString}`);
         
         await runTransaction(counterRef, (currentData) => {
             if (currentData === null) {
                 return 1;
-            } else {
+            }
+            else {
                 return currentData + 1;
             }
         }).then(async (result) => {
             if (result.committed) {
-                orderNumber = result.snapshot.val();
+                const orderNumber = result.snapshot.val();
+                console.log("Transaction committed. New order number:", orderNumber);
                 const paddedOrderNumber = String(orderNumber).padStart(3, '0');
                 const orderId = `${year}${day}${month}${paddedOrderNumber}`;
 
@@ -1232,9 +1248,10 @@ window.placeOrder = async function(event) {
                     orderId: orderId
                 };
 
-                // Save order with custom ID
+                console.log("Saving order with ID:", orderId);
                 const newOrderRef = ref(database, 'orders/' + orderId);
                 await set(newOrderRef, orderData);
+                console.log("Order saved successfully.");
 
                 // Save order ID to localStorage
                 const myOrders = JSON.parse(localStorage.getItem('myOrders')) || [];
@@ -1253,8 +1270,12 @@ window.placeOrder = async function(event) {
                 showToast(`অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে! অর্ডার আইডি: ${orderId}`, "success");
                 window.location.href = `order-track.html?orderId=${orderId}`;
             } else {
+                console.error("Transaction not committed.");
                 throw new Error("Failed to commit transaction for order counter.");
             }
+        }).catch(error => {
+            console.error("Error during transaction:", error);
+            throw error; // Re-throw to be caught by the outer catch block
         });
 
     } catch (error) {
