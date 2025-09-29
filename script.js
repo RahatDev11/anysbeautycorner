@@ -1245,7 +1245,9 @@ window.placeOrder = async function(event) {
         saveCart();
 
         // ৩. Telegram Notification পাঠানো (Non-Blocking)
-        await sendTelegramNotification({ ...orderData, orderId }); 
+        await sendTelegramNotification({ ...orderData, orderId });
+        console.log("Order Data sent to Telegram:", { ...orderData, orderId });
+        console.log("Items to Order:", itemsToOrder); 
 
         // ৪. সফলতার বার্তা এবং রিডাইরেক্ট
         showToast(`অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে! অর্ডার আইডি: ${orderId}`, "success");
