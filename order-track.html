@@ -21,11 +21,15 @@
     <div class="container mx-auto pt-20 pb-8 px-4 min-h-screen">
         <h1 class="text-3xl font-bold text-center mb-8 text-lipstick">আপনার অর্ডারসমূহ</h1>
         
-        <!-- অর্ডার লিস্ট -->
+        <div id="loginPrompt" class="text-center p-6 bg-white rounded-lg shadow-md" style="display: none;">
+            <p class="text-lg text-gray-700 mb-4">আপনার অর্ডারের তালিকা দেখতে অনুগ্রহ করে লগইন করুন।</p>
+            <button id="loginButton" class="bg-lipstick text-white px-8 py-3 rounded-lg font-semibold hover:bg-opacity-90 transition-colors">
+                <i class="fab fa-google mr-2"></i> Google দিয়ে লগইন করুন
+            </button>
+        </div>
+
         <div id="orderListContainer">
-            <div id="orderList" class="bg-white rounded-lg shadow-md">
-                <!-- লোডিং বা অর্ডার লিস্ট এখানে দেখানো হবে -->
-            </div>
+            <div id="orderList" class="bg-white rounded-lg shadow-md"></div>
         </div>
     </div>
 
@@ -44,9 +48,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
-        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
+        import { getDatabase, ref, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
 
-        // Firebase কনফিগারেশন
         const firebaseConfig = {
             apiKey: "AIzaSyCVSzQS1c7H4BLhsDF_fW8wnqUN4B35LPA",
             authDomain: "nahid-6714.firebaseapp.com",
@@ -59,6 +62,7 @@
         const database = getDatabase(app);
         const provider = new GoogleAuthProvider();
 
+        const loginPrompt = document.getElementById('loginPrompt');
         const orderListDiv = document.getElementById('orderList');
 
         async function loadLayout() {
@@ -66,12 +70,10 @@
                 const [headerRes, footerRes] = await Promise.all([fetch('header.html'), fetch('footer.html')]);
                 document.getElementById('header').innerHTML = await headerRes.text();
                 document.getElementById('footer').innerHTML = await footerRes.text();
-                
-                // Add login button functionality from header
-                const loginButton = document.querySelector('[onclick*="loginWithGmail"]');
-                if (loginButton) {
-                    loginButton.onclick = () => signInWithPopup(auth, provider);
-                }
+                const script = document.createElement('script');
+                script.src = 'script.js';
+                script.type = 'module';
+                document.body.appendChild(script);
             } catch (error) { console.error("Layout load failed:", error); }
         }
         
@@ -97,42 +99,53 @@
         
         async function fetchOrders(user) {
             orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-8">আপনার অর্ডারগুলো লোড হচ্ছে...</p>';
-            let orderIds = [];
-            
+            let allOrders = [];
             try {
+                const ordersRef = ref(database, 'orders');
                 if (user) {
-                    const historySnapshot = await get(ref(database, `users/${user.uid}/orderHistory`));
-                    if (historySnapshot.exists()) orderIds = Object.keys(historySnapshot.val());
+                    const [newOrdersSnap, oldOrdersSnap] = await Promise.all([
+                        get(query(ordersRef, orderByChild('userId'), equalTo(user.uid))),
+                        get(query(ordersRef, orderByChild('userEmail'), equalTo(user.email)))
+                    ]);
+                    if (newOrdersSnap.exists()) newOrdersSnap.forEach(child => allOrders.push({ key: child.key, ...child.val() }));
+                    if (oldOrdersSnap.exists()) oldOrdersSnap.forEach(child => {
+                        if (!allOrders.some(o => o.key === child.key)) allOrders.push({ key: child.key, ...child.val() });
+                    });
                 } else {
-                    orderIds = JSON.parse(localStorage.getItem('myOrders') || '[]');
+                    const localOrderKeys = JSON.parse(localStorage.getItem('myOrders') || '[]');
+                    if (localOrderKeys.length > 0) {
+                        const snapshots = await Promise.all(localOrderKeys.map(key => get(ref(database, `orders/${key}`))));
+                        allOrders = snapshots.filter(s => s.exists()).map(s => ({ key: s.key, ...s.val() }));
+                    }
                 }
-
-                if (orderIds.length === 0) {
-                    displayOrdersAsCards([]);
-                    return;
-                }
-
-                const orderPromises = orderIds.map(id => get(ref(database, `orders/${id}`)));
-                const orderSnapshots = await Promise.all(orderPromises);
-                const allOrders = orderSnapshots
-                    .filter(s => s.exists())
-                    .map(s => ({ key: s.key, ...s.val() }));
-
-                allOrders.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
-                displayOrdersAsCards(allOrders);
-
             } catch (error) {
                 console.error("Order fetch failed:", error);
-                orderListDiv.innerHTML = '<p class="text-center text-red-500 p-8">দুঃখিত, অর্ডার লোড করা সম্ভব হয়নি।</p>';
+                orderListDiv.innerHTML = `<p class="text-center text-red-500 p-8">অর্ডার লোড করা সম্ভব হয়নি।</p>`;
+                return;
             }
+            allOrders.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+            displayOrdersAsCards(allOrders);
         }
-
+        
         document.addEventListener("DOMContentLoaded", async () => {
             await loadLayout();
-            onAuthStateChanged(auth, fetchOrders);
+            document.getElementById('loginButton')?.addEventListener('click', () => signInWithPopup(auth, provider));
+            onAuthStateChanged(auth, (user) => {
+                const hasLocalOrders = (JSON.parse(localStorage.getItem('myOrders') || '[]')).length > 0;
+                if (user) {
+                    loginPrompt.style.display = 'none';
+                    fetchOrders(user);
+                } else if (hasLocalOrders) {
+                    loginPrompt.style.display = 'none';
+                    fetchOrders(null);
+                } else {
+                    loginPrompt.style.display = 'block';
+                    orderListDiv.innerHTML = '';
+                }
+            });
         });
         
-        // --- Modal and other helper functions ---
+        // --- Modal and helper functions ---
         function showOrderDetailsModal(order) {
             const modal = document.getElementById('orderModal');
             const modalContent = document.getElementById('modalContent');
@@ -145,11 +158,13 @@
                 trackerHTML += `<div class="step-item flex-1 relative"><div class="step-icon w-8 h-8 mx-auto rounded-full flex items-center justify-center font-bold ${isActive ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'} transition-colors duration-300">${isCompleted ? '<i class="fas fa-check"></i>' : (index + 1)}</div><p class="mt-2 ${isActive ? 'text-green-600 font-semibold' : 'text-gray-500'}">${getStatusText(status)}</p>${ index < statuses.length - 1 ? `<div class="step-connector absolute top-4 left-1/2 w-full h-0.5 ${isCompleted ? 'bg-green-500' : 'bg-gray-200'}"></div>` : '' }</div>`;
             });
             trackerHTML += '</div>';
-            let detailsHTML = `<h3 class="text-xl font-bold text-lipstick mb-4">অর্ডারের বিস্তারিত</h3>${trackerHTML}<div class="space-y-1 text-sm bg-gray-50 p-3 rounded-lg"><p><strong>অর্ডার আইডি:</strong> ${order.orderId || 'N/A'}</p><p><strong>তারিখ:</strong> ${order.orderDate ? new Date(order.orderDate).toLocaleString('bn-BD') : 'N/A'}</p><p><strong>নাম:</strong> ${order.customerName || 'N/A'}</p></div><hr class="my-3"><h4 class="font-semibold mb-2">প্রোডাক্টস</h4>`;
+
+            let detailsHTML = `<h3 class="text-xl font-bold text-lipstick mb-4">অর্ডারের বিস্তারিত</h3>${trackerHTML}<div class="space-y-1 text-sm bg-gray-50 p-3 rounded-lg"><p><strong>অর্ডার আইডি:</strong> ${order.orderId || 'N/A'}</p><p><strong>তারিখ:</strong> ${order.orderDate ? new Date(order.orderDate).toLocaleString('bn-BD') : 'N/A'}</p><p><strong>নাম:</strong> ${order.customerName || 'N/A'}</p><p><strong>ফোন:</strong> ${order.phoneNumber || 'N/A'}</p><p><strong>ঠিকানা:</strong> ${order.address || 'N/A'}</p></div><hr class="my-3"><h4 class="font-semibold mb-2">প্রোডাক্টস</h4>`;
             (order.cartItems || []).forEach(item => {
                 detailsHTML += `<div class="flex items-center mb-2 p-2 bg-gray-50 rounded-md"><img src="${item.image || 'https://via.placeholder.com/64'}" alt="${item.name}" class="w-12 h-12 object-cover rounded mr-3"><div class="text-sm flex-grow"><p class="font-semibold">${item.name}</p><p>${item.quantity} x ${item.price} টাকা</p></div><div class="text-sm font-semibold">${(item.quantity * item.price).toFixed(2)} টাকা</div></div>`;
             });
             detailsHTML += `<hr class="my-3"><div class="text-right space-y-1"><p><strong>ডেলিভারি ফি:</strong> ${order.deliveryFee || 0} টাকা</p><p class="text-lg font-bold"><strong>মোট মূল্য:</strong> ${order.totalAmount || 0} টাকা</p></div>`;
+
             modalContent.innerHTML = detailsHTML;
             modal.classList.add('flex');
             document.getElementById('modalClose').onclick = () => modal.classList.remove('flex');
