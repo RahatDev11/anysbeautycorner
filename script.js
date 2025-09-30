@@ -307,7 +307,18 @@ function displayProductDetails(product) {
     if (product.stockStatus === 'in_stock') extraHTML += `<div class="flex items-center space-x-3 my-4"><span class="text-gray-700 font-medium">পরিমাণ:</span><div class="flex items-center border border-gray-300 rounded-lg"><button onclick="window.changeDetailQuantity(-1)" class="bg-gray-200 px-4 py-2 font-bold">-</button><input type="number" id="quantityDetailInput" value="1" min="1" class="w-16 text-center border-0 focus:ring-0"><button onclick="window.changeDetailQuantity(1)" class="bg-gray-200 px-4 py-2 font-bold">+</button></div></div>`;
     document.getElementById('productDetailsExtra').innerHTML = extraHTML;
     const whatsappLink = `https://wa.me/8801931866636?text=${encodeURIComponent(`প্রোডাক্ট: ${product.name}\nদাম: ${product.price} টাকা`)}`;
-    document.getElementById('actionButtons').innerHTML = `<button id="buyNowDetailBtn" onclick="window.buyNowWithQuantity('${product.id}')" class="btn-primary"><i class="fas fa-credit-card mr-2"></i>এখনই কিনুন</button><button id="addToCartDetailBtn" onclick="window.addToCartWithQuantity('${product.id}')" class="btn-secondary"><i class="fas fa-cart-plus mr-2"></i>কার্টে যোগ করুন</button><a href="${whatsappLink}" target="_blank" class="btn-whatsapp"><i class="fab fa-whatsapp mr-2"></i>WhatsApp এ অর্ডার</a>`;
+    // সঠিক কোড (এই লাইনটি পেস্ট করুন)
+document.getElementById('actionButtons').innerHTML = `
+    <button id="buyNowDetailBtn" onclick="window.buyNowWithQuantity('${product.id}')" class="w-full sm:w-auto bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 font-semibold flex items-center justify-center">
+        <i class="fas fa-credit-card mr-2"></i>এখনই কিনুন
+    </button>
+    <button id="addToCartDetailBtn" onclick="window.addToCartWithQuantity('${product.id}')" class="w-full sm:w-auto bg-teal-500 text-white px-6 py-3 rounded-lg hover:bg-teal-600 font-semibold flex items-center justify-center">
+        <i class="fas fa-cart-plus mr-2"></i>কার্টে যোগ করুন
+    </button>
+    <a href="${whatsappLink}" target="_blank" class="w-full sm:w-auto bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 font-semibold inline-flex items-center justify-center">
+        <i class="fab fa-whatsapp mr-2"></i>WhatsApp এ অর্ডার
+    </a>
+`;
     if (product.stockStatus !== 'in_stock') document.querySelectorAll('#actionButtons button').forEach(b => { b.disabled = true; b.classList.add('opacity-50', 'cursor-not-allowed'); });
     setupImageGallery(product.image ? product.image.split(',').map(img => img.trim()).filter(Boolean) : []);
 }
