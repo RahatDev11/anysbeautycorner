@@ -3,71 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>অর্ডার ফর্ম - Any's Beauty Corner</title>
+    <title>অর্ডার ট্র্যাক - Any's Beauty Corner</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <style>
-        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; }
-        .form-input, .form-radio { width: 100%; padding: 0.75rem; border: 1px solid #D1D5DB; border-radius: 0.375rem; }
-        .form-input:focus { outline: none; border-color: #D92C66; }
-        .form-radio { width: auto; }
-        .required-star { color: #EF4444; }
+        .step-item .step-connector { z-index: -1; }
+        .modal { display: none; }
+        .modal.flex { display: flex; }
     </style>
 </head>
 <body class="bg-gray-50">
     <!-- হেডার -->
     <div id="header"></div>
 
-    <main class="container mx-auto pt-24 pb-12 px-4">
-        <div id="loadingIndicator" class="text-center py-12">
-            <i class="fas fa-spinner fa-spin text-4xl text-lipstick"></i>
+    <!-- মেইন কন্টেন্ট -->
+    <div class="container mx-auto pt-20 pb-8 px-4 min-h-screen">
+        <h1 class="text-3xl font-bold text-center mb-8 text-lipstick">আপনার অর্ডারসমূহ</h1>
+        
+        <div id="loginPrompt" class="text-center p-6 bg-white rounded-lg shadow-md" style="display: none;">
+            <p class="text-lg text-gray-700 mb-4">আপনার অর্ডারের তালিকা দেখতে অনুগ্রহ করে লগইন করুন।</p>
+            <button id="loginButton" class="bg-lipstick text-white px-8 py-3 rounded-lg font-semibold hover:bg-opacity-90 transition-colors">
+                <i class="fab fa-google mr-2"></i> Google দিয়ে লগইন করুন
+            </button>
         </div>
 
-        <form id="checkoutForm" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- কাস্টমারের তথ্য -->
-            <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-2xl font-bold mb-6 text-lipstick">বিলিং ডিটেইলস</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="customerName" class="form-label">আপনার নাম <span class="required-star">*</span></label>
-                        <input type="text" id="customerName" class="form-input" required>
-                    </div>
-                    <div>
-                        <label for="phoneNumber" class="form-label">ফোন নম্বর <span class="required-star">*</span></label>
-                        <input type="tel" id="phoneNumber" class="form-input" required pattern="01[3-9][0-9]{8}">
-                    </div>
-                </div>
-                <div class="mt-6"><label for="address" class="form-label">সম্পূর্ণ ঠিকানা <span class="required-star">*</span></label><textarea id="address" rows="3" class="form-input" required></textarea></div>
-                <div class="mt-6">
-                    <label class="form-label">ডেলিভারি এলাকা <span class="required-star">*</span></label>
-                    <div class="flex space-x-4 mt-2">
-                        <label class="flex items-center"><input type="radio" name="deliveryLocation" value="insideDhaka" class="form-radio" checked> <span class="ml-2">ঢাকার ভেতরে</span></label>
-                        <label class="flex items-center"><input type="radio" name="deliveryLocation" value="outsideDhaka" class="form-radio"> <span class="ml-2">ঢাকার বাইরে</span></label>
-                    </div>
-                </div>
-                <div id="outsideDhakaLocationGroup" class="mt-6 hidden"><label for="outsideDhakaLocation" class="form-label">জেলা ও থানা <span class="required-star">*</span></label><input type="text" id="outsideDhakaLocation" class="form-input"></div>
-                <div class="mt-6"><label for="deliveryNote" class="form-label">অতিরিক্ত তথ্য (ঐচ্ছিক)</label><textarea id="deliveryNote" rows="2" class="form-input"></textarea></div>
-            </div>
-            <!-- অর্ডারের সারাংশ -->
-            <div class="bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-2xl font-bold mb-6 text-lipstick">আপনার অর্ডার</h2>
-                <div id="checkoutItems" class="space-y-4 max-h-64 overflow-y-auto mb-4 border-b pb-4"></div>
-                <div class="space-y-2 text-gray-700">
-                    <div class="flex justify-between"><span>সাব-টোটাল</span> <span id="subTotalDisplay">০.০০ টাকা</span></div>
-                    <div class="flex justify-between"><span>ডেলিভারি ফি</span> <span id="deliveryFeeDisplay">৭০.০০ টাকা</span></div>
-                    <div class="flex justify-between font-bold text-lg border-t pt-2 mt-2"><span>মোট</span> <span id="totalAmountDisplay">৭০.০০ টাকা</span></div>
-                </div>
-                <div id="paymentNotice" class="mt-4 text-sm text-red-600 bg-red-50 p-3 rounded-md hidden"><strong>নোট:</strong> ডেলিভারি চার্জ <strong>১৬০ টাকা</strong> অগ্রিম প্রযোজ্য। অনুগ্রহ করে <strong>01972580114</strong> নম্বরে সেন্ড মানি করুন।</div>
-                <div id="deliveryPaymentGroup" class="mt-4 hidden space-y-4">
-                    <div><label for="deliveryPaymentMethod" class="form-label">পেমেন্ট মাধ্যম <span class="required-star">*</span></label><select id="deliveryPaymentMethod" class="form-input"><option value="">সিলেক্ট করুন</option><option value="bkash">বিকাশ</option><option value="nagad">নগদ</option></select></div>
-                    <div id="paymentNumberGroup" class="hidden"><label for="paymentNumber" class="form-label">আপনার পেমেন্ট নাম্বার <span class="required-star">*</span></label><input type="text" id="paymentNumber" class="form-input"></div>
-                    <div id="transactionIdGroup" class="hidden"><label for="transactionId" class="form-label">ট্রানজেকশন আইডি <span class="required-star">*</span></label><input type="text" id="transactionId" class="form-input"></div>
-                </div>
-                <div class="mt-6"><button type="submit" id="submitButton" class="w-full bg-lipstick text-white py-3 rounded-lg font-semibold hover:bg-opacity-90 disabled:bg-gray-400">অর্ডার কনফার্ম করুন</button></div>
-            </div>
-        </form>
-    </main>
+        <div id="orderListContainer">
+            <div id="orderList" class="bg-white rounded-lg shadow-md"></div>
+        </div>
+    </div>
+
+    <!-- মডাল -->
+    <div id="orderModal" class="modal fixed inset-0 bg-black bg-opacity-50 z-[2000] items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 max-h-[90vh] overflow-y-auto relative p-6">
+            <span id="modalClose" class="absolute top-2 right-4 text-3xl text-gray-500 cursor-pointer">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
 
     <!-- ফুটার -->
     <div id="footer"></div>
@@ -75,8 +47,8 @@
     <!-- Firebase এবং স্ক্রিপ্ট -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
-        import { getDatabase, ref, get, set, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
+        import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+        import { getDatabase, ref, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCVSzQS1c7H4BLhsDF_fW8wnqUN4B35LPA",
@@ -88,190 +60,118 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const database = getDatabase(app);
+        const provider = new GoogleAuthProvider();
 
-        let checkoutCart = [];
-        let isBuyNowMode = false;
+        const loginPrompt = document.getElementById('loginPrompt');
+        const orderListDiv = document.getElementById('orderList');
 
-        // --- Helper Functions ---
-        const showToast = (message, type = "success") => {
-            const toast = document.createElement("div");
-            toast.className = `fixed bottom-24 right-4 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white px-4 py-3 rounded-lg shadow-lg z-50`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        };
-
-        const sendTelegramNotification = async (orderData) => {
-            try {
-                await fetch('/.netlify/functions/telegram_notifier', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(orderData)
-                });
-            } catch (error) { console.error("Telegram notification failed:", error); }
-        };
-
-        const calculateAndDisplayPrices = () => {
-            const subTotal = checkoutCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const isOutside = document.querySelector('input[name="deliveryLocation"]:checked')?.value === 'outsideDhaka';
-            const deliveryFee = isOutside ? 160 : 70;
-            document.getElementById('subTotalDisplay').textContent = `${subTotal.toFixed(2)} টাকা`;
-            document.getElementById('deliveryFeeDisplay').textContent = `${deliveryFee.toFixed(2)} টাকা`;
-            document.getElementById('totalAmountDisplay').textContent = `${(subTotal + deliveryFee).toFixed(2)} টাকা`;
-        };
-
-        const renderCheckoutItems = () => {
-            const container = document.getElementById('checkoutItems');
-            const submitBtn = document.getElementById('submitButton');
-            if (!container || !submitBtn) return;
-            container.innerHTML = '';
-            if (!checkoutCart || checkoutCart.length === 0) {
-                container.innerHTML = '<p class="text-center text-red-500 p-4">আপনার কার্ট খালি।</p>';
-                submitBtn.disabled = true;
-                return;
-            }
-            checkoutCart.forEach(item => {
-                container.innerHTML += `<div class="flex items-center gap-4"><img src="${item.image || 'https://via.placeholder.com/64'}" alt="${item.name}" class="w-16 h-16 object-cover rounded-md"><div class="flex-grow"><p class="font-semibold">${item.name}</p><p class="text-sm text-gray-600">${item.quantity} x ${parseFloat(item.price).toFixed(2)} টাকা</p></div><p class="font-semibold">${(item.price * item.quantity).toFixed(2)} টাকা</p></div>`;
-            });
-            submitBtn.disabled = false;
-        };
-        
-        const fetchUserProfile = async (uid) => {
-            const profile = (await get(ref(database, `users/${uid}/profile`))).val();
-            if (profile) {
-                document.getElementById('customerName').value = profile.name || '';
-                document.getElementById('phoneNumber').value = profile.phone || '';
-                document.getElementById('address').value = profile.address || '';
-            }
-        };
-
-        const handleDeliveryLocationChange = () => {
-            const isOutside = document.querySelector('input[name="deliveryLocation"]:checked').value === 'outsideDhaka';
-            document.getElementById('outsideDhakaLocationGroup').classList.toggle('hidden', !isOutside);
-            document.getElementById('paymentNotice').classList.toggle('hidden', !isOutside);
-            document.getElementById('deliveryPaymentGroup').classList.toggle('hidden', !isOutside);
-            document.getElementById('outsideDhakaLocation').required = isOutside;
-            document.getElementById('deliveryPaymentMethod').required = isOutside;
-            handleDeliveryPaymentMethodChange();
-            calculateAndDisplayPrices();
-        };
-
-        const handleDeliveryPaymentMethodChange = () => {
-            const isOutside = document.querySelector('input[name="deliveryLocation"]:checked').value === 'outsideDhaka';
-            const method = document.getElementById('deliveryPaymentMethod').value;
-            const showFields = isOutside && !!method;
-            document.getElementById('paymentNumberGroup').classList.toggle('hidden', !showFields);
-            document.getElementById('transactionIdGroup').classList.toggle('hidden', !showFields);
-            document.getElementById('paymentNumber').required = showFields;
-            document.getElementById('transactionId').required = showFields;
-        };
-
-        const placeOrder = async (event) => {
-            event.preventDefault();
-            const submitButton = document.getElementById('submitButton');
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>অর্ডার হচ্ছে...';
-
-            try {
-                if (checkoutCart.length === 0) throw new Error("কার্ট খালি।");
-
-                const isOutside = document.querySelector('input[name="deliveryLocation"]:checked').value === 'outsideDhaka';
-                const subTotal = checkoutCart.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
-                const deliveryFee = isOutside ? 160 : 70;
-
-                const date = new Date();
-                const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-                const counterRef = ref(database, `counters/${dateString}`);
-                const result = await runTransaction(counterRef, (data) => (data || 0) + 1);
-                if (!result.committed) throw new Error("Order ID তৈরি করা যায়নি।");
-                
-                const orderNumber = String(result.snapshot.val()).padStart(3, '0');
-                const orderId = `${date.getFullYear().toString().slice(-2)}${String(date.getDate()).padStart(2, '0')}${date.getMonth() + 1}${orderNumber}`;
-                
-                const orderData = {
-                    orderId,
-                    customerName: document.getElementById('customerName').value.trim(),
-                    phoneNumber: document.getElementById('phoneNumber').value.trim(),
-                    address: document.getElementById('address').value.trim(),
-                    deliveryLocation: isOutside ? 'ঢাকার বাইরে' : 'ঢাকার ভেতরে',
-                    deliveryFee,
-                    totalAmount: (subTotal + deliveryFee).toFixed(2),
-                    cartItems: checkoutCart,
-                    orderDate: date.toISOString(),
-                    status: 'processing',
-                    userId: auth.currentUser ? auth.currentUser.uid : 'guest_user',
-                    userEmail: auth.currentUser ? auth.currentUser.email : 'guest_order',
-                    deliveryNote: document.getElementById('deliveryNote').value.trim() || 'N/A',
-                    outsideDhakaLocation: isOutside ? document.getElementById('outsideDhakaLocation').value : 'N/A',
-                    paymentNumber: isOutside ? document.getElementById('paymentNumber').value : 'N/A',
-                    transactionId: isOutside ? document.getElementById('transactionId').value : 'N/A',
-                };
-
-                await set(ref(database, 'orders/' + orderId), orderData);
-                
-                if (auth.currentUser) {
-                    await set(ref(database, `users/${auth.currentUser.uid}/orderHistory/${orderId}`), true);
-                } else {
-                    const myOrders = JSON.parse(localStorage.getItem('myOrders')) || [];
-                    myOrders.push(orderId);
-                    localStorage.setItem('myOrders', JSON.stringify(myOrders));
-                }
-                
-                if (!isBuyNowMode) {
-                    localStorage.removeItem('anyBeautyCart');
-                    if(auth.currentUser) await set(ref(database, `carts/${auth.currentUser.uid}`), []);
-                }
-
-                await sendTelegramNotification(orderData);
-                window.location.href = `order-track.html?orderId=${orderId}`;
-
-            } catch (error) {
-                showToast(`অর্ডার করতে সমস্যা হয়েছে: ${error.message}`, "error");
-                submitButton.disabled = false;
-                submitButton.innerHTML = 'অর্ডার কনফার্ম করুন';
-            }
-        };
-
-        // --- Page Initialization ---
-        document.addEventListener("DOMContentLoaded", async () => {
-            // Load header and footer
+        async function loadLayout() {
             try {
                 const [headerRes, footerRes] = await Promise.all([fetch('header.html'), fetch('footer.html')]);
                 document.getElementById('header').innerHTML = await headerRes.text();
                 document.getElementById('footer').innerHTML = await footerRes.text();
-            } catch(e) { console.error("Layout failed to load", e); }
-
-            // Initialize the page after auth state is known
-            onAuthStateChanged(auth, async (user) => {
-                document.getElementById('loadingIndicator').style.display = 'none';
-                document.getElementById('checkoutForm').classList.remove('hidden');
-                
-                const urlParams = new URLSearchParams(window.location.search);
-                const urlCartData = urlParams.get('cart');
-                isBuyNowMode = !!urlCartData;
-
-                if (isBuyNowMode) {
-                    checkoutCart = JSON.parse(decodeURIComponent(urlCartData));
+                const script = document.createElement('script');
+                script.src = 'script.js';
+                script.type = 'module';
+                document.body.appendChild(script);
+            } catch (error) { console.error("Layout load failed:", error); }
+        }
+        
+        function displayOrdersAsCards(orders) {
+            if (!orders || orders.length === 0) {
+                orderListDiv.innerHTML = '<p class="text-center text-gray-600 p-8">আপনি এখনো কোনো অর্ডার করেননি।</p>';
+                return;
+            }
+            orderListDiv.innerHTML = `<div class="hidden md:grid grid-cols-4 gap-4 font-bold p-4 bg-gray-100 rounded-t-lg text-sm text-gray-700"><div>অর্ডার আইডি</div><div>অর্ডারের তারিখ</div><div>মোট মূল্য</div><div>স্ট্যাটাস</div></div>`;
+            orders.forEach(order => {
+                const card = document.createElement('div');
+                card.className = 'grid grid-cols-2 md:grid-cols-4 gap-4 p-4 border-b cursor-pointer hover:bg-gray-50 text-sm items-center';
+                card.innerHTML = `
+                    <div><span class="md:hidden font-semibold">আইডি: </span>${order.orderId || 'N/A'}</div>
+                    <div class="hidden md:block">${order.orderDate ? new Date(order.orderDate).toLocaleString('bn-BD') : 'N/A'}</div>
+                    <div><span class="md:hidden font-semibold">মূল্য: </span>${order.totalAmount || 0} টাকা</div>
+                    <div class="text-right md:text-left"><span class="px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}">${getStatusText(order.status)}</span></div>
+                `;
+                card.onclick = () => showOrderDetailsModal(order);
+                orderListDiv.appendChild(card);
+            });
+        }
+        
+        async function fetchOrders(user) {
+            orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-8">আপনার অর্ডারগুলো লোড হচ্ছে...</p>';
+            let allOrders = [];
+            try {
+                const ordersRef = ref(database, 'orders');
+                if (user) {
+                    const [newOrdersSnap, oldOrdersSnap] = await Promise.all([
+                        get(query(ordersRef, orderByChild('userId'), equalTo(user.uid))),
+                        get(query(ordersRef, orderByChild('userEmail'), equalTo(user.email)))
+                    ]);
+                    if (newOrdersSnap.exists()) newOrdersSnap.forEach(child => allOrders.push({ key: child.key, ...child.val() }));
+                    if (oldOrdersSnap.exists()) oldOrdersSnap.forEach(child => {
+                        if (!allOrders.some(o => o.key === child.key)) allOrders.push({ key: child.key, ...child.val() });
+                    });
                 } else {
-                    // Load cart based on user status
-                    if(user) {
-                        const cartSnapshot = await get(ref(database, `carts/${user.uid}`));
-                        checkoutCart = cartSnapshot.val() || [];
-                    } else {
-                        checkoutCart = JSON.parse(localStorage.getItem('anyBeautyCart') || '[]');
+                    const localOrderKeys = JSON.parse(localStorage.getItem('myOrders') || '[]');
+                    if (localOrderKeys.length > 0) {
+                        const snapshots = await Promise.all(localOrderKeys.map(key => get(ref(database, `orders/${key}`))));
+                        allOrders = snapshots.filter(s => s.exists()).map(s => ({ key: s.key, ...s.val() }));
                     }
                 }
-                
-                renderCheckoutItems();
-                calculateAndDisplayPrices();
-                if (user) await fetchUserProfile(user.uid);
-                
-                document.getElementById('checkoutForm').addEventListener('submit', placeOrder);
-                document.querySelectorAll('input[name="deliveryLocation"]').forEach(radio => radio.addEventListener('change', handleDeliveryLocationChange));
-                document.getElementById('deliveryPaymentMethod')?.addEventListener('change', handleDeliveryPaymentMethodChange);
-                handleDeliveryLocationChange();
+            } catch (error) {
+                console.error("Order fetch failed:", error);
+                orderListDiv.innerHTML = `<p class="text-center text-red-500 p-8">অর্ডার লোড করা সম্ভব হয়নি।</p>`;
+                return;
+            }
+            allOrders.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+            displayOrdersAsCards(allOrders);
+        }
+        
+        document.addEventListener("DOMContentLoaded", async () => {
+            await loadLayout();
+            document.getElementById('loginButton')?.addEventListener('click', () => signInWithPopup(auth, provider));
+            onAuthStateChanged(auth, (user) => {
+                const hasLocalOrders = (JSON.parse(localStorage.getItem('myOrders') || '[]')).length > 0;
+                if (user) {
+                    loginPrompt.style.display = 'none';
+                    fetchOrders(user);
+                } else if (hasLocalOrders) {
+                    loginPrompt.style.display = 'none';
+                    fetchOrders(null);
+                } else {
+                    loginPrompt.style.display = 'block';
+                    orderListDiv.innerHTML = '';
+                }
             });
         });
+        
+        // --- Modal and helper functions ---
+        function showOrderDetailsModal(order) {
+            const modal = document.getElementById('orderModal');
+            const modalContent = document.getElementById('modalContent');
+            const statuses = ['processing', 'confirmed', 'packaging', 'shipped', 'delivered'];
+            const currentStatusIndex = statuses.indexOf(order.status || 'processing');
+            let trackerHTML = '<div class="flex justify-between items-center mb-6 text-xs text-center">';
+            statuses.forEach((status, index) => {
+                const isActive = index <= currentStatusIndex;
+                const isCompleted = index < currentStatusIndex;
+                trackerHTML += `<div class="step-item flex-1 relative"><div class="step-icon w-8 h-8 mx-auto rounded-full flex items-center justify-center font-bold ${isActive ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'} transition-colors duration-300">${isCompleted ? '<i class="fas fa-check"></i>' : (index + 1)}</div><p class="mt-2 ${isActive ? 'text-green-600 font-semibold' : 'text-gray-500'}">${getStatusText(status)}</p>${ index < statuses.length - 1 ? `<div class="step-connector absolute top-4 left-1/2 w-full h-0.5 ${isCompleted ? 'bg-green-500' : 'bg-gray-200'}"></div>` : '' }</div>`;
+            });
+            trackerHTML += '</div>';
+
+            let detailsHTML = `<h3 class="text-xl font-bold text-lipstick mb-4">অর্ডারের বিস্তারিত</h3>${trackerHTML}<div class="space-y-1 text-sm bg-gray-50 p-3 rounded-lg"><p><strong>অর্ডার আইডি:</strong> ${order.orderId || 'N/A'}</p><p><strong>তারিখ:</strong> ${order.orderDate ? new Date(order.orderDate).toLocaleString('bn-BD') : 'N/A'}</p><p><strong>নাম:</strong> ${order.customerName || 'N/A'}</p><p><strong>ফোন:</strong> ${order.phoneNumber || 'N/A'}</p><p><strong>ঠিকানা:</strong> ${order.address || 'N/A'}</p></div><hr class="my-3"><h4 class="font-semibold mb-2">প্রোডাক্টস</h4>`;
+            (order.cartItems || []).forEach(item => {
+                detailsHTML += `<div class="flex items-center mb-2 p-2 bg-gray-50 rounded-md"><img src="${item.image || 'https://via.placeholder.com/64'}" alt="${item.name}" class="w-12 h-12 object-cover rounded mr-3"><div class="text-sm flex-grow"><p class="font-semibold">${item.name}</p><p>${item.quantity} x ${item.price} টাকা</p></div><div class="text-sm font-semibold">${(item.quantity * item.price).toFixed(2)} টাকা</div></div>`;
+            });
+            detailsHTML += `<hr class="my-3"><div class="text-right space-y-1"><p><strong>ডেলিভারি ফি:</strong> ${order.deliveryFee || 0} টাকা</p><p class="text-lg font-bold"><strong>মোট মূল্য:</strong> ${order.totalAmount || 0} টাকা</p></div>`;
+
+            modalContent.innerHTML = detailsHTML;
+            modal.classList.add('flex');
+            document.getElementById('modalClose').onclick = () => modal.classList.remove('flex');
+            modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('flex'); };
+        }
+        function getStatusText(status) { const s = { processing: 'প্রসেসিং', confirmed: 'কনফার্মড', packaging: 'প্যাকেজিং', shipped: 'ডেলিভারি হয়েছে', delivered: 'সম্পন্ন হয়েছে' }; return s[status] || 'প্রসেসিং'; }
+        function getStatusColor(status) { const c = { processing: 'bg-yellow-100 text-yellow-800', confirmed: 'bg-blue-100 text-blue-800', packaging: 'bg-purple-100 text-purple-800', shipped: 'bg-cyan-100 text-cyan-800', delivered: 'bg-green-100 text-green-800' }; return c[status] || c.processing; }
     </script>
 </body>
 </html>
