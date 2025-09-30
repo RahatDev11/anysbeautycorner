@@ -371,9 +371,7 @@ async function initializePage() {
         if (filterCategory) filterProducts(filterCategory);
     } else if (currentPage.includes('product-detail.html')) {
         await initializeProductDetailPage();
-    } else if (currentPage.includes('order-form.html')) {
-        await initializeOrderFormPage();
-    }
+    } 
     // Note: initializeOrderTrackPage is NOT called here because it's self-contained in its own file.
     
     hideGlobalLoadingSpinner();
