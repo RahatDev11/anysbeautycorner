@@ -1,3 +1,22 @@
+async function getOneSignalPlayerId() {
+    console.warn("OneSignal SDK not deferred/available.");
+        return null;
+    }
+    
+    // OneSignal ইনিশিয়ালাইজ হওয়ার জন্য অপেক্ষা করুন
+    await new Promise(resolve => window.OneSignalDeferred.push(resolve));
+    
+    try {
+        // Player ID পান
+        const deviceId = await window.OneSignal.getUserId();
+        // console.log("OneSignal Player ID:", deviceId); // আপনি চাইলে এটি দেখতে পারেন
+        return deviceId;
+    } catch (error) {
+        console.error("Error retrieving OneSignal Player ID:", error);
+        return null;
+    }
+}
+
 // =================================================================
 // SECTION: FIREBASE INITIALIZATION & CONFIGURATION
 // =================================================================
@@ -903,6 +922,7 @@ Object.assign(window, {
     // Global Utilities
     showToast,
     sendTelegramNotification, // <--- আপনার নতুন ফাংশন
+    getOneSignalPlayerId,
     // Header UI
     openSidebar, closeSidebar, toggleSubMenuMobile, handleSubMenuItemClick,
     toggleSubMenuDesktop, openCartSidebar, closeCartSidebar, focusMobileSearch,
@@ -1310,6 +1330,8 @@ window.placeOrder = async function(event) {
                 const paddedOrderNumber = String(orderNumber).padStart(3, '0');
                 const orderId = `${year}${day}${month}${paddedOrderNumber}`;
 
+                const oneSignalPlayerId = await getOneSignalPlayerId(); // Added
+
                 const orderData = {
                     customerName,
                     phoneNumber,
@@ -1321,12 +1343,16 @@ window.placeOrder = async function(event) {
                     cartItems: itemsToOrder,
                     orderDate: new Date().toISOString(),
                     status: 'Pending',
-                    userId: getUserId(),
+                    userId: window.currentUserId, // Changed from getUserId()
+                    userEmail: window.currentUserEmail, // Added
+                    oneSignalPlayerId: oneSignalPlayerId, // Added
                     deliveryNote: deliveryNote || 'N/A',
                     outsideDhakaLocation: deliveryLocation === 'outsideDhaka' ? document.getElementById('outsideDhakaLocation').value : 'N/A',
                     paymentNumber: deliveryLocation === 'outsideDhaka' ? document.getElementById('paymentNumber').value : 'N/A',
                     transactionId: deliveryLocation === 'outsideDhaka' ? document.getElementById('transactionId').value : 'N/A',
-                    orderId: orderId
+                    orderId: orderId,
+                    isBuyNow: isBuyNowMode, // Added
+                    timestamp: Date.now() // Added
                 };
 
                 console.log("Saving order with ID:", orderId);

@@ -19,7 +19,7 @@ const db = admin.database();
 
 // OneSignal API credentials
 const ONE_SIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID;
-const ONE_SIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY;
+const ONE_SIGNAL_REST_API_KEY = "os_v2_app_vpilnn5rzzeh7kdx5md7zzshzpcyv4h4zqlulgugct6sbd2qfjja6okrj6jjjl3nt6xk5jlscehmfyrdczuy6huhongwcnyfhkrglni";
 
 // স্ট্যাটাস অনুযায়ী মেসেজ তৈরি করার ফাংশন
 function getNotificationMessage(status) {
