@@ -693,7 +693,7 @@ async function initializeOrderTrackPage() {
 }
 
 async function loadLocalOrders() {
-    const localOrderKeys = JSON.parse(localStorage.getItem('myOrders') || '[]'); // Use the correct key 'myOrders' 
+    const localOrderKeys = JSON.parse(localStorage.getItem('myOrders') || '[]'); // Use the correct key 'myOrders'
     const orderListContainer = document.getElementById('orderListContainer');
 
     if (!orderListContainer) return;
@@ -792,8 +792,8 @@ function showOrderDetailsModal(order) {
     document.getElementById('modalClose').onclick = () => { modal.style.display = 'none'; };
     modal.onclick = (e) => { if(e.target === modal) modal.style.display = 'none'; };
 }
-function getStatusText(status) { const statuses = { processing: 'প্রসেসিং', confirmed: 'কনফার্মড', packaging: 'প্যাকেজিং', shipped: 'ডেলিভারি হয়েছে', delivered: 'সম্পন্ন হয়েছে', failed: 'ব্যর্থ', cancelled: 'ক্যানসেলড' }; return statuses[status] || 'অজানা'; } 
-function getStatusColor(status) { const colors = { processing: { text: 'text-yellow-800', bg: 'bg-yellow-100' }, confirmed: { text: 'text-blue-800', bg: 'bg-blue-100' }, packaging: { text: 'text-purple-800', bg: 'bg-purple-100' }, shipped: { text: 'text-cyan-800', bg: 'bg-cyan-100' }, delivered: { text: 'text-green-800', bg: 'bg-green-100' }, failed: { text: 'text-red-800', bg: 'bg-red-100' }, cancelled: { text: 'text-gray-800', bg: 'bg-gray-200' } }; return colors[status] || colors.cancelled; } 
+function getStatusText(status) { const statuses = { processing: 'প্রসেসিং', confirmed: 'কনফার্মড', packaging: 'প্যাকেজিং', shipped: 'ডেলিভারি হয়েছে', delivered: 'সম্পন্ন হয়েছে', failed: 'ব্যর্থ', cancelled: 'ক্যানসেলড' }; return statuses[status] || 'অজানা'; }
+function getStatusColor(status) { const colors = { processing: { text: 'text-yellow-800', bg: 'bg-yellow-100' }, confirmed: { text: 'text-blue-800', bg: 'bg-blue-100' }, packaging: { text: 'text-purple-800', bg: 'bg-purple-100' }, shipped: { text: 'text-cyan-800', bg: 'bg-cyan-100' }, delivered: { text: 'text-green-800', bg: 'bg-green-100' }, failed: { text: 'text-red-800', bg: 'bg-red-100' }, cancelled: { text: 'text-gray-800', bg: 'bg-gray-200' } }; return colors[status] || colors.cancelled; }
 function calculateProgress(status) { const progressMap = { processing: 0, confirmed: 25, packaging: 50, shipped: 75, delivered: 100, failed: 0, cancelled: 0 }; return progressMap[status] ?? 0; }
 function getStatusIcon(status) { const icons = { processing: 'fas fa-cogs', confirmed: 'fas fa-check', packaging: 'fas fa-box-open', shipped: 'fas fa-truck', delivered: 'fas fa-home', failed: 'fas fa-times-circle', cancelled: 'fas fa-ban' }; return `<i class="${icons[status] || 'fas fa-question'}"></i>`; }
 function getStepIcon(status) { const icons = { processing: '1', confirmed: '2', 'packaging': '3', shipped: '4', delivered: '<i class="fas fa-check"></i>' }; return icons[status]; }

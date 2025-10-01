@@ -166,23 +166,6 @@
             document.getElementById('transactionId').required = showFields;
         };
 
-        const getOneSignalPlayerId = async () => {
-            if (!window.OneSignal) {
-                console.warn("OneSignal SDK not loaded yet.");
-                return null;
-            }
-            // Wait for OneSignal to initialize
-            await new Promise(resolve => window.OneSignalDeferred.push(resolve));
-            try {
-                const deviceId = await window.OneSignal.getUserId();
-                console.log("OneSignal Player ID successfully retrieved:", deviceId);
-                return deviceId;
-            } catch (error) {
-                console.error("Error retrieving OneSignal Player ID:", error);
-                return null;
-            }
-        };
-
         const placeOrder = async (event) => {
             event.preventDefault();
             const submitButton = document.getElementById('submitButton');
@@ -191,9 +174,6 @@
 
             try {
                 if (checkoutCart.length === 0) throw new Error("কার্ট খালি।");
-
-                // Get OneSignal Player ID
-                const oneSignalPlayerId = await getOneSignalPlayerId();
 
                 const isOutside = document.querySelector('input[name="deliveryLocation"]:checked').value === 'outsideDhaka';
                 const subTotal = checkoutCart.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
@@ -221,13 +201,10 @@
                     status: 'processing',
                     userId: auth.currentUser ? auth.currentUser.uid : 'guest_user',
                     userEmail: auth.currentUser ? auth.currentUser.email : 'guest_order',
-                    oneSignalPlayerId: oneSignalPlayerId,
                     deliveryNote: document.getElementById('deliveryNote').value.trim() || 'N/A',
                     outsideDhakaLocation: isOutside ? document.getElementById('outsideDhakaLocation').value : 'N/A',
                     paymentNumber: isOutside ? document.getElementById('paymentNumber').value : 'N/A',
                     transactionId: isOutside ? document.getElementById('transactionId').value : 'N/A',
-                    isBuyNow: isBuyNowMode,
-                    timestamp: Date.now()
                 };
 
                 await set(ref(database, 'orders/' + orderId), orderData);
