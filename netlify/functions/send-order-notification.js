@@ -1,78 +1,83 @@
+// ফাইল: netlify/functions/send-order-notification.js
+
 const admin = require('firebase-admin');
 const fetch = require('node-fetch');
 
-// Initialize Firebase Admin SDK
-let serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+// --- CORS হেডার (এই অংশটি গুরুত্বপূর্ণ) ---
+const headers = {
+  'Access-Control-Allow-Origin': '*', // যেকোনো অরিজিনকে অনুমতি দেওয়া হচ্ছে
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS'
+};
+
+// Firebase Admin SDK সেটআপ
+const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
 if (!admin.apps.length) {
   try {
     const serviceAccount = JSON.parse(Buffer.from(serviceAccountBase64, 'base64').toString('ascii'));
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
-      databaseURL: "https://nahid-6714-default-rtdb.asia-southeast1.firebasedatabase.app" // আপনার ডাটাবেজ URL
+      databaseURL: "https://nahid-6T14-default-rtdb.asia-southeast1.firebasedatabase.app"
     });
   } catch (e) {
     console.error('Firebase admin initialization error', e);
   }
 }
-
 const db = admin.database();
 
-// --- OneSignal API তথ্য ---
+// OneSignal API তথ্য
 const ONE_SIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID;
 const ONE_SIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY;
 
 // স্ট্যাটাস অনুযায়ী মেসেজ
-function getStatusMessage(status, orderId) {
-    const messages = {
-        processing: `আপনার অর্ডার (#${orderId.slice(-4)}) টি প্রসেসিং চলছে।`,
-        confirmed: `আপনার অর্ডার (#${orderId.slice(-4)}) টি কনফার্ম করা হয়েছে।`,
-        packaging: `আপনার অর্ডার (#${orderId.slice(-4)}) টি প্যাকেজিং করা হচ্ছে।`,
-        shipped: `আপনার অর্ডারটি (#${orderId.slice(-4)}) ডেলিভারির জন্য পাঠানো হয়েছে।`,
-        delivered: `আপনার অর্ডার (#${orderId.slice(-4)}) টি সফলভাবে ডেলিভারি করা হয়েছে।`,
-        cancelled: `আপনার অর্ডার (#${orderId.slice(-4)}) টি বাতিল করা হয়েছে।`,
-    };
-    return messages[status] || `আপনার অর্ডারের স্ট্যাটাস আপডেট হয়েছে: ${status}`;
-}
+function getStatusMessage(status, orderId) { /* ... আপনার আগের কোড ... */ }
 
 exports.handler = async (event) => {
+    // ব্রাউজার প্রথমে একটি OPTIONS রিকোয়েস্ট পাঠাতে পারে CORS চেক করার জন্য
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 204,
+            headers,
+            body: ''
+        };
+    }
+
     if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, body: 'Method Not Allowed' };
+        return { statusCode: 405, headers, body: 'Method Not Allowed' };
     }
 
     let orderId;
     try {
         const body = JSON.parse(event.body);
         orderId = body.orderId;
-        if (!orderId) {
-            throw new Error('Order ID is required.');
-        }
+        if (!orderId) throw new Error('Order ID is required.');
     } catch (error) {
-        return { statusCode: 400, body: JSON.stringify({ success: false, message: 'Invalid JSON or missing orderId.' }) };
+        return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'Invalid JSON or missing orderId.' }) };
     }
 
     try {
-        // Firebase থেকে অর্ডার ডেটা আনা হচ্ছে
         const orderRef = db.ref(`orders/${orderId}`);
         const snapshot = await orderRef.once('value');
         const orderData = snapshot.val();
 
         if (!orderData) {
-            return { statusCode: 404, body: JSON.stringify({ success: false, message: 'Order not found.' }) };
+            return { statusCode: 404, headers, body: JSON.stringify({ success: false, message: 'Order not found.' }) };
         }
 
         const playerID = orderData.oneSignalPlayerId;
         const status = orderData.status;
 
         if (!playerID) {
-            return { statusCode: 200, body: JSON.stringify({ success: true, message: 'No Player ID found, notification skipped.' }) };
+            return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'No Player ID found, notification skipped.' }) };
         }
 
+        // ... নোটিফিকেশন পাঠানোর বাকি লজিক এখানে অপরিবর্তিত থাকবে ...
         const notificationPayload = {
             app_id: ONE_SIGNAL_APP_ID,
             include_player_ids: [playerID],
             headings: { "en": "Any's Beauty Corner" },
             contents: { "en": getStatusMessage(status, orderId) },
-            data: { "orderId": orderId } // ক্লিকে অর্ডার ট্র্যাক পেজে পাঠানোর জন্য
+            data: { "orderId": orderId }
         };
 
         await fetch('https://onesignal.com/api/v1/notifications', {
@@ -84,10 +89,10 @@ exports.handler = async (event) => {
             body: JSON.stringify(notificationPayload)
         });
 
-        return { statusCode: 200, body: JSON.stringify({ success: true, message: 'Notification sent successfully.' }) };
+        return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Notification sent successfully.' }) };
 
     } catch (error) {
         console.error('Error processing notification:', error);
-        return { statusCode: 500, body: JSON.stringify({ success: false, message: 'An internal error occurred.' }) };
+        return { statusCode: 500, headers, body: JSON.stringify({ success: false, message: 'An internal error occurred.' }) };
     }
 };
