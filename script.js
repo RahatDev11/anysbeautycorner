@@ -1321,6 +1321,8 @@ window.placeOrder = async function(event) {
                     cartItems: itemsToOrder,
                     orderDate: new Date().toISOString(),
                     status: 'Pending',
+                    // >>>>>> এই লাইনটি যোগ/পরিবর্তন করুন <<<<<<
+                    oneSignalPlayerId: window.oneSignalPlayerId || null, // গ্লোবাল ভেরিয়েবল থেকে ID নেওয়া হচ্ছে
                     userId: getUserId(),
                     deliveryNote: deliveryNote || 'N/A',
                     outsideDhakaLocation: deliveryLocation === 'outsideDhaka' ? document.getElementById('outsideDhakaLocation').value : 'N/A',

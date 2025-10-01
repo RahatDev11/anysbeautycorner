@@ -296,5 +296,26 @@
             });
         });
     </script>
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        // Player ID সেভ করার জন্য গ্লোবাল ভেরিয়েবল
+        window.oneSignalPlayerId = null;
+
+        OneSignalDeferred.push(async function(OneSignal) {
+            // OneSignal Initialization
+            OneSignal.init({
+                appId: "abd0b6b7-b1ce-487f-a877-eb07fce647cb", // <<< আপনার সরবরাহকৃত OneSignal App ID
+            });
+
+            // Get Player ID and save it globally
+            await OneSignal.getUserId().then(function(userId) {                if (userId) {                    window.oneSignalPlayerId = userId;                    console.log("OneSignal Player ID captured:", userId);
+                } else {
+                    console.log("OneSignal ID not available (User might not have subscribed yet).");
+                }
+            });
+        });
+    </script>
+    <script src="script.js" type="module"></script> 
 </body>
 </html>
