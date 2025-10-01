@@ -14,6 +14,7 @@
         .form-radio { width: auto; }
         .required-star { color: #EF4444; }
     </style>
+    <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
 </head>
 <body class="bg-gray-50">
     <!-- হেডার -->
@@ -78,6 +79,14 @@
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
         import { getDatabase, ref, get, set, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
 
+        // --- OneSignal SDK Initialization ---
+        window.OneSignal = window.OneSignal || [];
+        OneSignal.push(function() {
+            OneSignal.init({
+                appId: "abd0b6b7-b1ce-487f-a877-eb07fce647cb",
+            });
+        });
+
         const firebaseConfig = {
             apiKey: "AIzaSyCVSzQS1c7H4BLhsDF_fW8wnqUN4B35LPA",
             authDomain: "nahid-6714.firebaseapp.com",
@@ -99,6 +108,26 @@
             toast.textContent = message;
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
+        };
+
+        // OneSignal Player ID পাওয়ার জন্য ফাংশন
+        const getOneSignalPlayerId = () => {
+            return new Promise((resolve) => {
+                if (!window.OneSignal) {
+                    console.warn("OneSignal SDK not loaded.");
+                    resolve(null);
+                    return;
+                }
+                OneSignal.push(function() {
+                    OneSignal.getUserId().then(function(playerId) {
+                        console.log("OneSignal Player ID:", playerId);
+                        resolve(playerId);
+                    }).catch(function(error) {
+                        console.error("Error getting OneSignal Player ID:", error);
+                        resolve(null);
+                    });
+                });
+            });
         };
 
         const sendTelegramNotification = async (orderData) => {
@@ -175,6 +204,8 @@
             try {
                 if (checkoutCart.length === 0) throw new Error("কার্ট খালি।");
 
+                const oneSignalPlayerId = await getOneSignalPlayerId();
+
                 const isOutside = document.querySelector('input[name="deliveryLocation"]:checked').value === 'outsideDhaka';
                 const subTotal = checkoutCart.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
                 const deliveryFee = isOutside ? 160 : 70;
@@ -201,6 +232,7 @@
                     status: 'processing',
                     userId: auth.currentUser ? auth.currentUser.uid : 'guest_user',
                     userEmail: auth.currentUser ? auth.currentUser.email : 'guest_order',
+                    oneSignalPlayerId: oneSignalPlayerId,
                     deliveryNote: document.getElementById('deliveryNote').value.trim() || 'N/A',
                     outsideDhakaLocation: isOutside ? document.getElementById('outsideDhakaLocation').value : 'N/A',
                     paymentNumber: isOutside ? document.getElementById('paymentNumber').value : 'N/A',

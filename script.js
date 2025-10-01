@@ -82,6 +82,33 @@ async function sendTelegramNotification(orderData) {
 }
 // === END: TELEGRAM NOTIFICATION FUNCTION (NEW CODE) ===
 
+// === START: ONESIGNAL NOTIFICATION FUNCTION (NEW CODE) ===
+async function sendNotificationForOrder(orderId) {
+    try {
+        const response = await fetch('/.netlify/functions/send-order-notification', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ orderId: orderId })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            console.log('Notification request sent successfully!');
+            // এখানে অ্যাডমিনকে একটি সফল বার্তা দেখাতে পারেন
+        } else {
+            console.error('Failed to send notification:', result.message);
+            // এখানে অ্যাডমিনকে একটি এরর বার্তা দেখাতে পারেন
+        }
+
+    } catch (error) {
+        console.error('Error calling notification function:', error);
+    }
+}
+// === END: ONESIGNAL NOTIFICATION FUNCTION (NEW CODE) ===
+
 
 // =================================================================
 // SECTION: CART MANAGEMENT
@@ -903,6 +930,7 @@ Object.assign(window, {
     // Global Utilities
     showToast,
     sendTelegramNotification, // <--- আপনার নতুন ফাংশন
+    sendNotificationForOrder, // <--- OneSignal নোটিফিকেশন ফাংশন
     // Header UI
     openSidebar, closeSidebar, toggleSubMenuMobile, handleSubMenuItemClick,
     toggleSubMenuDesktop, openCartSidebar, closeCartSidebar, focusMobileSearch,
@@ -1346,6 +1374,7 @@ window.placeOrder = async function(event) {
 
                 // Send notification
                 await sendTelegramNotification({ ...orderData, orderId });
+                await sendNotificationForOrder(orderId); // Call OneSignal notification function
 
                 // Redirect with success message
                 showToast(`অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে! অর্ডার আইডি: ${orderId}`, "success");
