@@ -79,11 +79,23 @@
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
         import { getDatabase, ref, get, set, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
 
-        // --- OneSignal SDK Initialization ---
+        // --- OneSignal SDK Initialization (নতুন এবং নির্ভরযোগ্য কোড) ---
         window.OneSignal = window.OneSignal || [];
         OneSignal.push(function() {
             OneSignal.init({
                 appId: "abd0b6b7-b1ce-487f-a877-eb07fce647cb",
+                allowLocalhostAsSecureOrigin: true,
+                logLevel: 'trace' // <-- ডিবাগিং এর জন্য এই লাইনটি যোগ করা হয়েছে
+            });
+
+            // এই কোডটি নিশ্চিত করবে যে ইউজারকে সাবস্ক্রাইব করার জন্য প্রম্পট দেখানো হবে
+            OneSignal.isPushNotificationsEnabled(function(isEnabled) {
+                if (!isEnabled) {
+                    console.log("Push notifications are not enabled. Showing prompt.");
+                    OneSignal.showSlidedownPrompt();
+                } else {
+                    console.log("Push notifications are already enabled.");
+                }
             });
         });
 
@@ -110,21 +122,12 @@
             setTimeout(() => toast.remove(), 3000);
         };
 
-        // OneSignal Player ID পাওয়ার জন্য ফাংশন
         const getOneSignalPlayerId = () => {
             return new Promise((resolve) => {
-                if (!window.OneSignal) {
-                    console.warn("OneSignal SDK not loaded.");
-                    resolve(null);
-                    return;
-                }
                 OneSignal.push(function() {
-                    OneSignal.getUserId().then(function(playerId) {
-                        console.log("OneSignal Player ID:", playerId);
+                    OneSignal.getUserId(function(playerId) {
+                        console.log("SUCCESS: Retrieved OneSignal Player ID ->", playerId);
                         resolve(playerId);
-                    }).catch(function(error) {
-                        console.error("Error getting OneSignal Player ID:", error);
-                        resolve(null);
                     });
                 });
             });
@@ -164,7 +167,7 @@
             });
             submitBtn.disabled = false;
         };
-        
+
         const fetchUserProfile = async (uid) => {
             const profile = (await get(ref(database, `users/${uid}/profile`))).val();
             if (profile) {
@@ -215,10 +218,10 @@
                 const counterRef = ref(database, `counters/${dateString}`);
                 const result = await runTransaction(counterRef, (data) => (data || 0) + 1);
                 if (!result.committed) throw new Error("Order ID তৈরি করা যায়নি।");
-                
+
                 const orderNumber = String(result.snapshot.val()).padStart(3, '0');
                 const orderId = `${date.getFullYear().toString().slice(-2)}${String(date.getDate()).padStart(2, '0')}${date.getMonth() + 1}${orderNumber}`;
-                
+
                 const orderData = {
                     orderId,
                     customerName: document.getElementById('customerName').value.trim(),
@@ -240,7 +243,7 @@
                 };
 
                 await set(ref(database, 'orders/' + orderId), orderData);
-                
+
                 if (auth.currentUser) {
                     await set(ref(database, `users/${auth.currentUser.uid}/orderHistory/${orderId}`), true);
                 } else {
@@ -248,7 +251,7 @@
                     myOrders.push(orderId);
                     localStorage.setItem('myOrders', JSON.stringify(myOrders));
                 }
-                
+
                 if (!isBuyNowMode) {
                     localStorage.removeItem('anyBeautyCart');
                     if(auth.currentUser) await set(ref(database, `carts/${auth.currentUser.uid}`), []);
@@ -266,18 +269,16 @@
 
         // --- Page Initialization ---
         document.addEventListener("DOMContentLoaded", async () => {
-            // Load header and footer
             try {
                 const [headerRes, footerRes] = await Promise.all([fetch('header.html'), fetch('footer.html')]);
                 document.getElementById('header').innerHTML = await headerRes.text();
                 document.getElementById('footer').innerHTML = await footerRes.text();
             } catch(e) { console.error("Layout failed to load", e); }
 
-            // Initialize the page after auth state is known
             onAuthStateChanged(auth, async (user) => {
                 document.getElementById('loadingIndicator').style.display = 'none';
                 document.getElementById('checkoutForm').classList.remove('hidden');
-                
+
                 const urlParams = new URLSearchParams(window.location.search);
                 const urlCartData = urlParams.get('cart');
                 isBuyNowMode = !!urlCartData;
@@ -285,7 +286,6 @@
                 if (isBuyNowMode) {
                     checkoutCart = JSON.parse(decodeURIComponent(urlCartData));
                 } else {
-                    // Load cart based on user status
                     if(user) {
                         const cartSnapshot = await get(ref(database, `carts/${user.uid}`));
                         checkoutCart = cartSnapshot.val() || [];
@@ -293,11 +293,11 @@
                         checkoutCart = JSON.parse(localStorage.getItem('anyBeautyCart') || '[]');
                     }
                 }
-                
+
                 renderCheckoutItems();
                 calculateAndDisplayPrices();
                 if (user) await fetchUserProfile(user.uid);
-                
+
                 document.getElementById('checkoutForm').addEventListener('submit', placeOrder);
                 document.querySelectorAll('input[name="deliveryLocation"]').forEach(radio => radio.addEventListener('change', handleDeliveryLocationChange));
                 document.getElementById('deliveryPaymentMethod')?.addEventListener('change', handleDeliveryPaymentMethodChange);
