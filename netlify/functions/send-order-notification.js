@@ -17,7 +17,7 @@ if (!admin.apps.length) {
     const serviceAccount = JSON.parse(Buffer.from(serviceAccountBase64, 'base64').toString('ascii'));
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
-      databaseURL: "https://nahid-6T14-default-rtdb.asia-southeast1.firebasedatabase.app"
+      databaseURL: "https://nahid-6714-default-rtdb.asia-southeast1.firebasedatabase.app"
     });
   } catch (e) {
     console.error('Firebase admin initialization error', e);
