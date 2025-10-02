@@ -49,6 +49,49 @@ const BULK_MESSAGES = {
     }
 };
 
+// --- OneSignal API কল হ্যান্ডলার ---
+async function callOneSignalAPI(notificationPayload) {
+    try {
+        const response = await fetch('https://onesignal.com/api/v1/notifications', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8',
+                'Authorization': `Basic ${ONE_SIGNAL_REST_API_KEY}`
+            },
+            body: JSON.stringify(notificationPayload)
+        });
+        
+        // রেসপন্স টেক্সট আগে পড়া
+        const responseText = await response.text();
+        console.log('OneSignal Bulk Response:', responseText);
+        
+        let responseData;
+        try {
+            responseData = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('JSON Parse Error:', parseError);
+            return {
+                success: false,
+                error: `OneSignal API Error: ${responseText}`,
+                status: response.status
+            };
+        }
+        
+        return {
+            success: response.ok,
+            data: responseData,
+            status: response.status
+        };
+        
+    } catch (error) {
+        console.error('Fetch Error:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
 // --- বাল্ক নোটিফিকেশন পাঠানোর ফাংশন ---
 async function sendBulkNotification(messageType, customMessage = null, targetSegment = "all") {
     let notificationPayload = {
@@ -72,16 +115,7 @@ async function sendBulkNotification(messageType, customMessage = null, targetSeg
         ];
     }
 
-    const response = await fetch('https://onesignal.com/api/v1/notifications', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json; charset=utf-8',
-            'Authorization': `Basic ${ONE_SIGNAL_REST_API_KEY}`
-        },
-        body: JSON.stringify(notificationPayload)
-    });
-    
-    return await response.json();
+    return await callOneSignalAPI(notificationPayload);
 }
 
 // --- Firebase থেকে সব Player IDs পাওয়ার ফাংশন ---
@@ -124,16 +158,7 @@ async function sendToSpecificUsers(playerIds, messageType, customMessage = null)
         chrome_web_icon: "https://anysbeautycorner.netlify.app/images/logo.png"
     };
 
-    const response = await fetch('https://onesignal.com/api/v1/notifications', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json; charset=utf-8',
-            'Authorization': `Basic ${ONE_SIGNAL_REST_API_KEY}`
-        },
-        body: JSON.stringify(notificationPayload)
-    });
-    
-    return await response.json();
+    return await callOneSignalAPI(notificationPayload);
 }
 
 // --- মূল Netlify Function হ্যান্ডলার ---
@@ -143,10 +168,18 @@ exports.handler = async (event) => {
     if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: 'Method Not Allowed' };
 
     try {
-        const { action, messageType, customMessage, targetSegment, specificUsers } = JSON.parse(event.body);
+        const body = JSON.parse(event.body);
+        const { action, messageType, customMessage, targetSegment, specificUsers } = body;
 
         if (!action) {
-            return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'Action is required.' }) };
+            return { 
+                statusCode: 400, 
+                headers, 
+                body: JSON.stringify({ 
+                    success: false, 
+                    message: 'Action is required.' 
+                }) 
+            };
         }
 
         let result;
@@ -154,11 +187,25 @@ exports.handler = async (event) => {
         if (action === 'bulk_send') {
             // বাল্ক নোটিফিকেশন পাঠানো
             if (!messageType) {
-                return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'Message type is required for bulk send.' }) };
+                return { 
+                    statusCode: 400, 
+                    headers, 
+                    body: JSON.stringify({ 
+                        success: false, 
+                        message: 'Message type is required for bulk send.' 
+                    }) 
+                };
             }
 
             if (messageType === 'custom' && !customMessage) {
-                return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'Custom message is required for custom type.' }) };
+                return { 
+                    statusCode: 400, 
+                    headers, 
+                    body: JSON.stringify({ 
+                        success: false, 
+                        message: 'Custom message is required for custom type.' 
+                    }) 
+                };
             }
 
             result = await sendBulkNotification(messageType, customMessage, targetSegment);
@@ -166,31 +213,77 @@ exports.handler = async (event) => {
         } else if (action === 'get_users') {
             // সব ইউজারের Player IDs পাওয়া
             const playerIds = await getAllPlayerIds();
-            result = { 
-                success: true, 
-                totalUsers: playerIds.length,
-                playerIds: playerIds 
+            return { 
+                statusCode: 200, 
+                headers, 
+                body: JSON.stringify({ 
+                    success: true, 
+                    totalUsers: playerIds.length,
+                    playerIds: playerIds 
+                }) 
             };
 
         } else if (action === 'send_to_users') {
             // স্পেসিফিক ইউজারদের নোটিফিকেশন পাঠানো
             if (!specificUsers || !Array.isArray(specificUsers) || specificUsers.length === 0) {
-                return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'Specific users array is required.' }) };
+                return { 
+                    statusCode: 400, 
+                    headers, 
+                    body: JSON.stringify({ 
+                        success: false, 
+                        message: 'Specific users array is required.' 
+                    }) 
+                };
             }
 
             if (!messageType) {
-                return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'Message type is required.' }) };
+                return { 
+                    statusCode: 400, 
+                    headers, 
+                    body: JSON.stringify({ 
+                        success: false, 
+                        message: 'Message type is required.' 
+                    }) 
+                };
             }
 
             result = await sendToSpecificUsers(specificUsers, messageType, customMessage);
 
         } else {
-            return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'Invalid action.' }) };
+            return { 
+                statusCode: 400, 
+                headers, 
+                body: JSON.stringify({ 
+                    success: false, 
+                    message: 'Invalid action.' 
+                }) 
+            };
         }
 
-        if (result.errors) {
-            console.error("OneSignal returned an error:", result.errors);
-            return { statusCode: 500, headers, body: JSON.stringify({ success: false, message: 'Failed to send notification.', errors: result.errors }) };
+        if (!result.success) {
+            console.error("OneSignal API Error:", result.error);
+            return { 
+                statusCode: 500, 
+                headers, 
+                body: JSON.stringify({ 
+                    success: false, 
+                    message: 'Failed to send notification.',
+                    error: result.error
+                }) 
+            };
+        }
+
+        if (result.data.errors) {
+            console.error("OneSignal returned errors:", result.data.errors);
+            return { 
+                statusCode: 500, 
+                headers, 
+                body: JSON.stringify({ 
+                    success: false, 
+                    message: 'OneSignal API error.',
+                    errors: result.data.errors
+                }) 
+            };
         }
 
         return { 
@@ -199,12 +292,21 @@ exports.handler = async (event) => {
             body: JSON.stringify({ 
                 success: true, 
                 message: 'Operation completed successfully.',
-                result: result 
+                notificationId: result.data.id,
+                recipients: result.data.recipients
             }) 
         };
 
     } catch (error) {
         console.error('Error in bulk notification:', error);
-        return { statusCode: 500, headers, body: JSON.stringify({ success: false, message: 'An internal error occurred.' }) };
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ 
+                success: false, 
+                message: 'An internal error occurred.',
+                error: error.message
+            }) 
+        };
     }
 };
