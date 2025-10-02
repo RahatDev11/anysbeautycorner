@@ -1,134 +1,289 @@
 <!DOCTYPE html>
 <!-- ================================================================= -->
-<!-- FILE: header.html (Updated, No onclick, compatible with script.js) -->
+<!-- FILE: header.html (HTML + All JavaScript Logic Included)          -->
 <!-- ================================================================= -->
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- TailwindCSS, FontAwesome ইত্যাদি আপনার প্রধান HTML ফাইলগুলোতে থাকবে -->
+    <!-- TailwindCSS, FontAwesome ইত্যাদি আপনার প্রধান HTML ফাইলগুলোতে থাকা উচিত -->
     <style>
         /* Dropdown menu transition */
-        #desktopSubMenuBar {
+        #desktopSubMenu {
             transition: opacity 0.2s ease, visibility 0.2s ease;
         }
-        .group:hover #desktopSubMenuBar {
+        #desktopSubMenuContainer:hover #desktopSubMenu {
             opacity: 1;
             visibility: visible;
+        }
+        #mobileSubMenu {
+            transition: max-height 0.4s ease-out;
+            overflow: hidden;
         }
     </style>
 </head>
 <body>
-    <header class="bg-brushstroke text-white py-2 px-2 md:px-4 flex justify-between items-center fixed top-0 left-0 w-full z-50" style="background-color: #F4A7B9;">
+    <header class="bg-white shadow-md text-gray-800 py-3 px-4 flex justify-between items-center fixed top-0 left-0 w-full z-50" style="background-color: #F4A7B9;">
         <!-- লোগো -->
-        <a class="flex items-center" href="index.html">
-            <img alt="Any's Beauty Corner লোগো" class="h-10 w-10 rounded-full mr-2 border-2 border-lipstick flex-shrink-0" src="img.jpg">
-            <span class="text-base md:text-lg font-bold whitespace-nowrap text-gray-900">Any's Beauty Corner</span>
+        <a href="index.html" class="flex-shrink-0 flex items-center">
+            <img alt="Any's Beauty Corner Logo" class="h-10 w-10 rounded-full border-2 border-white" src="img.jpg">
+            <span class="hidden sm:block ml-3 font-bold text-lg text-gray-900">Any's Beauty Corner</span>
         </a>
 
-        <!-- ডান দিকের আইকনসমূহ এবং ডেস্কটপ মেনু -->
-        <div class="flex items-center space-x-2 md:space-4">
+        <!-- ডেস্কটপ সার্চ বার -->
+        <div class="hidden md:flex items-center justify-center flex-grow mx-4">
+            <div class="relative w-full max-w-lg">
+                <input class="w-full p-2 pl-10 border-2 border-transparent rounded-full bg-white/80 text-gray-800 focus:outline-none focus:ring-2 focus:ring-lipstick" id="searchInputDesktop" placeholder="প্রোডাক্ট খুঁজুন..." type="text" />
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <div class="absolute top-full mt-2 w-full bg-white rounded-lg shadow-lg z-50" id="searchResultsDesktop"></div>
+            </div>
+        </div>
+
+        <!-- ডান দিকের আইকনসমূহ -->
+        <div class="flex items-center space-x-2 sm:space-x-3">
+            <button id="mobileSearchButton" class="md:hidden text-gray-900 w-10 h-10 flex items-center justify-center"><i class="fas fa-search text-xl"></i></button>
+            <a href="notifications.html" title="নোটিফিকেশন" class="text-gray-900 w-10 h-10 flex items-center justify-center relative">
+                <i class="fas fa-bell text-xl"></i>
+                <span id="notificationIndicator" class="hidden absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+            </a>
+            <button id="cartButton" class="bg-lipstick text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center relative">
+                <i class="fas fa-shopping-bag"></i>
+                <span id="cartCount" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
+            </button>
+            <button id="mobileMenuButton" class="md:hidden bg-white text-lipstick w-10 h-10 rounded-full flex items-center justify-center shadow-lg"><i class="fas fa-bars text-xl"></i></button>
+
             <!-- ডেস্কটপ মেনু -->
-            <nav class="hidden md:flex space-x-4 items-center">
+            <nav class="hidden md:flex items-center space-x-4 ml-4">
                 <a class="text-gray-900 hover:text-lipstick font-semibold" href="index.html">হোম</a>
-                <div class="relative group">
+                <div class="relative" id="desktopSubMenuContainer">
                     <button class="text-gray-900 hover:text-lipstick font-semibold flex items-center">
-                        <span>পণ্য সমূহ</span>
+                        <span>প্রোডাক্টস</span>
                         <i class="fas fa-chevron-down ml-1 text-xs"></i>
                     </button>
-                    <div id="desktopSubMenuBar" class="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-white rounded-md shadow-lg z-50 opacity-0 invisible">
+                    <div class="absolute top-full -left-4 mt-2 w-48 bg-white rounded-md shadow-lg z-50 opacity-0 invisible" id="desktopSubMenu">
                         <a class="block px-4 py-2 text-gray-800 hover:bg-gray-100 filter-link" href="#" data-category="all">সকল প্রোডাক্ট</a>
-                        <a class="block px-4 py-2 text-gray-800 hover:bg-gray-100 filter-link" href="#" data-category="health">স্বাস্থ্য</a>
-                        <a class="block px-4 py-2 text-gray-800 hover:bg-gray-100 filter-link" href="#" data-category="cosmetics">মেকআপ</a>
-                        <a class="block px-4 py-2 text-gray-800 hover:bg-gray-100 filter-link" href="#" data-category="skincare">স্কিনকেয়ার</a>
-                        <a class="block px-4 py-2 text-gray-800 hover:bg-gray-100 filter-link" href="#" data-category="haircare">হেয়ারকেয়ার</a>
-                        <a class="block px-4 py-2 text-gray-800 hover:bg-gray-100 filter-link" href="#" data-category="mehandi">মেহেদী</a>
+                        <!-- ক্যাটাগরিগুলো এখানে ডাইনামিকভাবে যুক্ত হবে -->
                     </div>
                 </div>
                 <a class="text-gray-900 hover:text-lipstick font-semibold" href="order-track.html">অর্ডার ট্র্যাক</a>
-                <div id="desktopLoginButton"></div>
+                <div id="desktopLoginButton" class="ml-2"></div>
             </nav>
-
-            <!-- আইকনসমূহ -->
-            <div class="flex items-center space-x-2">
-                <!-- মোবাইল সার্চ আইকন -->
-                <button id="mobileSearchButton" class="md:hidden text-gray-900 w-10 h-10 flex items-center justify-center">
-                    <i class="fas fa-search text-xl"></i>
-                </button>
-
-                <!-- নোটিফিকেশন আইকন -->
-                <a href="notifications.html" title="নোটিফিকেশন" class="text-gray-900 w-10 h-10 flex items-center justify-center relative">
-                    <i class="fas fa-bell text-xl"></i>
-                    <span id="notificationIndicator" class="hidden absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-                </a>
-
-                <!-- শপিং ব্যাগ আইকন -->
-                <button id="cartButton" class="bg-lipstick text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center relative">
-                    <i class="fas fa-shopping-bag"></i>
-                    <span id="cartCount" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
-                </button>
-
-                <!-- মোবাইল মেনু বাটন -->
-                <button id="mobileMenuButton" class="md:hidden bg-white text-lipstick w-10 h-10 rounded-full flex items-center justify-center shadow-lg">
-                    <i class="fas fa-bars text-xl"></i>
-                </button>
-            </div>
         </div>
     </header>
 
-    <!-- মোবাইল সার্চ বার (লুকানো) -->
-    <div class="md:hidden p-2 w-full fixed top-[68px] left-0 z-40 hidden" id="mobileSearchBar">
-        <div class="relative">
-            <input type="text" id="searchInput" class="w-full p-2 pl-10 border-0 rounded-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-lipstick bg-white/90" placeholder="প্রোডাক্ট খুঁজুন...">
-            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-        </div>
-        <div id="searchResults" class="mt-2 max-h-60 overflow-y-auto w-full bg-white rounded-lg shadow-lg"></div>
+    <!-- Other UI Elements -->
+    <div class="md:hidden p-2 w-full fixed top-[68px] left-0 z-40 hidden bg-transparent backdrop-blur-sm" id="mobileSearchBar">
+        <div class="relative"><input type="text" id="searchInputMobile" class="w-full p-2 pl-10 border-0 rounded-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-lipstick bg-white/90" placeholder="প্রোডাক্ট খুঁজুন..."><i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i></div>
+        <div id="searchResultsMobile" class="mt-2 max-h-60 overflow-y-auto w-full bg-white rounded-lg shadow-lg"></div>
     </div>
-    
-    <!-- কার্ট সাইডবার -->
     <div id="cartSidebar" class="fixed top-0 right-0 h-full w-full sm:w-80 bg-white shadow-lg transform translate-x-full transition-transform duration-300 ease-in-out z-[1001]">
-        <div class="p-4 h-full flex flex-col">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl text-black font-bold">আপনার কার্ট</h2>
-                <button id="closeCartButton" class="text-gray-600 hover:text-gray-900"><i class="fas fa-times text-2xl"></i></button>
-            </div>
-            <div id="cartItems" class="space-y-4 flex-1 overflow-y-auto"></div>
-            <div class="border-t pt-4 mt-4">
-                <p id="totalPrice" class="text-lg font-bold text-gray-800">মোট মূল্য: 0 টাকা</p>
-                <button id="checkoutButton" class="bg-lipstick text-white w-full py-3 rounded-lg mt-2 font-semibold hover:bg-opacity-90">অর্ডার করুন</button>
-            </div>
-        </div>
+        <div class="p-4 h-full flex flex-col"><div class="flex justify-between items-center mb-4"><h2 class="text-xl text-black font-bold">আপনার কার্ট</h2><button id="closeCartButton" class="text-gray-600 hover:text-gray-900"><i class="fas fa-times text-2xl"></i></button></div><div id="cartItems" class="space-y-4 flex-1 overflow-y-auto"></div><div class="border-t pt-4 mt-4"><p id="totalPrice" class="text-lg font-bold text-gray-800">মোট মূল্য: 0 টাকা</p><button id="checkoutButton" class="bg-lipstick text-white w-full py-3 rounded-lg mt-2 font-semibold hover:bg-opacity-90">অর্ডার করুন</button></div></div>
     </div>
-
-    <!-- কার্ট ও সাইডবার ওভারলে -->
-    <div id="cartOverlay" class="fixed inset-0 bg-black/50 z-[1000] hidden"></div>
-
-    <!-- মোবাইল মেনু সাইডবার -->
-    <div id="sidebarOverlay" class="fixed inset-0 z-[1000] hidden">
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-[1000] hidden">
         <div class="fixed top-0 left-0 h-full w-4/5 max-w-sm bg-white shadow-lg transform -translate-x-full transition-transform duration-300 ease-in-out" id="sidebar">
-            <div class="p-4">
-                <button id="closeSidebarButton" class="absolute top-4 right-4 text-gray-600 hover:text-gray-900"><i class="fas fa-times text-2xl"></i></button>
-                <ul class="mt-12 space-y-2">
-                    <li id="mobileLoginButton" class="border-b pb-2 mb-2"></li>
-                    <li><a class="block py-2 px-3 text-gray-800 rounded hover:bg-gray-100" href="index.html">হোম</a></li>
-                    <li id="mobileSubMenuContainer">
-                        <button class="w-full flex justify-between items-center py-2 px-3 text-gray-800 rounded hover:bg-gray-100">
-                            <span>পণ্য সমূহ</span>
-                            <i id="arrowIcon" class="fas fa-chevron-down text-xs transition-transform"></i>
-                        </button>
-                        <div class="pl-4 hidden" id="subMenuMobile">
-                            <a class="block py-2 px-3 text-gray-800 rounded hover:bg-gray-100 filter-link" href="#" data-category="all">সকল প্রোডাক্ট</a>
-                            <a class="block py-2 px-3 text-gray-800 rounded hover:bg-gray-100 filter-link" href="#" data-category="health">স্বাস্থ্য</a>
-                            <a class="block py-2 px-3 text-gray-800 rounded hover:bg-gray-100 filter-link" href="#" data-category="cosmetics">মেকআপ</a>
-                            <a class="block py-2 px-3 text-gray-800 rounded hover:bg-gray-100 filter-link" href="#" data-category="skincare">স্কিনকেয়ার</a>
-                            <a class="block py-2 px-3 text-gray-800 rounded hover:bg-gray-100 filter-link" href="#" data-category="haircare">হেয়ারকেয়ার</a>
-                            <a class="block py-2 px-3 text-gray-800 rounded hover:bg-gray-100 filter-link" href="#" data-category="mehandi">মেহেদী</a>
-                        </div>
-                    </li>
-                    <li><a class="block py-2 px-3 text-gray-800 rounded hover:bg-gray-100" href="order-track.html">অর্ডার ট্র্যাক</a></li>
-                </ul>
-            </div>
+            <div class="p-4"><button id="closeSidebarButton" class="absolute top-4 right-4 text-gray-600 hover:text-gray-900"><i class="fas fa-times text-2xl"></i></button><ul class="mt-12 space-y-2"><li id="mobileLoginButton" class="border-b pb-2 mb-2"></li><li><a class="block py-2 px-3 text-gray-800 rounded hover:bg-gray-100" href="index.html">হোম</a></li><li id="mobileSubMenuContainer"><button class="w-full flex justify-between items-center py-2 px-3 text-gray-800 rounded hover:bg-gray-100"><span>প্রোডাক্টস</span><i class="fas fa-chevron-down text-xs transition-transform"></i></button><div class="pl-4 max-h-0" id="mobileSubMenu"><a class="block py-2 px-3 text-gray-800 rounded hover:bg-gray-100 filter-link" href="#" data-category="all">সকল প্রোডাক্ট</a></div></li><li><a class="block py-2 px-3 text-gray-800 rounded hover:bg-gray-100" href="order-track.html">অর্ডার ট্র্যাক</a></li></ul></div>
         </div>
     </div>
+    <div id="cartOverlay" class="fixed inset-0 bg-black/50 z-[1000] hidden"></div>
+    <div id="toast-container" class="fixed bottom-4 right-4 z-[2000] space-y-2"></div>
+
+    <!-- =============================================================== -->
+    <!-- SECTION: JavaScript Logic (All-in-One)                          -->
+    <!-- =============================================================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCVSzQS1c7H4BLhsDF_fW8wnqUN4B35LPA",
+            authDomain: "nahid-6714.firebaseapp.com",
+            databaseURL: "https://nahid-6714-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "nahid-6714",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+        const provider = new GoogleAuthProvider();
+
+        let products = [];
+        let cart = [];
+
+        // --- UTILITY ---
+        function showToast(message, type = "success") {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `px-4 py-3 rounded-lg shadow-lg text-white ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // --- UI CONTROLS ---
+        function openSidebar() { document.getElementById('sidebarOverlay')?.classList.remove('hidden'); document.getElementById('sidebar')?.classList.remove('-translate-x-full'); }
+        function closeSidebar() { document.getElementById('sidebarOverlay')?.classList.add('hidden'); document.getElementById('sidebar')?.classList.add('-translate-x-full'); }
+        function openCartSidebar() { document.getElementById('cartOverlay')?.classList.remove('hidden'); document.getElementById('cartSidebar')?.classList.remove('translate-x-full'); }
+        function closeCartSidebar() { document.getElementById('cartOverlay')?.classList.add('hidden'); document.getElementById('cartSidebar')?.classList.add('translate-x-full'); }
+        function focusMobileSearch() { document.getElementById('mobileSearchBar')?.classList.toggle('hidden'); document.getElementById('searchInputMobile')?.focus(); }
+
+        // --- AUTH ---
+        function loginWithGmail() { signInWithPopup(auth, provider).then(result => saveUserToDb(result.user)).catch(console.error); }
+        function logout() { if (confirm("আপনি কি লগআউট করতে চান?")) signOut(auth); }
+        function updateLoginUI(user) {
+            const mobileBtn = document.getElementById('mobileLoginButton'), desktopBtn = document.getElementById('desktopLoginButton');
+            if (!mobileBtn || !desktopBtn) return;
+            let html = user
+                ? `<div class="flex items-center"><img src="${user.photoURL || 'https://via.placeholder.com/24'}" class="w-8 h-8 rounded-full mr-2"><div class="flex flex-col text-left"><span class="text-sm font-semibold text-gray-800">${user.displayName || 'User'}</span><button class="logout-btn text-xs text-red-600 hover:underline">লগআউট</button></div></div>`
+                : `<button class="login-btn bg-lipstick text-white px-4 py-2 rounded-full font-semibold">লগইন</button>`;
+            mobileBtn.innerHTML = desktopBtn.innerHTML = html;
+            document.querySelector('.logout-btn')?.addEventListener('click', logout);
+            document.querySelector('.login-btn')?.addEventListener('click', loginWithGmail);
+        }
+        function saveUserToDb(user) {
+            const userRef = ref(database, `users/${user.uid}/profile`);
+            get(userRef).then(snapshot => { if (!snapshot.exists()) set(userRef, { name: user.displayName, email: user.email, photoURL: user.photoURL }); });
+        }
+        
+        // --- NOTIFICATION INDICATOR ---
+        function checkForUnreadNotifications(user) {
+            const indicator = document.getElementById('notificationIndicator');
+            if (!indicator) return;
+            let userId = user ? user.uid : localStorage.getItem('anyBeautyGuestId');
+            if (!userId) { indicator.classList.add('hidden'); return; }
+            onValue(ref(database, `notifications/${userId}`), (snapshot) => {
+                let hasUnread = false;
+                if (snapshot.exists()) snapshot.forEach((child) => { if (child.val().isRead === false) hasUnread = true; });
+                indicator.classList.toggle('hidden', !hasUnread);
+            });
+        }
+
+        // --- CART ---
+        function updateCartUI() {
+            const cartItemsEl = document.getElementById("cartItems"), cartCountEl = document.getElementById("cartCount"), totalPriceEl = document.getElementById("totalPrice");
+            if (!cartItemsEl || !cartCountEl || !totalPriceEl) return;
+            cartItemsEl.innerHTML = "";
+            let totalPrice = 0;
+            const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
+            if (cart.length > 0) {
+                cart.forEach(item => {
+                    const itemTotal = (item.price || 0) * (item.quantity || 0);
+                    totalPrice += itemTotal;
+                    cartItemsEl.innerHTML += `<div class="flex justify-between items-center text-black text-sm"><p>${item.name} <span class="text-gray-600">(x${item.quantity})</span></p><p>${itemTotal.toFixed(2)} টাকা</p></div>`;
+                });
+            } else { cartItemsEl.innerHTML = '<p class="text-center text-gray-500">আপনার কার্ট খালি।</p>'; }
+            cartCountEl.textContent = totalItems;
+            totalPriceEl.textContent = `মোট মূল্য: ${totalPrice.toFixed(2)} টাকা`;
+        }
+        function loadCart(user) {
+            if (user) onValue(ref(database, `carts/${user.uid}`), s => { cart = s.val() || []; updateCartUI(); });
+            else { cart = JSON.parse(localStorage.getItem('anyBeautyCart')) || []; updateCartUI(); }
+        }
+        function saveCart() {
+            const user = auth.currentUser;
+            if (user) set(ref(database, `carts/${user.uid}`), cart); 
+            else localStorage.setItem('anyBeautyCart', JSON.stringify(cart));
+            updateCartUI();
+        }
+        window.addToCart = function(productId) {
+            const product = products.find(p => p.id === productId); if (!product) return;
+            const cartItem = cart.find(item => item.id === productId);
+            if (cartItem) cartItem.quantity++;
+            else cart.push({ id: product.id, name: product.name, price: product.price, image: product.image ? product.image.split(',')[0] : '', quantity: 1 });
+            saveCart();
+            showToast(`${product.name} কার্টে যোগ করা হয়েছে`, "success");
+        }
+        function checkout() {
+            if (cart.length > 0) window.location.href = 'order-form.html';
+            else showToast("আপনার কার্ট খালি!", "error");
+        }
+        
+        // --- SEARCH & FILTER ---
+        function filterProducts(category) {
+            const productListEl = document.getElementById("productList");
+            if (!productListEl || !products) return;
+            const productsToDisplay = (category === 'all') ? products : products.filter(p => p.category === category);
+            productListEl.innerHTML = productsToDisplay.map(product => `
+                <div class="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
+                    <a href="product-detail.html?id=${product.id}"><img src="${product.image ? product.image.split(',')[0] : 'https://via.placeholder.com/150'}" alt="${product.name}" class="w-full h-48 object-cover"></a>
+                    <div class="p-4 flex flex-col flex-grow"><h3 class="font-bold text-lg mb-2 flex-grow">${product.name}</h3><p class="text-lipstick text-xl font-semibold mb-4">${product.price} টাকা</p><button onclick="window.addToCart('${product.id}')" class="mt-auto bg-lipstick text-white py-2 rounded-lg font-semibold hover:bg-opacity-90">কার্টে যোগ করুন</button></div>
+                </div>`).join('');
+            closeSidebar();
+            document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
+        }
+        function searchProducts(query, resultsContainerId) {
+            const container = document.getElementById(resultsContainerId);
+            if (!container) return;
+            if (!query) { container.innerHTML = ''; return; }
+            const filtered = products.filter(p => p.name.toLowerCase().includes(query));
+            container.innerHTML = filtered.slice(0, 5).map(p => `<a href="product-detail.html?id=${p.id}" class="flex items-center p-3 hover:bg-gray-100 border-b"><img src="${p.image ? p.image.split(',')[0].trim() : ''}" class="w-10 h-10 object-cover rounded-md mr-3"><span>${p.name}</span></a>`).join('');
+        }
+        function searchProductsDesktop() { searchProducts(document.getElementById('searchInputDesktop').value.toLowerCase(), 'searchResultsDesktop'); }
+        function searchProductsMobile() { searchProducts(document.getElementById('searchInputMobile').value.toLowerCase(), 'searchResultsMobile'); }
+        
+        // --- INITIALIZATION ---
+        function initializeHeader() {
+            document.getElementById('mobileMenuButton')?.addEventListener('click', openSidebar);
+            document.getElementById('closeSidebarButton')?.addEventListener('click', closeSidebar);
+            document.getElementById('sidebarOverlay')?.addEventListener('click', (e) => { if (e.target.id === 'sidebarOverlay') closeSidebar(); });
+            const mobileSubMenuBtn = document.getElementById('mobileSubMenuContainer')?.querySelector('button');
+            mobileSubMenuBtn?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const subMenu = document.getElementById('mobileSubMenu');
+                const icon = mobileSubMenuBtn.querySelector('i');
+                if (subMenu.style.maxHeight) { subMenu.style.maxHeight = null; icon.classList.remove('rotate-180'); } 
+                else { subMenu.style.maxHeight = subMenu.scrollHeight + "px"; icon.classList.add('rotate-180'); }
+            });
+            document.getElementById('cartButton')?.addEventListener('click', openCartSidebar);
+            document.getElementById('closeCartButton')?.addEventListener('click', closeCartSidebar);
+            document.getElementById('cartOverlay')?.addEventListener('click', closeCartSidebar);
+            document.getElementById('checkoutButton')?.addEventListener('click', checkout);
+            document.getElementById('mobileSearchButton')?.addEventListener('click', focusMobileSearch);
+            document.getElementById('searchInputDesktop')?.addEventListener('input', searchProductsDesktop);
+            document.getElementById('searchInputMobile')?.addEventListener('input', searchProductsMobile);
+
+            onValue(ref(database, 'products'), (snapshot) => {
+                products = [];
+                if (snapshot.exists()) snapshot.forEach(child => products.push({ id: child.key, ...child.val() }));
+                if (document.getElementById("productList")) filterProducts('all');
+            });
+            
+            const categories = ['health', 'cosmetics', 'skincare', 'haircare', 'mehandi'];
+            const categoryNames = {health: 'স্বাস্থ্য', cosmetics: 'মেকআপ', skincare: 'স্কিনকেয়ার', haircare: 'হেয়ারকেয়ার', mehandi: 'মেহেদী'};
+            const desktopMenu = document.getElementById('desktopSubMenu');
+            const mobileMenu = document.getElementById('mobileSubMenu');
+            categories.forEach(cat => {
+                const name = categoryNames[cat] || cat;
+                if(desktopMenu) desktopMenu.innerHTML += `<a class="block px-4 py-2 text-gray-800 hover:bg-gray-100 filter-link" href="#" data-category="${cat}">${name}</a>`;
+                if(mobileMenu) mobileMenu.innerHTML += `<a class="block py-2 px-3 text-gray-800 rounded hover:bg-gray-100 filter-link" href="#" data-category="${cat}">${name}</a>`;
+            });
+
+            document.querySelectorAll('.filter-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const category = e.target.dataset.category;
+                    if(window.location.pathname.endsWith('index.html') || window.location.pathname === '/'){
+                        filterProducts(category);
+                    } else {
+                                                window.location.href = `index.html#products?filter=${category}`;
+                    }
+                });
+            });
+
+            onAuthStateChanged(auth, user => {
+                updateLoginUI(user);
+                loadCart(user);
+                checkForUnreadNotifications(user);
+            });
+        }
+
+        // Run initialization on DOM ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeHeader);
+        } else {
+            initializeHeader();
+        }
+    </script>
 </body>
 </html>
