@@ -61,17 +61,45 @@ async function sendNotification(playerID, orderId, status, productImage = null) 
         notificationPayload.chrome_web_image = productImage;
     }
 
-    const response = await fetch('https://onesignal.com/api/v1/notifications', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json; charset=utf-8',
-            'Authorization': `Basic ${ONE_SIGNAL_REST_API_KEY}`
-        },
-        body: JSON.stringify(notificationPayload)
-    });
-    
-    const responseData = await response.json();
-    return responseData;
+    try {
+        const response = await fetch('https://onesignal.com/api/v1/notifications', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8',
+                'Authorization': `Basic ${ONE_SIGNAL_REST_API_KEY}`
+            },
+            body: JSON.stringify(notificationPayload)
+        });
+        
+        // রেসপন্স টেক্সট আগে পড়া
+        const responseText = await response.text();
+        console.log('OneSignal Response:', responseText);
+        
+        let responseData;
+        try {
+            responseData = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('JSON Parse Error:', parseError);
+            return {
+                success: false,
+                error: `OneSignal API Error: ${responseText}`,
+                status: response.status
+            };
+        }
+        
+        return {
+            success: response.ok,
+            data: responseData,
+            status: response.status
+        };
+        
+    } catch (error) {
+        console.error('Fetch Error:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
 }
 
 // --- মূল Netlify Function হ্যান্ডলার ---
@@ -82,10 +110,18 @@ exports.handler = async (event) => {
 
     let orderId;
     try {
-        orderId = JSON.parse(event.body).orderId;
+        const body = JSON.parse(event.body);
+        orderId = body.orderId;
         if (!orderId) throw new Error('Order ID is required.');
     } catch (error) {
-        return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'Invalid JSON or missing orderId.' }) };
+        return { 
+            statusCode: 400, 
+            headers, 
+            body: JSON.stringify({ 
+                success: false, 
+                message: 'Invalid JSON or missing orderId.' 
+            }) 
+        };
     }
 
     try {
@@ -94,14 +130,28 @@ exports.handler = async (event) => {
         const orderData = snapshot.val();
 
         if (!orderData) {
-            return { statusCode: 404, headers, body: JSON.stringify({ success: false, message: 'Order not found.' }) };
+            return { 
+                statusCode: 404, 
+                headers, 
+                body: JSON.stringify({ 
+                    success: false, 
+                    message: 'Order not found.' 
+                }) 
+            };
         }
 
         const playerID = orderData.oneSignalPlayerId;
         const status = orderData.status;
 
         if (!playerID) {
-            return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'No Player ID found, notification skipped.' }) };
+            return { 
+                statusCode: 200, 
+                headers, 
+                body: JSON.stringify({ 
+                    success: true, 
+                    message: 'No Player ID found, notification skipped.' 
+                }) 
+            };
         }
 
         let productImage = null;
@@ -112,17 +162,54 @@ exports.handler = async (event) => {
             }
         }
 
-        const responseData = await sendNotification(playerID, orderId, status, productImage);
+        const notificationResult = await sendNotification(playerID, orderId, status, productImage);
         
-        if (responseData.errors) {
-            console.error("OneSignal returned an error:", responseData.errors);
-            return { statusCode: 500, headers, body: JSON.stringify({ success: false, message: 'Failed to send notification.' }) };
+        if (!notificationResult.success) {
+            console.error("OneSignal API Error:", notificationResult.error);
+            return { 
+                statusCode: 500, 
+                headers, 
+                body: JSON.stringify({ 
+                    success: false, 
+                    message: 'Failed to send notification.',
+                    error: notificationResult.error
+                }) 
+            };
         }
 
-        return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Notification sent successfully.' }) };
+        if (notificationResult.data.errors) {
+            console.error("OneSignal returned errors:", notificationResult.data.errors);
+            return { 
+                statusCode: 500, 
+                headers, 
+                body: JSON.stringify({ 
+                    success: false, 
+                    message: 'OneSignal API error.',
+                    errors: notificationResult.data.errors
+                }) 
+            };
+        }
+
+        return { 
+            statusCode: 200, 
+            headers, 
+            body: JSON.stringify({ 
+                success: true, 
+                message: 'Notification sent successfully.',
+                notificationId: notificationResult.data.id
+            }) 
+        };
 
     } catch (error) {
         console.error('Error processing notification:', error);
-        return { statusCode: 500, headers, body: JSON.stringify({ success: false, message: 'An internal error occurred.' }) };
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ 
+                success: false, 
+                message: 'An internal error occurred.',
+                error: error.message
+            }) 
+        };
     }
 };
