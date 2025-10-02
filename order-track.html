@@ -135,7 +135,6 @@
             const urlOrderId = urlParams.get('orderId');
 
             if (urlOrderId) {
-                // যদি URL-এ orderId থাকে, তাহলে সরাসরি সেই অর্ডারের বিস্তারিত দেখাও
                 orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-8">আপনার অর্ডারটি লোড হচ্ছে...</p>';
                 try {
                     const orderRef = ref(database, `orders/${urlOrderId}`);
@@ -144,7 +143,6 @@
                     if (snapshot.exists()) {
                         const orderData = { key: snapshot.key, ...snapshot.val() };
                         showOrderDetailsModal(orderData);
-                        // প্রিভিউ দেখানোর পর, ব্যাকগ্রাউন্ডে বাকি অর্ডারগুলোও লোড করা হচ্ছে
                         onAuthStateChanged(auth, user => fetchOrders(user));
                     } else {
                         orderListDiv.innerHTML = '<p class="text-center text-red-500 p-8">দুঃখিত, এই অর্ডার আইডিটি খুঁজে পাওয়া যায়নি।</p>';
@@ -154,7 +152,6 @@
                      orderListDiv.innerHTML = '<p class="text-center text-red-500 p-8">অর্ডারটি লোড করার সময় একটি সমস্যা হয়েছে।</p>';
                 }
             } else {
-                // যদি URL-এ orderId না থাকে, তাহলে আগের মতোই অর্ডারের তালিকা দেখাও
                 document.getElementById('loginButton')?.addEventListener('click', () => signInWithPopup(auth, provider));
                 onAuthStateChanged(auth, (user) => {
                     const hasLocalOrders = (JSON.parse(localStorage.getItem('myOrders') || '[]')).length > 0;
@@ -172,7 +169,6 @@
             }
         });
         
-        // --- Modal and helper functions ---
         function showOrderDetailsModal(order) {
             const modal = document.getElementById('orderModal');
             const modalContent = document.getElementById('modalContent');
@@ -187,9 +183,21 @@
             trackerHTML += '</div>';
 
             let detailsHTML = `<h3 class="text-xl font-bold text-lipstick mb-4">অর্ডারের বিস্তারিত</h3>${trackerHTML}<div class="space-y-1 text-sm bg-gray-50 p-3 rounded-lg"><p><strong>অর্ডার আইডি:</strong> ${order.orderId || 'N/A'}</p><p><strong>তারিখ:</strong> ${order.orderDate ? new Date(order.orderDate).toLocaleString('bn-BD') : 'N/A'}</p><p><strong>নাম:</strong> ${order.customerName || 'N/A'}</p><p><strong>ফোন:</strong> ${order.phoneNumber || 'N/A'}</p><p><strong>ঠিকানা:</strong> ${order.address || 'N/A'}</p></div><hr class="my-3"><h4 class="font-semibold mb-2">প্রোডাক্টস</h4>`;
+            
             (order.cartItems || []).forEach(item => {
-                detailsHTML += `<div class="flex items-center mb-2 p-2 bg-gray-50 rounded-md"><img src="${item.image || 'https://via.placeholder.com/64'}" alt="${item.name}" class="w-12 h-12 object-cover rounded mr-3"><div class="text-sm flex-grow"><p class="font-semibold">${item.name}</p><p>${item.quantity} x ${item.price} টাকা</p></div><div class="text-sm font-semibold">${(item.quantity * item.price).toFixed(2)} টাকা</div></div>`;
+                detailsHTML += `
+                <a href="product-detail.html?id=${item.id}" class="flex items-center mb-2 p-2 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors cursor-pointer" target="_blank">
+                    <img src="${item.image || 'https://via.placeholder.com/64'}" alt="${item.name}" class="w-12 h-12 object-cover rounded mr-3">
+                    <div class="text-sm flex-grow">
+                        <p class="font-semibold">${item.name}</p>
+                        <p>${item.quantity} x ${item.price} টাকা</p>
+                    </div>
+                    <div class="text-sm font-semibold">
+                        ${(item.quantity * item.price).toFixed(2)} টাকা
+                    </div>
+                </a>`;
             });
+
             detailsHTML += `<hr class="my-3"><div class="text-right space-y-1"><p><strong>ডেলিভারি ফি:</strong> ${order.deliveryFee || 0} টাকা</p><p class="text-lg font-bold"><strong>মোট মূল্য:</strong> ${order.totalAmount || 0} টাকা</p></div>`;
 
             modalContent.innerHTML = detailsHTML;
@@ -197,6 +205,7 @@
             document.getElementById('modalClose').onclick = () => modal.classList.remove('flex');
             modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('flex'); };
         }
+
         function getStatusText(status) { const s = { processing: 'প্রসেসিং', confirmed: 'কনফার্মড', packaging: 'প্যাকেজিং', shipped: 'ডেলিভারি হয়েছে', delivered: 'সম্পন্ন হয়েছে' }; return s[status] || 'প্রসেসিং'; }
         function getStatusColor(status) { const c = { processing: 'bg-yellow-100 text-yellow-800', confirmed: 'bg-blue-100 text-blue-800', packaging: 'bg-purple-100 text-purple-800', shipped: 'bg-cyan-100 text-cyan-800', delivered: 'bg-green-100 text-green-800' }; return c[status] || c.processing; }
     </script>
