@@ -3,7 +3,7 @@
 const admin = require('firebase-admin');
 const fetch = require('node-fetch');
 
-// --- CORS হেডার (যেকোনো ডোমেইন থেকে রিকোয়েস্ট গ্রহণের জন্য) ---
+// --- CORS হেডার ---
 const headers = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type',
@@ -11,7 +11,6 @@ const headers = {
 };
 
 // --- Firebase Admin SDK সেটআপ ---
-// নিশ্চিত করুন Netlify এনভায়রনমেন্ট ভেরিয়েবল সঠিকভাবে সেট করা আছে
 const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
 if (!admin.apps.length) {
   try {
@@ -21,7 +20,7 @@ if (!admin.apps.length) {
       databaseURL: "https://nahid-6714-default-rtdb.asia-southeast1.firebasedatabase.app"
     });
   } catch (e) {
-    console.error('Firebase admin initialization error:', e);
+    console.error('Firebase admin initialization error', e);
   }
 }
 const db = admin.database();
@@ -30,7 +29,7 @@ const db = admin.database();
 const ONE_SIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID;
 const ONE_SIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY;
 
-// --- স্ট্যাটাস অনুযায়ী মেসেজ তৈরি করার ফাংশন ---
+// --- স্ট্যাটাস অনুযায়ী মেসেজ ---
 function getStatusMessage(status, orderId) {
     const messages = {
         processing: `আপনার অর্ডার (#${orderId.slice(-4)}) টি প্রসেসিং চলছে।`,
@@ -43,20 +42,43 @@ function getStatusMessage(status, orderId) {
     return messages[status] || `আপনার অর্ডারের স্ট্যাটাস এখন: ${status}`;
 }
 
-// --- মূল Netlify Function হ্যান্ডলার ---
-exports.handler = async (event) => {
-    // ব্রাউজার প্রথমে একটি OPTIONS রিকোয়েস্ট পাঠাতে পারে CORS চেক করার জন্য, সেটিকে হ্যান্ডেল করা হচ্ছে
-    if (event.httpMethod === 'OPTIONS') {
-        return {
-            statusCode: 204, // No Content
-            headers
-        };
+// --- নোটিফিকেশন পাঠানোর ফাংশন ---
+async function sendNotification(playerID, orderId, status, productImage = null) {
+    const targetUrl = `https://anysbeautycorner.netlify.app/order-track.html?orderId=${orderId}`;
+    
+    const notificationPayload = {
+        app_id: ONE_SIGNAL_APP_ID,
+        include_player_ids: [playerID],
+        headings: { "en": "Any's Beauty Corner" },
+        contents: { "en": getStatusMessage(status, orderId) },
+        web_url: targetUrl,
+        data: { "orderId": orderId }
+    };
+
+    // ইমেজ থাকলে শুধুমাত্র যোগ করা
+    if (productImage) {
+        notificationPayload.big_picture = productImage;
+        notificationPayload.chrome_web_image = productImage;
     }
 
-    // শুধুমাত্র POST রিকোয়েস্ট গ্রহণ করা হবে
-    if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, headers, body: 'Method Not Allowed' };
-    }
+    const response = await fetch('https://onesignal.com/api/v1/notifications', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Authorization': `Basic ${ONE_SIGNAL_REST_API_KEY}`
+        },
+        body: JSON.stringify(notificationPayload)
+    });
+    
+    const responseData = await response.json();
+    return responseData;
+}
+
+// --- মূল Netlify Function হ্যান্ডলার ---
+exports.handler = async (event) => {
+    // CORS এবং রিকোয়েস্ট মেথড চেক করা
+    if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers, body: '' };
+    if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: 'Method Not Allowed' };
 
     let orderId;
     try {
@@ -71,64 +93,36 @@ exports.handler = async (event) => {
         const snapshot = await orderRef.once('value');
         const orderData = snapshot.val();
 
-        if (!orderData || !orderData.userId) {
-            return { statusCode: 404, headers, body: JSON.stringify({ success: false, message: 'Order or UserID not found.' }) };
+        if (!orderData) {
+            return { statusCode: 404, headers, body: JSON.stringify({ success: false, message: 'Order not found.' }) };
         }
 
         const playerID = orderData.oneSignalPlayerId;
         const status = orderData.status;
-        const userId = orderData.userId;
-        const message = getStatusMessage(status, orderId);
 
-        // ধাপ ১: নোটিফিকেশনটি Firebase ডাটাবেজে সেভ করা
-        const notificationData = {
-            message: message,
-            orderId: orderId,
-            timestamp: Date.now(),
-            isRead: false
-        };
-        await db.ref(`notifications/${userId}`).push(notificationData);
-        
-        // যদি Player ID না থাকে, তাহলে পুশ না পাঠিয়েই সফলভাবে শেষ করা
         if (!playerID) {
-            return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Notification saved to DB, but push skipped (no Player ID).' }) };
-        }
-        
-        // ধাপ ২: OneSignal-কে পুশ নোটিফিকেশন পাঠানোর জন্য রিকোয়েস্ট তৈরি করা
-        const targetUrl = `https://anysbeautycorner.netlify.app/order-track.html?orderId=${orderId}`;
-        let productImage = (orderData.cartItems && orderData.cartItems.length > 0) ? orderData.cartItems[0].image : null;
-        
-        const notificationPayload = {
-            app_id: ONE_SIGNAL_APP_ID,
-            include_player_ids: [playerID],
-            headings: { "en": "Any's Beauty Corner" },
-            contents: { "en": message },
-            web_url: targetUrl,
-            data: { "orderId": orderId },
-            big_picture: productImage,
-            chrome_web_image: productImage
-        };
-
-        if (!productImage) {
-            delete notificationPayload.big_picture;
-            delete notificationPayload.chrome_web_image;
+            return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'No Player ID found, notification skipped.' }) };
         }
 
-        const response = await fetch('https://onesignal.com/api/v1/notifications', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': `Basic ${ONE_SIGNAL_REST_API_KEY}` },
-            body: JSON.stringify(notificationPayload)
-        });
+        let productImage = null;
+        if (orderData.cartItems && orderData.cartItems.length > 0) {
+            const firstItem = orderData.cartItems[0];
+            if (firstItem.image) {
+                productImage = firstItem.image;
+            }
+        }
+
+        const responseData = await sendNotification(playerID, orderId, status, productImage);
         
-        const responseData = await response.json();
         if (responseData.errors) {
             console.error("OneSignal returned an error:", responseData.errors);
+            return { statusCode: 500, headers, body: JSON.stringify({ success: false, message: 'Failed to send notification.' }) };
         }
 
-        return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Notification sent and saved successfully.' }) };
+        return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Notification sent successfully.' }) };
 
     } catch (error) {
-        console.error('Error processing notification request:', error);
+        console.error('Error processing notification:', error);
         return { statusCode: 500, headers, body: JSON.stringify({ success: false, message: 'An internal error occurred.' }) };
     }
 };
