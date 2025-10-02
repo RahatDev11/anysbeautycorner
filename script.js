@@ -50,6 +50,20 @@ function hideSocialMediaIcons() {
     document.getElementById('socialIcons')?.classList.add('hidden');
 }
 
+function updateNotificationIndicators() {
+    const notifications = JSON.parse(localStorage.getItem('notifications')) || [];
+    const unreadCount = notifications.filter(n => !n.read).length;
+    const indicator = document.getElementById('notificationIndicator');
+    const indicatorDesktop = document.getElementById('notificationIndicatorDesktop');
+
+    if (indicator) {
+        indicator.classList.toggle('hidden', unreadCount === 0);
+    }
+    if (indicatorDesktop) {
+        indicatorDesktop.classList.toggle('hidden', unreadCount === 0);
+    }
+}
+
 // === START: TELEGRAM NOTIFICATION FUNCTION (NEW CODE) ===
 /**
  * Netlify Function কে কল করে Telegram এ নোটিফিকেশন পাঠায়।
@@ -108,6 +122,39 @@ async function sendNotificationForOrder(orderId) {
     }
 }
 // === END: ONESIGNAL NOTIFICATION FUNCTION (NEW CODE) ===
+
+// === START: ONESIGNAL CLIENT-SIDE SETUP (NEW CODE) ===
+function initializeOneSignal() {
+    window.OneSignal = window.OneSignal || [];
+    OneSignal.push(function() {
+        OneSignal.init({
+            appId: "6c80a625-1644-4246-8293-668d2a375ab5", // Your OneSignal App ID
+        });
+
+        // When a notification is displayed, store it and update the indicator
+        OneSignal.on('notificationDisplay', function(event) {
+            console.log('OneSignal notification displayed:', event);
+            
+            // Get existing notifications from localStorage
+            const notifications = JSON.parse(localStorage.getItem('notifications')) || [];
+            
+            // Add the new notification
+            notifications.unshift({
+                message: event.content,
+                timestamp: new Date().toISOString(),
+                read: false,
+                id: event.id
+            });
+
+            // Save back to localStorage
+            localStorage.setItem('notifications', JSON.stringify(notifications));
+
+            // Update the UI
+            updateNotificationIndicators();
+        });
+    });
+}
+// === END: ONESIGNAL CLIENT-SIDE SETUP (NEW CODE) ===
 
 
 // =================================================================
@@ -331,8 +378,8 @@ function showLoadingSpinner() {
     }
 }
 
-function displayProductsAsCards(productsToDisplay) {
-    const productList = document.getElementById("productList");
+function displayProductsInContainer(productsToDisplay, containerId) {
+    const productList = document.getElementById(containerId);
     if (!productList) return;
 
     let productsHTML = productsToDisplay.map(product => {
@@ -357,6 +404,32 @@ function displayProductsAsCards(productsToDisplay) {
     }).join('');
 
     productList.innerHTML = productsHTML;
+}
+
+function displayProductsAsCards(productsToDisplay) {
+    displayProductsInContainer(productsToDisplay, "productList");
+}
+
+async function loadAndDisplayRelatedProducts(currentProductId, category) {
+    const relatedProductsSection = document.getElementById('relatedProductsSection');
+    const relatedProductsContainer = document.getElementById('relatedProductsContainer');
+
+    if (!relatedProductsSection || !relatedProductsContainer) return;
+
+    try {
+        // Filter products to find related ones (same category, not the current product)
+        const related = products.filter(p => p.category === category && p.id !== currentProductId);
+
+        if (related.length > 0) {
+            relatedProductsSection.classList.remove('hidden');
+            displayProductsInContainer(related.slice(0, 4), 'relatedProductsContainer'); // Display up to 4 related products
+        } else {
+            relatedProductsSection.classList.add('hidden');
+        }
+    } catch (error) {
+        console.error("Error loading related products:", error);
+        relatedProductsSection.classList.add('hidden');
+    }
 }
 
 function initializeProductSlider(sliderProducts) {
@@ -519,13 +592,17 @@ async function initializeProductDetailPage() {
         const productRef = ref(database, 'products/' + productId);
         const snapshot = await get(productRef);
 
-        if (snapshot.exists()) {
-            const product = { id: productId, ...snapshot.val() };
-            displayProductDetails(product);
-            if (loadingSpinner) loadingSpinner.style.display = 'none';
-            productContent.classList.remove('hidden');
-        } else {
-            showToast('প্রোডাক্ট পাওয়া যায়নি!', 'error');
+                    if (snapshot.exists()) {
+                        const product = { id: productId, ...snapshot.val() };
+                        displayProductDetails(product);
+                        if (loadingSpinner) loadingSpinner.style.display = 'none';
+                        productContent.classList.remove('hidden');
+        
+                        // Load and display related products
+                        if (product.category) {
+                            await loadAndDisplayRelatedProducts(product.id, product.category);
+                        }
+                    } else {            showToast('প্রোডাক্ট পাওয়া যায়নি!', 'error');
             if (loadingSpinner) loadingSpinner.innerHTML = '<p class="text-red-500">দুঃখিত, এই প্রোডাক্টটি পাওয়া যায়নি।</p>';
         }
     } catch (error) {
@@ -931,6 +1008,7 @@ Object.assign(window, {
     showToast,
     sendTelegramNotification, // <--- আপনার নতুন ফাংশন
     sendNotificationForOrder, // <--- OneSignal নোটিফিকেশন ফাংশন
+    updateNotificationIndicators, // <-- Add this line
     // Header UI
     openSidebar, closeSidebar, toggleSubMenuMobile, handleSubMenuItemClick,
     toggleSubMenuDesktop, openCartSidebar, closeCartSidebar, focusMobileSearch,
@@ -970,7 +1048,9 @@ async function loadHeaderAndSetup() {
                 });
             });
             
+            
             await loadCart(); // Await the loadCart promise
+            updateNotificationIndicators(); // Update notification indicators on page load
 
             document.getElementById('mobileMenuButton')?.addEventListener('click', openSidebar);
             document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);
@@ -1053,6 +1133,7 @@ function hideGlobalLoadingSpinner() {
 }
 
 function main() {
+    initializeOneSignal(); // Initialize OneSignal
     let pageLoadPromises = [];
     // Load header and footer and set up their functionality
     pageLoadPromises.push(loadHeaderAndSetup());
@@ -1101,6 +1182,62 @@ function main() {
 
     if (currentPage.includes('order-list.html')) {
         pageLoadPromises.push(loadMyOrders());
+    }
+
+    if (currentPage.includes('notifications.html')) {
+        const notifications = JSON.parse(localStorage.getItem('notifications')) || [];
+        const notificationList = document.getElementById('notification-list');
+        const markAllReadBtn = document.getElementById('mark-all-read');
+        const loginPrompt = document.getElementById('login-prompt');
+        const noNotificationsMessage = document.getElementById('no-notifications-message');
+
+        if (notificationList) { // Check if the element exists
+            if (notifications.length > 0) {
+                notifications.forEach(notification => {
+                    const notificationItem = document.createElement('div');
+                    notificationItem.classList.add('notification-item');
+                    if (!notification.read) {
+                        notificationItem.classList.add('unread');
+                    }
+                    notificationItem.innerHTML = `
+                        <p>${notification.message}</p>
+                        <span class="notification-time">${new Date(notification.timestamp).toLocaleString()}</span>
+                    `;
+                    notificationItem.addEventListener('click', () => {
+                        notification.read = true;
+                        localStorage.setItem('notifications', JSON.stringify(notifications));
+                        notificationItem.classList.remove('unread');
+                        updateNotificationIndicators(); // Use global function
+                    });
+                    notificationList.appendChild(notificationItem);
+                });
+                if(markAllReadBtn) markAllReadBtn.classList.remove('hidden');
+            } else {
+                const loggedInUser = localStorage.getItem('loggedInUser');
+                if (loggedInUser) {
+                    if(noNotificationsMessage) noNotificationsMessage.classList.remove('hidden');
+                } else {
+                    if(loginPrompt) loginPrompt.classList.remove('hidden');
+                }
+            }
+        }
+
+        if(markAllReadBtn) {
+            markAllReadBtn.addEventListener('click', () => {
+                const notifications = JSON.parse(localStorage.getItem('notifications')) || [];
+                notifications.forEach(notification => {
+                    notification.read = true;
+                });
+                localStorage.setItem('notifications', JSON.stringify(notifications));
+                document.querySelectorAll('.notification-item').forEach(item => {
+                    item.classList.remove('unread');
+                });
+                updateNotificationIndicators(); // Use global function
+            });
+        }
+
+        // Initial call to set the indicator state on page load
+        updateNotificationIndicators();
     }
 
     Promise.all(pageLoadPromises).then(() => {

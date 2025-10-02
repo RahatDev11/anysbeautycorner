@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
 </head>
 <body class="bg-gray-50">
     <!-- হেডার -->
@@ -29,9 +30,14 @@
             </button>
         </div>
 
-        <div id="notificationList" class="hidden max-w-2xl mx-auto bg-white rounded-lg shadow-md divide-y divide-gray-200">
-            <!-- নোটিফিকেশনগুলো এখানে জাভাস্ক্রিপ্ট দিয়ে দেখানো হবে -->
-        </div>
+<div id="notification-list"></div>
+    <button id="mark-all-read" class="hidden">Mark all as read</button>
+    <div id="login-prompt" class="hidden">
+        <p>Please <a href="order-track.html?redirect=notifications.html">login</a> to see your notifications.</p>
+    </div>
+    <div id="no-notifications-message" class="hidden">
+        <p>You have no new notifications.</p>
+    </div>
     </main>
 
     <!-- ফুটার -->
