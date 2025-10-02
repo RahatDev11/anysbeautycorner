@@ -185,16 +185,14 @@
             let detailsHTML = `<h3 class="text-xl font-bold text-lipstick mb-4">অর্ডারের বিস্তারিত</h3>${trackerHTML}<div class="space-y-1 text-sm bg-gray-50 p-3 rounded-lg"><p><strong>অর্ডার আইডি:</strong> ${order.orderId || 'N/A'}</p><p><strong>তারিখ:</strong> ${order.orderDate ? new Date(order.orderDate).toLocaleString('bn-BD') : 'N/A'}</p><p><strong>নাম:</strong> ${order.customerName || 'N/A'}</p><p><strong>ফোন:</strong> ${order.phoneNumber || 'N/A'}</p><p><strong>ঠিকানা:</strong> ${order.address || 'N/A'}</p></div><hr class="my-3"><h4 class="font-semibold mb-2">প্রোডাক্টস</h4>`;
             
             (order.cartItems || []).forEach(item => {
-                // নিশ্চিত করা হচ্ছে যে item.id আছে
                 const productId = item.id || '';
-                // যদি প্রোডাক্ট আইডি থাকে, তাহলেই শুধু লিঙ্ক তৈরি হবে
                 const isClickable = !!productId;
                 const tag = isClickable ? 'a' : 'div';
                 const linkHref = isClickable ? `href="product-detail.html?id=${productId}"` : '';
                 const extraClasses = isClickable ? 'hover:bg-gray-100 transition-colors cursor-pointer' : '';
                 
                 detailsHTML += `
-                <${tag} ${linkHref} class="flex items-center mb-2 p-2 bg-gray-50 rounded-md ${extraClasses}" ${isClickable ? 'target="_blank"' : ''}>
+                <${tag} ${linkHref} class="flex items-center mb-2 p-2 bg-gray-50 rounded-md ${extraClasses}">
                     <img src="${item.image || 'https://via.placeholder.com/64'}" alt="${item.name}" class="w-12 h-12 object-cover rounded mr-3">
                     <div class="text-sm flex-grow">
                         <p class="font-semibold">${item.name || 'অজানা প্রোডাক্ট'}</p>
