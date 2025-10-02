@@ -60,6 +60,14 @@
                 const [headerRes, footerRes] = await Promise.all([fetch('header.html'), fetch('footer.html')]);
                 document.getElementById('header').innerHTML = await headerRes.text();
                 document.getElementById('footer').innerHTML = await footerRes.text();
+                
+                // header.html এর স্ক্রিপ্ট লোড করার জন্য অপেক্ষা করা
+                // এটি নিশ্চিত করবে যে script.js এর ফাংশনগুলো পাওয়া যাবে
+                const headerScript = document.createElement('script');
+                headerScript.src = 'script.js';
+                headerScript.type = 'module';
+                document.body.appendChild(headerScript);
+                
             } catch (error) {
                 console.error("Layout load failed:", error);
             }
@@ -132,14 +140,17 @@
 
             onAuthStateChanged(auth, (user) => {
                 loadingIndicator.style.display = 'none';
-                if (user) {
+                
+                let targetId = user ? user.uid : localStorage.getItem('anyBeautyGuestId');
+
+                if (targetId) {
                     loginPrompt.style.display = 'none';
                     notificationList.classList.remove('hidden');
-                    const notificationsRef = query(ref(database, `notifications/${user.uid}`), orderByChild('timestamp'));
-                    onValue(notificationsRef, (snapshot) => displayNotifications(snapshot, user.uid));
+                    const notificationsRef = query(ref(database, `notifications/${targetId}`), orderByChild('timestamp'));
+                    onValue(notificationsRef, (snapshot) => displayNotifications(snapshot, targetId));
                 } else {
                     notificationList.classList.add('hidden');
-                    loginPrompt.classList.remove('hidden');
+                    loginPrompt.classList.remove('hidden'); // লগইন প্রম্পট দেখানো হচ্ছে, যেহেতু কোনো আইডিই নেই
                     document.getElementById('loginButton').onclick = () => signInWithPopup(auth, provider);
                 }
             });
