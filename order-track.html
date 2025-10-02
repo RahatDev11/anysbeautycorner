@@ -80,6 +80,7 @@
         
         function displayOrdersAsCards(orders) {
             if (!orders || orders.length === 0) {
+                loginPrompt.style.display = 'none';
                 orderListDiv.innerHTML = '<p class="text-center text-gray-600 p-8">আপনি এখনো কোনো অর্ডার করেননি।</p>';
                 return;
             }
@@ -98,34 +99,57 @@
             });
         }
         
-        async function fetchOrders(user) {
+        async function fetchUserOrders(user) {
             orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-8">আপনার অর্ডারগুলো লোড হচ্ছে...</p>';
             let allOrders = [];
+            const uniqueOrderIds = new Set();
+            
             try {
                 const ordersRef = ref(database, 'orders');
+                
                 if (user) {
-                    const [newOrdersSnap, oldOrdersSnap] = await Promise.all([
-                        get(query(ordersRef, orderByChild('userId'), equalTo(user.uid))),
-                        get(query(ordersRef, orderByChild('userEmail'), equalTo(user.email)))
-                    ]);
-                    if (newOrdersSnap.exists()) newOrdersSnap.forEach(child => allOrders.push({ key: child.key, ...child.val() }));
-                    if (oldOrdersSnap.exists()) oldOrdersSnap.forEach(child => {
-                        if (!allOrders.some(o => o.key === child.key)) allOrders.push({ key: child.key, ...child.val() });
-                    });
-                } else {
-                    const localOrderKeys = JSON.parse(localStorage.getItem('myOrders') || '[]');
-                    if (localOrderKeys.length > 0) {
-                        const snapshots = await Promise.all(localOrderKeys.map(key => get(ref(database, `orders/${key}`))));
-                        allOrders = snapshots.filter(s => s.exists()).map(s => ({ key: s.key, ...s.val() }));
+                    const userOrdersQuery = query(ordersRef, orderByChild('userId'), equalTo(user.uid));
+                    const snapshot = await get(userOrdersQuery);
+                    if (snapshot.exists()) {
+                        snapshot.forEach(child => {
+                            if (!uniqueOrderIds.has(child.key)) {
+                                allOrders.push({ key: child.key, ...child.val() });
+                                uniqueOrderIds.add(child.key);
+                            }
+                        });
                     }
                 }
+
+                const localOrderKeys = JSON.parse(localStorage.getItem('myOrders') || '[]');
+                if (localOrderKeys.length > 0) {
+                    const guestOrderPromises = localOrderKeys.map(key => {
+                        if (!uniqueOrderIds.has(key)) {
+                            return get(ref(database, `orders/${key}`));
+                        }
+                        return null;
+                    }).filter(Boolean);
+
+                    const snapshots = await Promise.all(guestOrderPromises);
+                    snapshots.forEach(snapshot => {
+                        if (snapshot.exists()) {
+                            allOrders.push({ key: snapshot.key, ...snapshot.val() });
+                        }
+                    });
+                }
+
             } catch (error) {
                 console.error("Order fetch failed:", error);
                 orderListDiv.innerHTML = `<p class="text-center text-red-500 p-8">অর্ডার লোড করা সম্ভব হয়নি।</p>`;
                 return;
             }
-            allOrders.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
-            displayOrdersAsCards(allOrders);
+
+            if (allOrders.length > 0) {
+                allOrders.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+                displayOrdersAsCards(allOrders);
+            } else {
+                loginPrompt.style.display = 'none';
+                orderListDiv.innerHTML = '<p class="text-center text-gray-600 p-8">আপনি এখনো কোনো অর্ডার করেননি।</p>';
+            }
         }
         
         document.addEventListener("DOMContentLoaded", async () => {
@@ -143,7 +167,10 @@
                     if (snapshot.exists()) {
                         const orderData = { key: snapshot.key, ...snapshot.val() };
                         showOrderDetailsModal(orderData);
-                        onAuthStateChanged(auth, user => fetchOrders(user));
+                        onAuthStateChanged(auth, user => {
+                            loginPrompt.style.display = 'none';
+                            fetchUserOrders(user);
+                        });
                     } else {
                         orderListDiv.innerHTML = '<p class="text-center text-red-500 p-8">দুঃখিত, এই অর্ডার আইডিটি খুঁজে পাওয়া যায়নি।</p>';
                     }
@@ -152,18 +179,15 @@
                      orderListDiv.innerHTML = '<p class="text-center text-red-500 p-8">অর্ডারটি লোড করার সময় একটি সমস্যা হয়েছে।</p>';
                 }
             } else {
-                document.getElementById('loginButton')?.addEventListener('click', () => signInWithPopup(auth, provider));
                 onAuthStateChanged(auth, (user) => {
                     const hasLocalOrders = (JSON.parse(localStorage.getItem('myOrders') || '[]')).length > 0;
-                    if (user) {
+                    if (user || hasLocalOrders) {
                         loginPrompt.style.display = 'none';
-                        fetchOrders(user);
-                    } else if (hasLocalOrders) {
-                        loginPrompt.style.display = 'none';
-                        fetchOrders(null);
+                        fetchUserOrders(user);
                     } else {
                         loginPrompt.style.display = 'block';
                         orderListDiv.innerHTML = '';
+                        document.getElementById('loginButton')?.addEventListener('click', () => signInWithPopup(auth, provider));
                     }
                 });
             }
