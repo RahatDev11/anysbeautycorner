@@ -130,20 +130,46 @@
         
         document.addEventListener("DOMContentLoaded", async () => {
             await loadLayout();
-            document.getElementById('loginButton')?.addEventListener('click', () => signInWithPopup(auth, provider));
-            onAuthStateChanged(auth, (user) => {
-                const hasLocalOrders = (JSON.parse(localStorage.getItem('myOrders') || '[]')).length > 0;
-                if (user) {
-                    loginPrompt.style.display = 'none';
-                    fetchOrders(user);
-                } else if (hasLocalOrders) {
-                    loginPrompt.style.display = 'none';
-                    fetchOrders(null);
-                } else {
-                    loginPrompt.style.display = 'block';
-                    orderListDiv.innerHTML = '';
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlOrderId = urlParams.get('orderId');
+
+            if (urlOrderId) {
+                // যদি URL-এ orderId থাকে, তাহলে সরাসরি সেই অর্ডারের বিস্তারিত দেখাও
+                orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-8">আপনার অর্ডারটি লোড হচ্ছে...</p>';
+                try {
+                    const orderRef = ref(database, `orders/${urlOrderId}`);
+                    const snapshot = await get(orderRef);
+
+                    if (snapshot.exists()) {
+                        const orderData = { key: snapshot.key, ...snapshot.val() };
+                        showOrderDetailsModal(orderData);
+                        // প্রিভিউ দেখানোর পর, ব্যাকগ্রাউন্ডে বাকি অর্ডারগুলোও লোড করা হচ্ছে
+                        onAuthStateChanged(auth, user => fetchOrders(user));
+                    } else {
+                        orderListDiv.innerHTML = '<p class="text-center text-red-500 p-8">দুঃখিত, এই অর্ডার আইডিটি খুঁজে পাওয়া যায়নি।</p>';
+                    }
+                } catch (error) {
+                     console.error("Failed to fetch single order:", error);
+                     orderListDiv.innerHTML = '<p class="text-center text-red-500 p-8">অর্ডারটি লোড করার সময় একটি সমস্যা হয়েছে।</p>';
                 }
-            });
+            } else {
+                // যদি URL-এ orderId না থাকে, তাহলে আগের মতোই অর্ডারের তালিকা দেখাও
+                document.getElementById('loginButton')?.addEventListener('click', () => signInWithPopup(auth, provider));
+                onAuthStateChanged(auth, (user) => {
+                    const hasLocalOrders = (JSON.parse(localStorage.getItem('myOrders') || '[]')).length > 0;
+                    if (user) {
+                        loginPrompt.style.display = 'none';
+                        fetchOrders(user);
+                    } else if (hasLocalOrders) {
+                        loginPrompt.style.display = 'none';
+                        fetchOrders(null);
+                    } else {
+                        loginPrompt.style.display = 'block';
+                        orderListDiv.innerHTML = '';
+                    }
+                });
+            }
         });
         
         // --- Modal and helper functions ---
