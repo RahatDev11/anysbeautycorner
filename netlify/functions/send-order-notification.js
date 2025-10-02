@@ -1,125 +1,156 @@
-// ফাইল: netlify/functions/send-order-notification.js
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>নোটিফিকেশন - Any's Beauty Corner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gray-50">
+    <!-- হেডার -->
+    <div id="header"></div>
 
-const admin = require('firebase-admin');
-const fetch = require('node-fetch');
+    <!-- মেইন কন্টেন্ট -->
+    <main class="container mx-auto pt-20 pb-8 px-4 min-h-screen">
+        <h1 class="text-3xl font-bold text-center mb-8 text-lipstick">আপনার নোটিফিকেশন</h1>
 
-// --- CORS হেডার ---
-const headers = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS'
-};
+        <div id="loadingIndicator" class="text-center py-12">
+            <i class="fas fa-spinner fa-spin text-4xl text-lipstick"></i>
+            <p class="mt-2 text-gray-600">লোড হচ্ছে...</p>
+        </div>
 
-// --- Firebase Admin SDK সেটআপ ---
-const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
-if (!admin.apps.length) {
-  try {
-    const serviceAccount = JSON.parse(Buffer.from(serviceAccountBase64, 'base64').toString('ascii'));
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      databaseURL: "https://nahid-6714-default-rtdb.asia-southeast1.firebasedatabase.app"
-    });
-  } catch (e) {
-    console.error('Firebase admin initialization error', e);
-  }
-}
-const db = admin.database();
+        <div id="loginPrompt" class="hidden text-center p-6 bg-white rounded-lg shadow-md max-w-md mx-auto">
+            <p class="text-lg text-gray-700 mb-4">আপনার নোটিফিকেশনগুলো দেখতে অনুগ্রহ করে লগইন করুন।</p>
+            <button id="loginButton" class="bg-lipstick text-white px-8 py-3 rounded-lg font-semibold hover:bg-opacity-90 transition-colors">
+                <i class="fab fa-google mr-2"></i> Google দিয়ে লগইন করুন
+            </button>
+        </div>
 
-// --- OneSignal API তথ্য ---
-const ONE_SIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID;
-const ONE_SIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY;
+        <div id="notificationList" class="max-w-2xl mx-auto bg-white rounded-lg shadow-md divide-y divide-gray-200">
+            <!-- নোটিফিকেশনগুলো এখানে জাভাস্ক্রিপ্ট দিয়ে দেখানো হবে -->
+        </div>
+    </main>
 
-// --- স্ট্যাটাস অনুযায়ী মেসেজ ---
-function getStatusMessage(status, orderId) {
-    const messages = {
-        processing: `আপনার অর্ডার (#${orderId.slice(-4)}) টি প্রসেসিং চলছে।`,
-        confirmed: `আপনার অর্ডার (#${orderId.slice(-4)}) টি কনফার্ম করা হয়েছে।`,
-        packaging: `আপনার অর্ডার (#${orderId.slice(-4)}) টি প্যাকেজিং করা হচ্ছে।`,
-        shipped: `আপনার অর্ডারটি (#${orderId.slice(-4)}) ডেলিভারির জন্য পাঠানো হয়েছে।`,
-        delivered: `আপনার অর্ডার (#${orderId.slice(-4)}) টি সফলভাবে ডেলিভারি করা হয়েছে।`,
-        cancelled: `আপনার অর্ডার (#${orderId.slice(-4)}) টি বাতিল করা হয়েছে।`,
-    };
-    return messages[status] || `আপনার অর্ডারের স্ট্যাটাস এখন: ${status}`;
-}
+    <!-- ফুটার -->
+    <div id="footer"></div>
 
-// --- মূল Netlify Function হ্যান্ডলার ---
-exports.handler = async (event) => {
-    // CORS এবং রিকোয়েস্ট মেথড চেক করা
-    if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers, body: '' };
-    if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: 'Method Not Allowed' };
+    <!-- Firebase এবং স্ক্রিপ্ট -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+        import { getDatabase, ref, onValue, query, orderByChild, update } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
 
-    let orderId;
-    try {
-        orderId = JSON.parse(event.body).orderId;
-        if (!orderId) throw new Error('Order ID is required.');
-    } catch (error) {
-        return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'Invalid JSON or missing orderId.' }) };
-    }
-
-    try {
-        const orderRef = db.ref(`orders/${orderId}`);
-        const snapshot = await orderRef.once('value');
-        const orderData = snapshot.val();
-
-        if (!orderData) {
-            return { statusCode: 404, headers, body: JSON.stringify({ success: false, message: 'Order not found.' }) };
-        }
-
-        const playerID = orderData.oneSignalPlayerId;
-        const status = orderData.status;
-
-        if (!playerID) {
-            return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'No Player ID found, notification skipped.' }) };
-        }
-
-        let productImage = null;
-        if (orderData.cartItems && orderData.cartItems.length > 0) {
-            const firstItem = orderData.cartItems[0];
-            if (firstItem.image) {
-                productImage = firstItem.image;
-            }
-        }
-
-        const targetUrl = `https://anysbeautycorner.netlify.app/order-track.html?orderId=${orderId}`;
-
-        const notificationPayload = {
-            app_id: ONE_SIGNAL_APP_ID,
-            include_player_ids: [playerID],
-            headings: { "en": "Any's Beauty Corner" },
-            contents: { "en": getStatusMessage(status, orderId) },
-            
-            // --- সমস্যার সমাধান: শুধুমাত্র web_url ব্যবহার করা ---
-            web_url: targetUrl,
-            // ---------------------------------------------------
-
-            data: { "orderId": orderId },
-            big_picture: productImage,
-            chrome_web_image: productImage
+        const firebaseConfig = {
+            apiKey: "AIzaSyCVSzQS1c7H4BLhsDF_fW8wnqUN4B35LPA",
+            authDomain: "nahid-6714.firebaseapp.com",
+            databaseURL: "https://nahid-6714-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "nahid-6714",
         };
 
-        if (!productImage) {
-            delete notificationPayload.big_picture;
-            delete notificationPayload.chrome_web_image;
-        }
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+        const provider = new GoogleAuthProvider();
 
-        const response = await fetch('https://onesignal.com/api/v1/notifications', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json; charset=utf-8',
-                'Authorization': `Basic ${ONE_SIGNAL_REST_API_KEY}`
-            },
-            body: JSON.stringify(notificationPayload)
-        });
+        async function loadLayout() {
+            try {
+                const [headerRes, footerRes] = await Promise.all([fetch('header.html'), fetch('footer.html')]);
+                document.getElementById('header').innerHTML = await headerRes.text();
+                document.getElementById('footer').innerHTML = await footerRes.text();
+                
+                // header.html এর স্ক্রিপ্ট লোড করার জন্য অপেক্ষা করা
+                // এটি নিশ্চিত করবে যে script.js এর ফাংশনগুলো পাওয়া যাবে
+                const headerScript = document.createElement('script');
+                headerScript.src = 'script.js';
+                headerScript.type = 'module';
+                document.body.appendChild(headerScript);
+                
+            } catch (error) {
+                console.error("Layout load failed:", error);
+            }
+        }
         
-        const responseData = await response.json();
-        if (responseData.errors) {
-            console.error("OneSignal returned an error:", responseData.errors);
+        function formatTimeAgo(timestamp) {
+            const now = Date.now();
+            const seconds = Math.floor((now - timestamp) / 1000);
+            if (seconds < 60) return `${seconds} সেকেন্ড আগে`;
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes} মিনিট আগে`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours} ঘণ্টা আগে`;
+            const days = Math.floor(hours / 24);
+            return `${days} দিন আগে`;
+        }
+        
+        // নোটিফিকেশনকে 'read' হিসেবে মার্ক করার ফাংশন
+        function markNotificationAsRead(userId, notificationKey) {
+            const notifRef = ref(database, `notifications/${userId}/${notificationKey}`);
+            update(notifRef, { isRead: true });
         }
 
-        return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Notification sent successfully.' }) };
+        function displayNotifications(snapshot, userId) {
+            const notificationList = document.getElementById('notificationList');
+            notificationList.innerHTML = '';
 
-    } catch (error) {
-        console.error('Error processing notification:', error);
-        return { statusCode: 500, headers, body: JSON.stringify({ success: false, message: 'An internal error occurred.' }) };
-    }
-};
+            if (!snapshot.exists()) {
+                notificationList.innerHTML = '<p class="text-center text-gray-500 p-8">আপনার কোনো নোটিফিকেশন নেই।</p>';
+                return;
+            }
+
+            const notifications = [];
+            snapshot.forEach(childSnapshot => {
+                notifications.push({ key: childSnapshot.key, ...childSnapshot.val() });
+            });
+
+            notifications.reverse().forEach(notif => {
+                const notifElement = document.createElement('a');
+                notifElement.href = `order-track.html?orderId=${notif.orderId}`;
+                notifElement.className = `block p-4 hover:bg-gray-50 transition-colors ${!notif.isRead ? 'bg-blue-50 font-semibold' : ''}`;
+                
+                notifElement.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="mr-4 pt-1">
+                            <i class="fas fa-bell text-xl ${!notif.isRead ? 'text-blue-500' : 'text-gray-400'}"></i>
+                        </div>
+                        <div class="flex-grow">
+                            <p class="text-gray-800">${notif.message}</p>
+                            <p class="text-sm text-gray-500 mt-1 font-normal">${formatTimeAgo(notif.timestamp)}</p>
+                        </div>
+                        ${!notif.isRead ? '<div class="w-2.5 h-2.5 bg-blue-500 rounded-full ml-2 mt-1.5"></div>' : ''}
+                    </div>
+                `;
+                
+                // নোটিফিকেশনে ক্লিক করলে সেটিকে 'read' হিসেবে মার্ক করা হবে
+                notifElement.addEventListener('click', (e) => {
+                    if (!notif.isRead) {
+                        markNotificationAsRead(userId, notif.key);
+                    }
+                });
+
+                notificationList.appendChild(notifElement);
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            await loadLayout();
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const loginPrompt = document.getElementById('loginPrompt');
+
+            onAuthStateChanged(auth, (user) => {
+                loadingIndicator.style.display = 'none';
+                if (user) {
+                    loginPrompt.style.display = 'none';
+                    const notificationsRef = query(ref(database, `notifications/${user.uid}`), orderByChild('timestamp'));
+                    onValue(notificationsRef, (snapshot) => displayNotifications(snapshot, user.uid));
+                } else {
+                    document.getElementById('notificationList').innerHTML = '';
+                    loginPrompt.style.display = 'block';
+                    document.getElementById('loginButton').onclick = () => signInWithPopup(auth, provider);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
