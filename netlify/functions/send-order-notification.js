@@ -72,34 +72,31 @@ exports.handler = async (event) => {
             return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'No Player ID found, notification skipped.' }) };
         }
 
+        // --- প্রোডাক্টের ছবি বের করার জন্য নতুন কোড ---
         let productImage = null;
         if (orderData.cartItems && orderData.cartItems.length > 0) {
+            // প্রথম প্রোডাক্টের ছবিটি নেওয়া হচ্ছে
             const firstItem = orderData.cartItems[0];
             if (firstItem.image) {
                 productImage = firstItem.image;
             }
         }
-
-        // --- অর্ডার ট্র্যাক পেজের জন্য URL তৈরি ---
-        const targetUrl = `https://anysbeautycorner.netlify.app/order-track.html?orderId=${orderId}`;
-        // ------------------------------------
+        // ------------------------------------------
 
         const notificationPayload = {
             app_id: ONE_SIGNAL_APP_ID,
             include_player_ids: [playerID],
             headings: { "en": "Any's Beauty Corner" },
             contents: { "en": getStatusMessage(status, orderId) },
-            
-            // --- নোটিফিকেশনে ক্লিক করলে কোথায় যাবে তা নির্ধারণ ---
-            url: targetUrl, // <-- মূল URL
-            web_url: targetUrl, // <-- ওয়েব পুশের জন্য ফলব্যাক URL
-            // ----------------------------------------------------
-
             data: { "orderId": orderId },
-            big_picture: productImage,
-            chrome_web_image: productImage
+            
+            // --- নোটিফিকেশনে ছবি যুক্ত করার জন্য নতুন প্যারামিটার ---
+            big_picture: productImage, // বড় ছবি হিসেবে দেখানো হবে (Android, Chrome Desktop)
+            chrome_web_image: productImage // Chrome ওয়েব পুশের জন্য
+            // ----------------------------------------------------
         };
 
+        // যদি কোনো ছবি না থাকে, তাহলে এই প্যারামিটারগুলো না পাঠানোই ভালো
         if (!productImage) {
             delete notificationPayload.big_picture;
             delete notificationPayload.chrome_web_image;
