@@ -79,15 +79,23 @@
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
         import { getDatabase, ref, get, set, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
 
-        // --- OneSignal SDK Initialization ---
+        // --- OneSignal SDK Initialization (নতুন এবং নির্ভরযোগ্য কোড) ---
         window.OneSignal = window.OneSignal || [];
         OneSignal.push(function() {
             OneSignal.init({
                 appId: "abd0b6b7-b1ce-487f-a877-eb07fce647cb",
                 allowLocalhostAsSecureOrigin: true,
+                logLevel: 'trace' // <-- ডিবাগিং এর জন্য এই লাইনটি যোগ করা হয়েছে
             });
+
+            // এই কোডটি নিশ্চিত করবে যে ইউজারকে সাবস্ক্রাইব করার জন্য প্রম্পট দেখানো হবে
             OneSignal.isPushNotificationsEnabled(function(isEnabled) {
-                if (!isEnabled) { OneSignal.showSlidedownPrompt(); }
+                if (!isEnabled) {
+                    console.log("Push notifications are not enabled. Showing prompt.");
+                    OneSignal.showSlidedownPrompt();
+                } else {
+                    console.log("Push notifications are already enabled.");
+                }
             });
         });
 
@@ -113,22 +121,12 @@
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
         };
-        
-        // --- গেস্ট আইডি ম্যানেজ করার ফাংশন (নতুন) ---
-        function getOrCreateGuestId() {
-            let guestId = localStorage.getItem('anyBeautyGuestId');
-            if (!guestId) {
-                guestId = 'guest_' + Date.now() + Math.random().toString(36).substring(2, 10);
-                localStorage.setItem('anyBeautyGuestId', guestId);
-            }
-            return guestId;
-        }
 
         const getOneSignalPlayerId = () => {
             return new Promise((resolve) => {
                 OneSignal.push(function() {
                     OneSignal.getUserId(function(playerId) {
-                        console.log("OneSignal Player ID:", playerId);
+                        console.log("SUCCESS: Retrieved OneSignal Player ID ->", playerId);
                         resolve(playerId);
                     });
                 });
@@ -157,6 +155,7 @@
         const renderCheckoutItems = () => {
             const container = document.getElementById('checkoutItems');
             const submitBtn = document.getElementById('submitButton');
+            if (!container || !submitBtn) return;
             container.innerHTML = '';
             if (!checkoutCart || checkoutCart.length === 0) {
                 container.innerHTML = '<p class="text-center text-red-500 p-4">আপনার কার্ট খালি।</p>';
@@ -209,8 +208,6 @@
                 if (checkoutCart.length === 0) throw new Error("কার্ট খালি।");
 
                 const oneSignalPlayerId = await getOneSignalPlayerId();
-                const user = auth.currentUser;
-                const userId = user ? user.uid : getOrCreateGuestId(); // <-- মূল পরিবর্তন এখানে
 
                 const isOutside = document.querySelector('input[name="deliveryLocation"]:checked').value === 'outsideDhaka';
                 const subTotal = checkoutCart.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
@@ -236,8 +233,8 @@
                     cartItems: checkoutCart,
                     orderDate: date.toISOString(),
                     status: 'processing',
-                    userId: userId, // <-- এখন এখানে লগইন করা ইউজার আইডি অথবা গেস্ট আইডি থাকবে
-                    userEmail: user ? user.email : 'guest_order',
+                    userId: auth.currentUser ? auth.currentUser.uid : 'guest_user',
+                    userEmail: auth.currentUser ? auth.currentUser.email : 'guest_order',
                     oneSignalPlayerId: oneSignalPlayerId,
                     deliveryNote: document.getElementById('deliveryNote').value.trim() || 'N/A',
                     outsideDhakaLocation: isOutside ? document.getElementById('outsideDhakaLocation').value : 'N/A',
@@ -247,20 +244,17 @@
 
                 await set(ref(database, 'orders/' + orderId), orderData);
 
-                if (user) {
-                    await set(ref(database, `users/${user.uid}/orderHistory/${orderId}`), true);
-                }
-                
-                // গেস্ট বা লগইন করা ইউজার, উভয়ের ক্ষেত্রেই লোকাল স্টোরেজে অর্ডার আইডি সেভ হবে
-                const myOrders = JSON.parse(localStorage.getItem('myOrders')) || [];
-                if (!myOrders.includes(orderId)) {
+                if (auth.currentUser) {
+                    await set(ref(database, `users/${auth.currentUser.uid}/orderHistory/${orderId}`), true);
+                } else {
+                    const myOrders = JSON.parse(localStorage.getItem('myOrders')) || [];
                     myOrders.push(orderId);
+                    localStorage.setItem('myOrders', JSON.stringify(myOrders));
                 }
-                localStorage.setItem('myOrders', JSON.stringify(myOrders));
-                
+
                 if (!isBuyNowMode) {
                     localStorage.removeItem('anyBeautyCart');
-                    if(user) await set(ref(database, `carts/${user.uid}`), []);
+                    if(auth.currentUser) await set(ref(database, `carts/${auth.currentUser.uid}`), []);
                 }
 
                 await sendTelegramNotification(orderData);

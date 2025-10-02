@@ -49,7 +49,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
-        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
+        import { getDatabase, ref, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCVSzQS1c7H4BLhsDF_fW8wnqUN4B35LPA",
@@ -71,12 +71,15 @@
                 const [headerRes, footerRes] = await Promise.all([fetch('header.html'), fetch('footer.html')]);
                 document.getElementById('header').innerHTML = await headerRes.text();
                 document.getElementById('footer').innerHTML = await footerRes.text();
+                const script = document.createElement('script');
+                script.src = 'script.js';
+                script.type = 'module';
+                document.body.appendChild(script);
             } catch (error) { console.error("Layout load failed:", error); }
         }
         
         function displayOrdersAsCards(orders) {
             if (!orders || orders.length === 0) {
-                loginPrompt.style.display = 'none';
                 orderListDiv.innerHTML = '<p class="text-center text-gray-600 p-8">আপনি এখনো কোনো অর্ডার করেননি।</p>';
                 return;
             }
@@ -95,53 +98,39 @@
             });
         }
         
-        async function loadAllUserOrders(user) {
+        async function fetchOrders(user) {
             orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-8">আপনার অর্ডারগুলো লোড হচ্ছে...</p>';
-            
-            const orderIdsToFetch = new Set();
-            
-            const localOrderKeys = JSON.parse(localStorage.getItem('myOrders') || '[]');
-            localOrderKeys.forEach(id => orderIdsToFetch.add(id));
-
-            if (user) {
-                const userOrderHistoryRef = ref(database, `users/${user.uid}/orderHistory`);
-                const historySnapshot = await get(userOrderHistoryRef);
-                if (historySnapshot.exists()) {
-                    Object.keys(historySnapshot.val()).forEach(id => orderIdsToFetch.add(id));
-                }
-            }
-            
-            if (orderIdsToFetch.size === 0) {
-                orderListDiv.innerHTML = '<p class="text-center text-gray-600 p-8">আপনি এখনো কোনো অর্ডার করেননি।</p>';
-                if (!user) {
-                    loginPrompt.style.display = 'block';
-                    document.getElementById('loginButton')?.addEventListener('click', () => signInWithPopup(auth, provider));
-                }
-                return;
-            }
-
-            loginPrompt.style.display = 'none';
-
+            let allOrders = [];
             try {
-                const orderPromises = Array.from(orderIdsToFetch).map(orderId => get(ref(database, `orders/${orderId}`)));
-                const orderSnapshots = await Promise.all(orderPromises);
-                
-                const allOrders = orderSnapshots
-                    .filter(snapshot => snapshot.exists())
-                    .map(snapshot => ({ key: snapshot.key, ...snapshot.val() }))
-                    .sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
-
-                displayOrdersAsCards(allOrders);
-
+                const ordersRef = ref(database, 'orders');
+                if (user) {
+                    const [newOrdersSnap, oldOrdersSnap] = await Promise.all([
+                        get(query(ordersRef, orderByChild('userId'), equalTo(user.uid))),
+                        get(query(ordersRef, orderByChild('userEmail'), equalTo(user.email)))
+                    ]);
+                    if (newOrdersSnap.exists()) newOrdersSnap.forEach(child => allOrders.push({ key: child.key, ...child.val() }));
+                    if (oldOrdersSnap.exists()) oldOrdersSnap.forEach(child => {
+                        if (!allOrders.some(o => o.key === child.key)) allOrders.push({ key: child.key, ...child.val() });
+                    });
+                } else {
+                    const localOrderKeys = JSON.parse(localStorage.getItem('myOrders') || '[]');
+                    if (localOrderKeys.length > 0) {
+                        const snapshots = await Promise.all(localOrderKeys.map(key => get(ref(database, `orders/${key}`))));
+                        allOrders = snapshots.filter(s => s.exists()).map(s => ({ key: s.key, ...s.val() }));
+                    }
+                }
             } catch (error) {
                 console.error("Order fetch failed:", error);
-                orderListDiv.innerHTML = `<p class="text-center text-red-500 p-8">অর্ডার লোড করা সম্ভব হয়নি। ডাটাবেজ রুলস চেক করুন।</p>`;
+                orderListDiv.innerHTML = `<p class="text-center text-red-500 p-8">অর্ডার লোড করা সম্ভব হয়নি।</p>`;
+                return;
             }
+            allOrders.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+            displayOrdersAsCards(allOrders);
         }
         
         document.addEventListener("DOMContentLoaded", async () => {
             await loadLayout();
-
+            
             const urlParams = new URLSearchParams(window.location.search);
             const urlOrderId = urlParams.get('orderId');
 
@@ -152,17 +141,30 @@
                     const snapshot = await get(orderRef);
 
                     if (snapshot.exists()) {
-                        showOrderDetailsModal({ key: snapshot.key, ...snapshot.val() });
-                        onAuthStateChanged(auth, user => loadAllUserOrders(user));
+                        const orderData = { key: snapshot.key, ...snapshot.val() };
+                        showOrderDetailsModal(orderData);
+                        onAuthStateChanged(auth, user => fetchOrders(user));
                     } else {
                         orderListDiv.innerHTML = '<p class="text-center text-red-500 p-8">দুঃখিত, এই অর্ডার আইডিটি খুঁজে পাওয়া যায়নি।</p>';
                     }
-                } catch(error) {
+                } catch (error) {
+                     console.error("Failed to fetch single order:", error);
                      orderListDiv.innerHTML = '<p class="text-center text-red-500 p-8">অর্ডারটি লোড করার সময় একটি সমস্যা হয়েছে।</p>';
                 }
             } else {
-                onAuthStateChanged(auth, user => {
-                    loadAllUserOrders(user);
+                document.getElementById('loginButton')?.addEventListener('click', () => signInWithPopup(auth, provider));
+                onAuthStateChanged(auth, (user) => {
+                    const hasLocalOrders = (JSON.parse(localStorage.getItem('myOrders') || '[]')).length > 0;
+                    if (user) {
+                        loginPrompt.style.display = 'none';
+                        fetchOrders(user);
+                    } else if (hasLocalOrders) {
+                        loginPrompt.style.display = 'none';
+                        fetchOrders(null);
+                    } else {
+                        loginPrompt.style.display = 'block';
+                        orderListDiv.innerHTML = '';
+                    }
                 });
             }
         });
