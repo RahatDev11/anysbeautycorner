@@ -44,23 +44,9 @@ function getStatusMessage(status, orderId) {
 
 // --- মূল Netlify Function হ্যান্ডলার ---
 exports.handler = async (event) => {
-    // --- ধাপ ১: এনভায়রনমেন্ট ভেরিয়েবল এবং রিকোয়েস্ট ডেটা লগ করা ---
-    console.log("--- STARTING FUNCTION EXECUTION ---");
-    try {
-        console.log("Received Order ID:", JSON.parse(event.body).orderId);
-    } catch (e) { console.log("Could not parse orderId from body"); }
-    console.log("OneSignal App ID from env:", process.env.ONESIGNAL_APP_ID ? "FOUND" : "NOT FOUND");
-    console.log("OneSignal REST API Key from env (first 5 chars):", process.env.ONESIGNAL_REST_API_KEY ? process.env.ONESIGNAL_REST_API_KEY.substring(0, 5) + "..." : "NOT FOUND");
-    console.log("Firebase Service Account from env:", process.env.FIREBASE_SERVICE_ACCOUNT_BASE64 ? "FOUND" : "NOT FOUND");
-    // --------------------------------------------------------
-
-    // CORS প্রি-ফ্লাইট রিকোয়েস্ট হ্যান্ডেল করা
-    if (event.httpMethod === 'OPTIONS') {
-        return { statusCode: 204, headers, body: '' };
-    }
-    if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, headers, body: 'Method Not Allowed' };
-    }
+    // CORS এবং রিকোয়েস্ট মেথড চেক করা
+    if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers, body: '' };
+    if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: 'Method Not Allowed' };
 
     let orderId;
     try {
@@ -76,7 +62,6 @@ exports.handler = async (event) => {
         const orderData = snapshot.val();
 
         if (!orderData) {
-            console.error(`Order with ID ${orderId} not found in Firebase.`);
             return { statusCode: 404, headers, body: JSON.stringify({ success: false, message: 'Order not found.' }) };
         }
 
@@ -84,21 +69,38 @@ exports.handler = async (event) => {
         const status = orderData.status;
 
         if (!playerID) {
-            console.log(`No Player ID found for order ${orderId}. Skipping notification.`);
             return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'No Player ID found, notification skipped.' }) };
         }
+
+        // --- প্রোডাক্টের ছবি বের করার জন্য নতুন কোড ---
+        let productImage = null;
+        if (orderData.cartItems && orderData.cartItems.length > 0) {
+            // প্রথম প্রোডাক্টের ছবিটি নেওয়া হচ্ছে
+            const firstItem = orderData.cartItems[0];
+            if (firstItem.image) {
+                productImage = firstItem.image;
+            }
+        }
+        // ------------------------------------------
 
         const notificationPayload = {
             app_id: ONE_SIGNAL_APP_ID,
             include_player_ids: [playerID],
             headings: { "en": "Any's Beauty Corner" },
             contents: { "en": getStatusMessage(status, orderId) },
-            data: { "orderId": orderId }
+            data: { "orderId": orderId },
+            
+            // --- নোটিফিকেশনে ছবি যুক্ত করার জন্য নতুন প্যারামিটার ---
+            big_picture: productImage, // বড় ছবি হিসেবে দেখানো হবে (Android, Chrome Desktop)
+            chrome_web_image: productImage // Chrome ওয়েব পুশের জন্য
+            // ----------------------------------------------------
         };
 
-        // --- ধাপ ২: OneSignal-কে কী ডেটা পাঠানো হচ্ছে তা লগ করা ---
-        console.log("Sending payload to OneSignal:", JSON.stringify(notificationPayload, null, 2));
-        // ----------------------------------------------------
+        // যদি কোনো ছবি না থাকে, তাহলে এই প্যারামিটারগুলো না পাঠানোই ভালো
+        if (!productImage) {
+            delete notificationPayload.big_picture;
+            delete notificationPayload.chrome_web_image;
+        }
 
         const response = await fetch('https://onesignal.com/api/v1/notifications', {
             method: 'POST',
@@ -108,23 +110,16 @@ exports.handler = async (event) => {
             },
             body: JSON.stringify(notificationPayload)
         });
-
-        const responseData = await response.json();
-
-        // --- ধাপ ৩: OneSignal থেকে কী উত্তর আসছে তা লগ করা ---
-        console.log("Received response from OneSignal:", responseData);
-        // --------------------------------------------------
         
+        const responseData = await response.json();
         if (responseData.errors) {
             console.error("OneSignal returned an error:", responseData.errors);
-            return { statusCode: 500, headers, body: JSON.stringify({ success: false, message: 'OneSignal returned an error.', details: responseData.errors }) };
         }
 
-        console.log("--- FUNCTION EXECUTION SUCCESSFUL ---");
-        return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Notification sent successfully.', oneSignalResponse: responseData }) };
+        return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Notification sent successfully.' }) };
 
     } catch (error) {
-        console.error('Error processing notification request:', error);
+        console.error('Error processing notification:', error);
         return { statusCode: 500, headers, body: JSON.stringify({ success: false, message: 'An internal error occurred.' }) };
     }
 };
