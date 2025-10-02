@@ -80,9 +80,7 @@ exports.handler = async (event) => {
             }
         }
 
-        // --- অর্ডার ট্র্যাক পেজের জন্য URL তৈরি ---
         const targetUrl = `https://anysbeautycorner.netlify.app/order-track.html?orderId=${orderId}`;
-        // ------------------------------------
 
         const notificationPayload = {
             app_id: ONE_SIGNAL_APP_ID,
@@ -90,10 +88,9 @@ exports.handler = async (event) => {
             headings: { "en": "Any's Beauty Corner" },
             contents: { "en": getStatusMessage(status, orderId) },
             
-            // --- নোটিফিকেশনে ক্লিক করলে কোথায় যাবে তা নির্ধারণ ---
-            url: targetUrl,
+            // --- সমস্যার সমাধান: শুধুমাত্র web_url ব্যবহার করা ---
             web_url: targetUrl,
-            // ----------------------------------------------------
+            // ---------------------------------------------------
 
             data: { "orderId": orderId },
             big_picture: productImage,
@@ -104,10 +101,6 @@ exports.handler = async (event) => {
             delete notificationPayload.big_picture;
             delete notificationPayload.chrome_web_image;
         }
-
-        // --- ডিবাগিং এর জন্য নতুন লগ: OneSignal-কে কী URL পাঠানো হচ্ছে তা দেখা ---
-        console.log("Notification URL being sent to OneSignal:", targetUrl);
-        // --------------------------------------------------------------------
 
         const response = await fetch('https://onesignal.com/api/v1/notifications', {
             method: 'POST',
