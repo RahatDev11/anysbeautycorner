@@ -81,7 +81,7 @@ exports.handler = async (event) => {
         }
 
         // --- অর্ডার ট্র্যাক পেজের জন্য URL তৈরি ---
-        const targetUrl = `https://anysbeautycorner.netlify.app/order-track.html?orderId=${orderId}`;
+        const targetUrl = `https://anysbeautycorner.netlify.app/order-track}`;
         // ------------------------------------
 
         const notificationPayload = {
