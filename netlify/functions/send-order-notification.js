@@ -42,6 +42,66 @@ function getStatusMessage(status, orderId) {
     return messages[status] || `আপনার অর্ডারের স্ট্যাটাস এখন: ${status}`;
 }
 
+// --- নোটিফিকেশন পাঠানোর ফাংশন ---
+async function sendNotification(playerID, orderId, status, productImage = null) {
+    const targetUrl = `https://anysbeautycorner.netlify.app/order-track.html?orderId=${orderId}`;
+    
+    const notificationPayload = {
+        app_id: ONE_SIGNAL_APP_ID,
+        include_player_ids: [playerID],
+        headings: { "en": "Any's Beauty Corner" },
+        contents: { "en": getStatusMessage(status, orderId) },
+        web_url: targetUrl,
+        data: { "orderId": orderId }
+    };
+
+    // ইমেজ থাকলে শুধুমাত্র যোগ করা
+    if (productImage) {
+        notificationPayload.big_picture = productImage;
+        notificationPayload.chrome_web_image = productImage;
+    }
+
+    try {
+        const response = await fetch('https://onesignal.com/api/v1/notifications', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8',
+                'Authorization': `Basic ${ONE_SIGNAL_REST_API_KEY}`
+            },
+            body: JSON.stringify(notificationPayload)
+        });
+        
+        // রেসপন্স টেক্সট আগে পড়া
+        const responseText = await response.text();
+        console.log('OneSignal Response:', responseText);
+        
+        let responseData;
+        try {
+            responseData = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('JSON Parse Error:', parseError);
+            return {
+                success: false,
+                error: `OneSignal API Error: ${responseText}`,
+                status: response.status
+            };
+        }
+        
+        return {
+            success: response.ok,
+            data: responseData,
+            status: response.status
+        };
+        
+    } catch (error) {
+        console.error('Fetch Error:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
 // --- মূল Netlify Function হ্যান্ডলার ---
 exports.handler = async (event) => {
     // CORS এবং রিকোয়েস্ট মেথড চেক করা
@@ -50,10 +110,18 @@ exports.handler = async (event) => {
 
     let orderId;
     try {
-        orderId = JSON.parse(event.body).orderId;
+        const body = JSON.parse(event.body);
+        orderId = body.orderId;
         if (!orderId) throw new Error('Order ID is required.');
     } catch (error) {
-        return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'Invalid JSON or missing orderId.' }) };
+        return { 
+            statusCode: 400, 
+            headers, 
+            body: JSON.stringify({ 
+                success: false, 
+                message: 'Invalid JSON or missing orderId.' 
+            }) 
+        };
     }
 
     try {
@@ -62,14 +130,28 @@ exports.handler = async (event) => {
         const orderData = snapshot.val();
 
         if (!orderData) {
-            return { statusCode: 404, headers, body: JSON.stringify({ success: false, message: 'Order not found.' }) };
+            return { 
+                statusCode: 404, 
+                headers, 
+                body: JSON.stringify({ 
+                    success: false, 
+                    message: 'Order not found.' 
+                }) 
+            };
         }
 
         const playerID = orderData.oneSignalPlayerId;
         const status = orderData.status;
 
         if (!playerID) {
-            return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'No Player ID found, notification skipped.' }) };
+            return { 
+                statusCode: 200, 
+                headers, 
+                body: JSON.stringify({ 
+                    success: true, 
+                    message: 'No Player ID found, notification skipped.' 
+                }) 
+            };
         }
 
         let productImage = null;
@@ -80,46 +162,54 @@ exports.handler = async (event) => {
             }
         }
 
-        const targetUrl = `https://anysbeautycorner.netlify.app/order-track.html?orderId=${orderId}`;
-
-        const notificationPayload = {
-            app_id: ONE_SIGNAL_APP_ID,
-            include_player_ids: [playerID],
-            headings: { "en": "Any's Beauty Corner" },
-            contents: { "en": getStatusMessage(status, orderId) },
-            
-            // --- সমস্যার সমাধান: শুধুমাত্র web_url ব্যবহার করা ---
-            web_url: targetUrl,
-            // ---------------------------------------------------
-
-            data: { "orderId": orderId },
-            big_picture: productImage,
-            chrome_web_image: productImage
-        };
-
-        if (!productImage) {
-            delete notificationPayload.big_picture;
-            delete notificationPayload.chrome_web_image;
-        }
-
-        const response = await fetch('https://onesignal.com/api/v1/notifications', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json; charset=utf-8',
-                'Authorization': `Basic ${ONE_SIGNAL_REST_API_KEY}`
-            },
-            body: JSON.stringify(notificationPayload)
-        });
+        const notificationResult = await sendNotification(playerID, orderId, status, productImage);
         
-        const responseData = await response.json();
-        if (responseData.errors) {
-            console.error("OneSignal returned an error:", responseData.errors);
+        if (!notificationResult.success) {
+            console.error("OneSignal API Error:", notificationResult.error);
+            return { 
+                statusCode: 500, 
+                headers, 
+                body: JSON.stringify({ 
+                    success: false, 
+                    message: 'Failed to send notification.',
+                    error: notificationResult.error
+                }) 
+            };
         }
 
-        return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Notification sent successfully.' }) };
+        if (notificationResult.data.errors) {
+            console.error("OneSignal returned errors:", notificationResult.data.errors);
+            return { 
+                statusCode: 500, 
+                headers, 
+                body: JSON.stringify({ 
+                    success: false, 
+                    message: 'OneSignal API error.',
+                    errors: notificationResult.data.errors
+                }) 
+            };
+        }
+
+        return { 
+            statusCode: 200, 
+            headers, 
+            body: JSON.stringify({ 
+                success: true, 
+                message: 'Notification sent successfully.',
+                notificationId: notificationResult.data.id
+            }) 
+        };
 
     } catch (error) {
         console.error('Error processing notification:', error);
-        return { statusCode: 500, headers, body: JSON.stringify({ success: false, message: 'An internal error occurred.' }) };
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ 
+                success: false, 
+                message: 'An internal error occurred.',
+                error: error.message
+            }) 
+        };
     }
 };
