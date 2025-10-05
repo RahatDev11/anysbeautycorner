@@ -1,4 +1,9 @@
-
+@font-face {
+    font-family: 'SolaimanLipi';
+    src: url('./fonts/SolaimanLipi.ttf') format('truetype'); /* Adjust path if necessary */
+    font-weight: normal;
+    font-style: normal;
+}
 
 body {
     font-family: 'SolaimanLipi', sans-serif;
