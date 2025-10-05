@@ -20,7 +20,6 @@ if (!admin.apps.length) {
       databaseURL: "https://nahid-6714-default-rtdb.asia-southeast1.firebasedatabase.app"
     });
   } catch (e) {
-    console.error('Firebase admin initialization error', e);
   }
 }
 const db = admin.database();
@@ -61,15 +60,12 @@ async function callOneSignalAPI(notificationPayload) {
             body: JSON.stringify(notificationPayload)
         });
         
-        // রেসপন্স টেক্সট আগে পড়া
         const responseText = await response.text();
-        console.log('OneSignal Bulk Response:', responseText);
         
         let responseData;
         try {
             responseData = JSON.parse(responseText);
         } catch (parseError) {
-            console.error('JSON Parse Error:', parseError);
             return {
                 success: false,
                 error: `OneSignal API Error: ${responseText}`,
@@ -84,7 +80,6 @@ async function callOneSignalAPI(notificationPayload) {
         };
         
     } catch (error) {
-        console.error('Fetch Error:', error);
         return {
             success: false,
             error: error.message
@@ -138,7 +133,6 @@ async function getAllPlayerIds() {
         
         return playerIds;
     } catch (error) {
-        console.error('Error fetching player IDs:', error);
         return [];
     }
 }
@@ -261,7 +255,6 @@ exports.handler = async (event) => {
         }
 
         if (!result.success) {
-            console.error("OneSignal API Error:", result.error);
             return { 
                 statusCode: 500, 
                 headers, 
@@ -274,7 +267,6 @@ exports.handler = async (event) => {
         }
 
         if (result.data.errors) {
-            console.error("OneSignal returned errors:", result.data.errors);
             return { 
                 statusCode: 500, 
                 headers, 
@@ -298,7 +290,6 @@ exports.handler = async (event) => {
         };
 
     } catch (error) {
-        console.error('Error in bulk notification:', error);
         return { 
             statusCode: 500, 
             headers, 

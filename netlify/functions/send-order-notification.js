@@ -20,7 +20,6 @@ if (!admin.apps.length) {
       databaseURL: "https://nahid-6714-default-rtdb.asia-southeast1.firebasedatabase.app"
     });
   } catch (e) {
-    console.error('Firebase admin initialization error', e);
   }
 }
 const db = admin.database();
@@ -44,13 +43,6 @@ function getStatusMessage(status, orderId) {
 
 // --- নোটিফিকেশন পাঠানোর ফাংশন (সরলীকৃত) ---
 async function sendNotification(playerID, orderId, status, productImage = null) {
-    console.log('🔍 Debug: Starting sendNotification');
-    console.log('🔍 Debug: Player ID:', playerID);
-    console.log('🔍 Debug: Order ID:', orderId);
-    console.log('🔍 Debug: Status:', status);
-    console.log('🔍 Debug: OneSignal App ID exists:', !!ONE_SIGNAL_APP_ID);
-    console.log('🔍 Debug: OneSignal API Key exists:', !!ONE_SIGNAL_REST_API_KEY);
-
     const targetUrl = `https://anysbeautycorner.netlify.app/order-track.html?orderId=${orderId}`;
     
     const notificationPayload = {
@@ -68,11 +60,7 @@ async function sendNotification(playerID, orderId, status, productImage = null) 
         notificationPayload.chrome_web_image = productImage;
     }
 
-    console.log('🔍 Debug: Notification Payload:', JSON.stringify(notificationPayload, null, 2));
-
     try {
-        console.log('🔍 Debug: Making API call to OneSignal...');
-        
         const response = await fetch('https://onesignal.com/api/v1/notifications', {
             method: 'POST',
             headers: {
@@ -82,16 +70,9 @@ async function sendNotification(playerID, orderId, status, productImage = null) 
             body: JSON.stringify(notificationPayload)
         });
         
-        console.log('🔍 Debug: Response Status:', response.status);
-        console.log('🔍 Debug: Response OK:', response.ok);
-        
-        // রেসপন্স টেক্সট আগে পড়া
         const responseText = await response.text();
-        console.log('🔍 Debug: Raw Response Text:', responseText);
         
-        // রেসপন্স টেক্সট চেক করা
         if (!responseText || responseText.trim() === '') {
-            console.log('🔍 Debug: Empty response from OneSignal');
             return {
                 success: false,
                 error: 'Empty response from OneSignal API',
@@ -99,16 +80,10 @@ async function sendNotification(playerID, orderId, status, productImage = null) 
             };
         }
 
-        // JSON পার্স করার চেষ্টা করা
         let responseData;
         try {
             responseData = JSON.parse(responseText);
-            console.log('🔍 Debug: Parsed Response Data:', responseData);
         } catch (parseError) {
-            console.error('❌ JSON Parse Error:', parseError);
-            console.error('❌ Response that failed to parse:', responseText);
-            
-            // যদি JSON পার্স না হয়, তাহলে আমরা raw error return করব
             return {
                 success: false,
                 error: `OneSignal API returned non-JSON response: ${responseText}`,
@@ -124,7 +99,6 @@ async function sendNotification(playerID, orderId, status, productImage = null) 
         };
         
     } catch (error) {
-        console.error('❌ Fetch Error:', error);
         return {
             success: false,
             error: error.message
@@ -134,30 +108,20 @@ async function sendNotification(playerID, orderId, status, productImage = null) 
 
 // --- মূল Netlify Function হ্যান্ডলার ---
 exports.handler = async (event) => {
-    console.log('🔍 Debug: Function started');
-    console.log('🔍 Debug: HTTP Method:', event.httpMethod);
-    
-    // CORS এবং রিকোয়েস্ট মেথড চেক করা
     if (event.httpMethod === 'OPTIONS') {
-        console.log('🔍 Debug: Handling OPTIONS request');
         return { statusCode: 204, headers, body: '' };
     }
     
     if (event.httpMethod !== 'POST') {
-        console.log('🔍 Debug: Method not allowed');
         return { statusCode: 405, headers, body: 'Method Not Allowed' };
     }
-
-    console.log('🔍 Debug: Request Body:', event.body);
 
     let orderId;
     try {
         const body = JSON.parse(event.body);
         orderId = body.orderId;
         if (!orderId) throw new Error('Order ID is required.');
-        console.log('🔍 Debug: Order ID parsed:', orderId);
     } catch (error) {
-        console.error('❌ Error parsing request:', error);
         return { 
             statusCode: 400, 
             headers, 
@@ -169,13 +133,11 @@ exports.handler = async (event) => {
     }
 
     try {
-        console.log('🔍 Debug: Fetching order from Firebase...');
         const orderRef = db.ref(`orders/${orderId}`);
         const snapshot = await orderRef.once('value');
         const orderData = snapshot.val();
 
         if (!orderData) {
-            console.log('❌ Order not found:', orderId);
             return { 
                 statusCode: 404, 
                 headers, 
@@ -186,16 +148,10 @@ exports.handler = async (event) => {
             };
         }
 
-        console.log('🔍 Debug: Order data found:', orderData);
-
         const playerID = orderData.oneSignalPlayerId;
         const status = orderData.status;
 
-        console.log('🔍 Debug: Player ID from order:', playerID);
-        console.log('🔍 Debug: Status from order:', status);
-
         if (!playerID) {
-            console.log('⚠️ No Player ID found, skipping notification');
             return { 
                 statusCode: 200, 
                 headers, 
@@ -214,13 +170,9 @@ exports.handler = async (event) => {
             }
         }
 
-        console.log('🔍 Debug: Calling sendNotification...');
         const notificationResult = await sendNotification(playerID, orderId, status, productImage);
         
-        console.log('🔍 Debug: Notification result:', notificationResult);
-
         if (!notificationResult.success) {
-            console.error("❌ OneSignal API Error:", notificationResult.error);
             return { 
                 statusCode: 500, 
                 headers, 
@@ -234,7 +186,6 @@ exports.handler = async (event) => {
         }
 
         if (notificationResult.data && notificationResult.data.errors) {
-            console.error("❌ OneSignal returned errors:", notificationResult.data.errors);
             return { 
                 statusCode: 500, 
                 headers, 
@@ -246,7 +197,6 @@ exports.handler = async (event) => {
             };
         }
 
-        console.log('✅ Notification sent successfully');
         return { 
             statusCode: 200, 
             headers, 
@@ -258,7 +208,6 @@ exports.handler = async (event) => {
         };
 
     } catch (error) {
-        console.error('❌ Error processing notification:', error);
         return { 
             statusCode: 500, 
             headers, 
