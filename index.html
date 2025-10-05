@@ -7,10 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+
     <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
     <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
-    <script src="script.js" type="module"></script>
     <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
 
     <script>
@@ -18,7 +17,7 @@
             theme: {
                 extend: {
                     colors: {
-                        lipstick: 'rgb(232, 232, 232)',
+                        lipstick: '#F4A7B9',
                         'lipstick-dark': '#D92C66',
                         background: '#FFF5F7',
                     }
@@ -41,7 +40,7 @@
     <!-- মোবাইল সার্চ বার -->
     <div class="md:hidden p-2 w-full fixed top-20 left-0 z-40 hidden bg-transparent" id="mobileSearchBar">
         <div class="relative">
-            <input type="text" id="searchInput" class="w-full p-2 pl-10 border-0 rounded-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-lipstick bg-white/50 backdrop-blur-sm placeholder:text-gray-400/80" placeholder="প্রোডাক্ট সার্চ করুন..." oninput="searchProductsMobile()">
+            <input type="text" id="searchInput" class="w-full p-2 pl-10 border-0 rounded-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-lipstick bg-white/50 backdrop-blur-sm placeholder:text-gray-400/80" placeholder="প্রোডাক্ট সার্চ করুন...">
             <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400/80"></i>
         </div>
         <div id="searchResults" class="mt-2 max-h-60 overflow-y-auto absolute bg-white/50 backdrop-blur-sm w-full shadow-lg rounded-lg z-50"></div>
@@ -49,7 +48,7 @@
 
     <!-- মূল কন্টেন্ট -->
     <main class="p-4 pt-20 pb-24">
-        <section id="new-arrivals" class="mb-8">
+        <section id="new-arrivals">
             <div class="swiper new-product-slider rounded-lg shadow-md">
                 <div class="swiper-wrapper" id="new-product-slider-wrapper"></div>
                 <div class="swiper-pagination"></div>
@@ -57,14 +56,14 @@
         </section>
 
         <section id="products" class="mb-6">
-            <div class="mb-10">
-                <h2 class="text-2xl font-bold text-center mb-4 text-lipstick-dark">Upcoming Events</h2>
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-center mt-2 mb-2 text-lipstick-dark">Upcoming Events</h2>
                 <div class="swiper event-slider rounded-lg">
                     <div class="swiper-wrapper" id="event-slider-wrapper"></div>
                     <div class="swiper-pagination !bottom-2"></div>
                 </div>
             </div>
-            <h2 class="text-2xl font-bold text-center mb-4 text-lipstick-dark">All Products</h2>
+            <h2 class="text-2xl font-bold text-center mt-4 mb-4 text-lipstick-dark">All Products</h2>
             <div id="productList" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
         </section>
 
@@ -174,10 +173,10 @@
     <div id="place-order-bar" class="fixed bottom-0 left-0 w-full bg-white p-3 shadow-lg z-40 hidden" style="box-shadow: 0 -2px 10px rgba(0,0,0,0.1);">
         <div class="flex justify-between items-center">
             <div>
-                <span class="text-gray-600">Total Items: <span id="bar-item-count" class="font-bold text-lipstick">0</span></span>
-                <p class="font-bold text-lg text-lipstick">BDT <span id="bar-total-price">0.00</span></p>
+                <span class="text-gray-600">Total Items: <span id="bar-item-count" class="font-bold text-red-500">0</span></span>
+                <p class="font-bold text-lg text-red-500">BDT <span id="bar-total-price">0.00</span></p>
             </div>
-            <button onclick="checkout()" class="font-bold py-3 px-6 rounded-lg bg-lipstick text-white hover:bg-lipstick-dark transition-colors">Place Order</button>
+            <button onclick="checkout()" class="font-bold py-3 px-6 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors">Place Order</button>
         </div>
     </div>
     <div id="footer"></div>
@@ -185,8 +184,7 @@
     <!-- Global Social Media Buttons for index.html -->
 
 
-    <script src="script.js" type="module"></script>
-</body>
+    <script type="module" src="js/main.js"></script>
 
 
 

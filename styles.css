@@ -1,3 +1,14 @@
+@font-face {
+    font-family: 'SolaimanLipi';
+    src: url('./fonts/SolaimanLipi.ttf') format('truetype'); /* Adjust path if necessary */
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    font-family: 'SolaimanLipi', sans-serif;
+}
+
 /* Order Form Page Styles */
 /* Add any custom styles here */
 @import url("loading-spinner.css");
@@ -6,7 +17,7 @@
 .text-lipstick { color: #A52A2A; }
 .bg-lipstick { background-color: #A52A2A; }
 .border-lipstick { border-color: #A52A2A; }
-.hover\:bg-lipstick-dark:hover { background-color: #8B1A1A; }
+.hover\:bg-lipstick-dark:hover { background-color: #7a1f1f; }
 .bg-highlight { background-color: #FFD700; }
 .text-highlight { color: black; }
 .bg-background { background-color: #FFF5F7; }
@@ -35,7 +46,7 @@
 .radio-group input[type="radio"] { accent-color: #A52A2A; margin-right: 0.5rem; }
 
 /* পেমেন্ট নোটিশ */
-.payment-notice { background: #fef2f2; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.9rem; color: #dc2626; margin-bottom: 1.5rem; display: none; border: 1px solid #fecaca; }
+.payment-notice { background: #fef2f2; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.9rem; color: #a52a2a; margin-bottom: 1.5rem; display: none; border: 1px solid #e0b2b2; }
 
 /* কার্ট আইটেম স্টাইল */
 .checkout-items { margin-bottom: 1.5rem; }
@@ -58,12 +69,12 @@
 .submit-btn {
     width: 100%; padding: 0.875rem; background: #A52A2A; color: white; border: none; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background-color 0.3s ease, opacity 0.3s ease; display: inline-flex; align-items: center; justify-content: center; letter-spacing: 0.5px;
 }
-.submit-btn:hover:not(:disabled) { background: #8B1A1A; }
+.submit-btn:hover:not(:disabled) { background: #7a1f1f; }
 .submit-btn:disabled { background: #cccccc; cursor: not-allowed; opacity: 0.7; }
 
 /* অর্ডার লিস্ট লিঙ্ক */
-.order-list-link { display: inline-flex; align-items:center; justify-content: center; text-align: center; margin-top: 1.25rem; color: #A52A2A; text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: color 0.3s ease, background-color 0.3s ease; width: 100%; padding: 0.6rem; border: 1px solid #f3d9d9; border-radius: 0.5rem; background-color: #fff5f7; } 
-.order-list-link:hover { color: #8B1A1A; background-color: #fdecec; border-color: #eebbbb; }
+.order-list-link { display: inline-flex; align-items:center; justify-content: center; text-align: center; margin-top: 1.25rem; color: #A52A2A; text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: color 0.3s ease, background-color 0.3s ease; width: 100%; padding: 0.6rem; border: 1px solid #e0b2b2; border-radius: 0.5rem; background-color: #fff5f7; } 
+.order-list-link:hover { color: #7a1f1f; background-color: #f5e0e0; border-color: #d4a3a3; }
 
 /* Hide scrollbar utility */
 .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -83,6 +94,7 @@
      .checkout-item-details { margin-left: 0.75rem; }
      .checkout-item-details p { font-size: 0.85rem; }
      .price-summary p { font-size: 0.9rem; }
+     .submit-btn { font-size: 0.95rem; padding: 0.75rem; }
      .submit-btn { font-size: 0.95rem; padding: 0.75rem; }
      .order-list-link { font-size: 0.9rem; padding: 0.5rem; }
  }
