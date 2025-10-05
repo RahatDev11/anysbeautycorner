@@ -3,7 +3,7 @@
 // =================================================================
 
 // Import Firebase Config (for initialization and global access to auth/db instances)
-import { auth, database, ref, onValue } from '../js/modules/firebase-config.js';
+import { auth, onAuthStateChanged, database, ref, onValue } from '../js/modules/firebase-config.js';
 
 // Import UI Utilities
 import { showToast, hideGlobalLoadingSpinner, openSidebar, closeSidebar, toggleSubMenuMobile, handleSubMenuItemClick, toggleSubMenuDesktop, openCartSidebar, closeCartSidebar, focusMobileSearch, setupSocialMediaButtons } from '../js/modules/ui-utilities.js';
@@ -12,7 +12,7 @@ import { showToast, hideGlobalLoadingSpinner, openSidebar, closeSidebar, toggleS
 import { sendTelegramNotification, sendNotificationForOrder } from '../js/modules/notification-manager.js';
 
 // Import Auth Manager
-import { loginWithGmail, confirmLogout, logout, isAdmin, updateLoginButton, onAuthStateChanged } from '../js/modules/auth-manager.js';
+import { loginWithGmail, confirmLogout, logout, isAdmin, updateLoginButton } from '../js/modules/auth-manager.js';
 
 // Import Cart Manager
 import { loadCart, addToCart, updateQuantity, removeFromCart, checkout, buyNow, setProducts as setCartManagerProducts } from '../js/modules/cart-manager.js';
@@ -46,7 +46,7 @@ async function loadHeaderAndSetup() {
             }
 
             // Wait for initial auth state to be determined and login button updated
-            auth.onAuthStateChanged(user => {
+            onAuthStateChanged(auth, user => {
                 updateLoginButton(user);
             });
             
