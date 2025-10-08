@@ -6,116 +6,11 @@
     <title>অর্ডার ট্র্যাক - আমার দোকান</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        .bg-lipstick {
-            background-color: #E91E63;
-        }
-        .text-lipstick {
-            color: #E91E63;
-        }
-        .focus\:ring-lipstick:focus {
-            ring-color: #E91E63;
-        }
-        
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-        
-        .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 600px;
-            position: relative;
-        }
-        
-        .modal-close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            line-height: 20px;
-        }
-        
-        .modal-close:hover,
-        .modal-close:focus {
-            color: #000;
-        }
-        
-        .order-card {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-        }
-        
-        .order-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-        }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        
-        .status-pending {
-            background-color: #FFF3CD;
-            color: #856404;
-        }
-        
-        .status-processing {
-            background-color: #CCE5FF;
-            color: #004085;
-        }
-        
-        .status-shipped {
-            background-color: #D1ECF1;
-            color: #0C5460;
-        }
-        
-        .status-delivered {
-            background-color: #D4EDDA;
-            color: #155724;
-        }
-        
-        .status-cancelled {
-            background-color: #F8D7DA;
-            color: #721C24;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body class="bg-gray-100">
     <!-- হেডার -->
-    <header class="bg-white shadow-md sticky top-0 z-50">
-        <div class="container mx-auto px-4 py-4">
-            <div class="flex items-center justify-between">
-                <h1 class="text-2xl font-bold text-lipstick">আমার দোকান</h1>
-                <nav class="space-x-4">
-                    <a href="index.html" class="text-gray-600 hover:text-lipstick">হোম</a>
-                    <a href="order-track.html" class="text-lipstick font-semibold">অর্ডার ট্র্যাক</a>
-                </nav>
-            </div>
-        </div>
-    </header>
+    <div id="header"></div>
 
     <!-- মেইন কন্টেন্ট -->
     <div class="container mx-auto py-8 px-4">
@@ -126,34 +21,32 @@
             <p class="text-lg text-gray-700 mb-4 text-center">আপনার অর্ডার ট্র্যাক করতে অর্ডার আইডি দিন:</p>
             <div class="flex space-x-2">
                 <input type="text" id="orderIdInput" placeholder="আপনার অর্ডার আইডি লিখুন" class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lipstick">
-                <button id="trackOrderButton" class="bg-lipstick text-white px-5 py-3 rounded-lg hover:bg-opacity-90 transition duration-300 ease-in-out">
-                    ট্র্যাক করুন
-                </button>
+                <button id="trackOrderButton" class="bg-lipstick text-white px-5 py-3 rounded-lg hover:bg-opacity-90 transition duration-300 ease-in-out">ট্র্যাক করুন</button>
             </div>
             <p id="orderIdError" class="text-red-500 text-sm mt-2 hidden">অনুগ্রহ করে একটি বৈধ অর্ডার আইডি দিন।</p>
-            <div id="searchResult" class="mt-4 hidden"></div>
+            <div id="searchResult" class="mt-4"></div>
         </div>
 
         <!-- Loading Spinner -->
-        <div id="loadingSpinner" class="text-center hidden">
+        <div id="loadingSpinner" class="text-center" style="display: none;">
             <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-lipstick"></div>
             <p class="mt-2 text-gray-600">লোড হচ্ছে...</p>
         </div>
 
         <!-- লগইন প্রম্পট -->
-        <div id="loginPrompt" class="text-center hidden">
+        <div id="loginPrompt" class="text-center" style="display: none;">
             <p class="text-lg text-gray-600 mb-4">আপনার অর্ডার দেখতে অনুগ্রহ করে লগইন করুন।</p>
             <button id="loginButton" class="bg-lipstick text-white px-6 py-2 rounded-lg hover:bg-opacity-90">লগইন করুন</button>
         </div>
 
         <!-- অর্ডার লিস্ট -->
-        <div id="orderListContainer" class="hidden">
-            <h2 class="text-2xl font-semibold mb-4 text-center">আপনার সকল অর্ডার</h2>
+        <div id="orderListContainer" style="display: none;">
+            <h2 class="text-2xl font-semibold mb-4 text-center text-lipstick">আপনার সকল অর্ডার</h2>
             <div id="orderList" class="max-w-4xl mx-auto"></div>
         </div>
 
         <!-- No Orders Message -->
-        <div id="noOrdersMessage" class="text-center hidden">
+        <div id="noOrdersMessage" class="text-center" style="display: none;">
             <p class="text-gray-600 text-lg">কোন অর্ডার পাওয়া যায়নি।</p>
         </div>
     </div>
@@ -167,241 +60,58 @@
     </div>
 
     <!-- ফুটার -->
-    <footer class="bg-gray-800 text-white py-6 mt-12">
-        <div class="container mx-auto px-4 text-center">
-            <p>&copy; 2024 আমার দোকান। সর্বস্বত্ব সংরক্ষিত।</p>
-        </div>
-    </footer>
+    <div id="footer"></div>
 
+    <!-- Firebase এবং স্ক্রিপ্ট -->
+    <script src="script.js" type="module"></script>
+    
     <!-- সোশ্যাল মিডিয়া ফ্লোটিং বাটন -->
     <div class="fixed bottom-4 right-4 z-50">
-        <button id="shareButton" class="bg-lipstick text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center hover:bg-opacity-90 transition">
+        <!-- শেয়ার বাটন -->
+        <button id="shareButton" class="bg-lipstick text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center hover:bg-opacity-90 transition-all duration-300">
             <i class="fas fa-share-alt"></i>
         </button>
-        <div id="socialIcons" class="hidden space-y-2 mt-2">
-            <a href="https://www.facebook.com/share/1PyLUzGE9P/" target="_blank" class="bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow hover:bg-opacity-90 transition">
+        <!-- সোশ্যাল মিডিয়া আইকনগুলি (লুকানো অবস্থায়) -->
+        <div id="socialIcons" class="space-y-2 mt-2 transition-all duration-300" style="display: none;">
+            <a href="https://www.facebook.com/share/1PyLUzGE9P/" target="_blank" class="bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:bg-opacity-90 transition-all duration-300">
                 <i class="fab fa-facebook-f"></i>
             </a>
-            <a href="https://www.instagram.com/anysbeautycorner/?utm_medium=copy_link" target="_blank" class="bg-pink-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow hover:bg-opacity-90 transition">
+            <a href="https://www.instagram.com/anysbeautycorner/?utm_medium=copy_link" target="_blank" class="bg-pink-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:bg-opacity-90 transition-all duration-300">
                 <i class="fab fa-instagram"></i>
             </a>
-            <a href="https://www.tiktok.com/@anysbeautycorner" target="_blank" class="bg-black text-white w-10 h-10 rounded-full flex items-center justify-center shadow hover:bg-opacity-90 transition">
+            <a href="https://www.tiktok.com/@anysbeautycorner" target="_blank" class="bg-black text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:bg-opacity-90 transition-all duration-300">
                 <i class="fab fa-tiktok"></i>
             </a>
-            <a href="https://youtube.com/@anysbeautycorner?si=oXGtEuakP_SIPH_Q" target="_blank" class="bg-red-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow hover:bg-opacity-90 transition">
+            <a href="https://youtube.com/@anysbeautycorner?si=oXGtEuakP_SIPH_Q" target="_blank" class="bg-red-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:bg-opacity-90 transition-all duration-300">
                 <i class="fab fa-youtube"></i>
             </a>
         </div>
     </div>
 
     <script>
-        // Demo data (আপনার Firebase data এর সাথে replace করবেন)
-        const demoOrders = [
-            {
-                id: 'ORD001',
-                date: '২০২৪-০১-১৫',
-                total: '২৫০০ টাকা',
-                status: 'delivered',
-                items: [
-                    { name: 'লিপস্টিক', quantity: 2, price: '৫০০' },
-                    { name: 'ফাউন্ডেশন', quantity: 1, price: '১৫০০' }
-                ]
-            },
-            {
-                id: 'ORD002',
-                date: '২০২৪-০১-২০',
-                total: '১৮০০ টাকা',
-                status: 'shipped',
-                items: [
-                    { name: 'মাস্কারা', quantity: 1, price: '৮০০' },
-                    { name: 'আইলাইনার', quantity: 2, price: '৫০০' }
-                ]
-            }
-        ];
-
-        // Status labels in Bengali
-        const statusLabels = {
-            pending: 'অপেক্ষমাণ',
-            processing: 'প্রক্রিয়াধীন',
-            shipped: 'পাঠানো হয়েছে',
-            delivered: 'ডেলিভারি সম্পন্ন',
-            cancelled: 'বাতিল'
-        };
-
-        // Initialize
+        // Social media toggle functionality
         document.addEventListener('DOMContentLoaded', function() {
-            setupEventListeners();
-            checkUserLogin();
-        });
-
-        function setupEventListeners() {
-            // Track order button
-            document.getElementById('trackOrderButton').addEventListener('click', trackOrder);
-            
-            // Enter key on input
-            document.getElementById('orderIdInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') trackOrder();
-            });
-
-            // Modal close
-            document.getElementById('modalClose').addEventListener('click', closeModal);
-            
-            // Click outside modal to close
-            window.addEventListener('click', function(e) {
-                const modal = document.getElementById('orderModal');
-                if (e.target === modal) closeModal();
-            });
-
-            // Social media toggle
-            document.getElementById('shareButton').addEventListener('click', toggleSocialIcons);
-
-            // Login button
-            document.getElementById('loginButton')?.addEventListener('click', function() {
-                window.location.href = 'login.html';
-            });
-        }
-
-        function checkUserLogin() {
-            // আপনার Firebase auth check করবেন
-            // Demo purpose এর জন্য orders দেখাচ্ছি
-            const isLoggedIn = true; // Firebase auth দিয়ে check করবেন
-            
-            if (isLoggedIn) {
-                displayOrders(demoOrders);
-            } else {
-                document.getElementById('loginPrompt').classList.remove('hidden');
-            }
-        }
-
-        function trackOrder() {
-            const orderId = document.getElementById('orderIdInput').value.trim();
-            const errorMsg = document.getElementById('orderIdError');
-            const searchResult = document.getElementById('searchResult');
-            
-            if (!orderId) {
-                errorMsg.classList.remove('hidden');
-                return;
-            }
-            
-            errorMsg.classList.add('hidden');
-            
-            // Search for order
-            const order = demoOrders.find(o => o.id.toLowerCase() === orderId.toLowerCase());
-            
-            if (order) {
-                searchResult.innerHTML = createOrderCard(order, true);
-                searchResult.classList.remove('hidden');
-            } else {
-                searchResult.innerHTML = '<p class="text-red-500 text-center">অর্ডার খুঁজে পাওয়া যায়নি।</p>';
-                searchResult.classList.remove('hidden');
-            }
-        }
-
-        function displayOrders(orders) {
-            const container = document.getElementById('orderListContainer');
-            const orderList = document.getElementById('orderList');
-            const noOrdersMsg = document.getElementById('noOrdersMessage');
-            
-            if (orders.length === 0) {
-                noOrdersMsg.classList.remove('hidden');
-                return;
-            }
-            
-            orderList.innerHTML = orders.map(order => createOrderCard(order)).join('');
-            container.classList.remove('hidden');
-            
-            // Add click listeners to view details buttons
-            document.querySelectorAll('.view-details-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const orderId = this.dataset.orderId;
-                    const order = orders.find(o => o.id === orderId);
-                    showOrderDetails(order);
-                });
-            });
-        }
-
-        function createOrderCard(order, detailed = false) {
-            return `
-                <div class="order-card">
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <h3 class="text-xl font-semibold text-gray-800">অর্ডার #${order.id}</h3>
-                            <p class="text-gray-600 text-sm">তারিখ: ${order.date}</p>
-                        </div>
-                        <span class="status-badge status-${order.status}">
-                            ${statusLabels[order.status]}
-                        </span>
-                    </div>
-                    <div class="border-t pt-3 mt-3">
-                        <p class="text-lg font-semibold text-gray-800">মোট: ${order.total}</p>
-                        ${!detailed ? `<button class="view-details-btn mt-3 bg-lipstick text-white px-4 py-2 rounded hover:bg-opacity-90 transition" data-order-id="${order.id}">বিস্তারিত দেখুন</button>` : ''}
-                    </div>
-                    ${detailed ? `
-                        <div class="mt-4 border-t pt-4">
-                            <h4 class="font-semibold mb-2">পণ্যসমূহ:</h4>
-                            ${order.items.map(item => `
-                                <div class="flex justify-between py-1 text-sm">
-                                    <span>${item.name} × ${item.quantity}</span>
-                                    <span>${item.price} টাকা</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-        }
-
-        function showOrderDetails(order) {
-            const modal = document.getElementById('orderModal');
-            const modalContent = document.getElementById('modalContent');
-            
-            modalContent.innerHTML = `
-                <h2 class="text-2xl font-bold mb-4 text-lipstick">অর্ডার বিস্তারিত</h2>
-                <div class="space-y-3">
-                    <div class="flex justify-between">
-                        <span class="font-semibold">অর্ডার আইডি:</span>
-                        <span>${order.id}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="font-semibold">তারিখ:</span>
-                        <span>${order.date}</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="font-semibold">স্ট্যাটাস:</span>
-                        <span class="status-badge status-${order.status}">
-                            ${statusLabels[order.status]}
-                        </span>
-                    </div>
-                    <div class="border-t pt-3 mt-3">
-                        <h3 class="font-semibold mb-2">পণ্যসমূহ:</h3>
-                        ${order.items.map(item => `
-                            <div class="flex justify-between py-2 border-b">
-                                <div>
-                                    <p class="font-medium">${item.name}</p>
-                                    <p class="text-sm text-gray-600">পরিমাণ: ${item.quantity}</p>
-                                </div>
-                                <span class="font-semibold">${item.price} টাকা</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="flex justify-between text-lg font-bold border-t pt-3 mt-3">
-                        <span>মোট:</span>
-                        <span class="text-lipstick">${order.total}</span>
-                    </div>
-                </div>
-            `;
-            
-            modal.style.display = 'block';
-        }
-
-        function closeModal() {
-            document.getElementById('orderModal').style.display = 'none';
-        }
-
-        function toggleSocialIcons() {
+            const shareButton = document.getElementById('shareButton');
             const socialIcons = document.getElementById('socialIcons');
-            socialIcons.classList.toggle('hidden');
-        }
+            
+            if (shareButton && socialIcons) {
+                shareButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (socialIcons.style.display === 'none' || socialIcons.style.display === '') {
+                        socialIcons.style.display = 'block';
+                    } else {
+                        socialIcons.style.display = 'none';
+                    }
+                });
+            }
+
+            // Close social icons when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!shareButton.contains(e.target) && !socialIcons.contains(e.target)) {
+                    socialIcons.style.display = 'none';
+                }
+            });
+        });
     </script>
 </body>
 </html>
