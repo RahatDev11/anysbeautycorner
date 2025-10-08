@@ -261,11 +261,18 @@ async function placeOrder(event) {
                 await sendNotificationForOrder(orderId); // Call OneSignal notification function
 
                 // Redirect with success message
+                                // ১. সাফল্যের বার্তা দেখানো
                 showToast(`অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে! অর্ডার আইডি: ${orderId}`, "success");
-                window.location.href = `order-track.html?orderId=${orderId}`;
+
+                // ২. ২.৫ সেকেন্ড অপেক্ষা করে ইউজারকে হোমপেজে রিডাইরেক্ট করা
+                setTimeout(() => {
+                    window.location.href = 'index.html'; // হোমপেজের URL
+                }, 2500); // ২৫০০ মিলিসেকেন্ড = ২.৫ সেকেন্ড
+
             } else {
                 throw new Error("Failed to commit transaction for order counter.");
             }
+
         }).catch(error => {
             throw error; // Re-throw to be caught by the outer catch block
         });
