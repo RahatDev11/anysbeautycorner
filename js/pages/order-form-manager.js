@@ -268,7 +268,7 @@ async function placeOrder(event) {
 
                 // সঠিক ট্র্যাকিং পেইজে রিডাইরেক্ট করা
                 showToast(`অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে! অর্ডার আইডি: ${orderId}`, "success");
-                window.location.href = `order-track.html?orderId=${orderId}`; 
+                window.location.href = `index.html`; 
 
             } else {
                 throw new Error("Failed to commit transaction for order counter.");
