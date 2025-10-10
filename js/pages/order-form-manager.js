@@ -1,10 +1,10 @@
 // =================================================================
-// SECTION: ORDER FORM PAGE LOGIC
+// SECTION: ORDER FORM PAGE LOGIC (চূড়ান্ত সংশোধিত)
 // =================================================================
 
 import { auth, database, ref, get, set, runTransaction } from '../modules/firebase-config.js';
 import { showToast } from '../modules/ui-utilities.js';
-import { getUserId, onAuthStateChanged } from '../modules/auth-manager.js';
+import { onAuthStateChanged } from '../modules/auth-manager.js'; 
 import { sendTelegramNotification, sendNotificationForOrder } from '../modules/notification-manager.js';
 import { cart, saveCart } from '../modules/cart-manager.js';
 
@@ -26,11 +26,13 @@ async function initializeOrderFormPage() {
         // Initialize checkout process
         onAuthStateChanged(auth, async user => {
             if (user) {
+                // লগইন করা ইউজার: UID এবং ইমেইল সেভ করা হলো
                 window.currentUserId = user.uid;
                 window.currentUserEmail = user.email;
                 await fetchUserProfile(user.uid);
                 initializeCheckout(user);
             } else {
+                // গেস্ট ইউজার: GUEST_ দিয়ে আইডি সেভ করা হলো
                 window.currentUserId = 'GUEST_' + Date.now();
                 window.currentUserEmail = 'guest@checkout.com';
                 initializeCheckout(null);
@@ -234,7 +236,8 @@ async function placeOrder(event) {
                     cartItems: itemsToOrder,
                     orderDate: new Date().toISOString(),
                     status: 'Pending',
-                    userId: getUserId(),
+                    // ✅ FIX: userId-এ গ্লোবাল ভেরিয়েবল ব্যবহার
+                    userId: window.currentUserId, 
                     customerEmail: window.currentUserEmail || 'N/A',
                     deliveryNote: deliveryNote || 'N/A',
                     outsideDhakaLocation: deliveryLocation === 'outsideDhaka' ? document.getElementById('outsideDhakaLocation').value : 'N/A',
@@ -246,35 +249,33 @@ async function placeOrder(event) {
                 const newOrderRef = ref(database, 'orders/' + orderId);
                 await set(newOrderRef, orderData);
 
-                // Save order ID to localStorage
-                const myOrders = JSON.parse(localStorage.getItem('myOrders')) || [];
-                myOrders.push(orderId);
-                localStorage.setItem('myOrders', JSON.stringify(myOrders));
-
+                // ✅ FIX: Local Storage সেভ করার আগে GUEST চেক করা হলো
+                // শুধুমাত্র GUEST_ দিয়ে শুরু হলে লোকাল স্টোরেজে সেভ হবে
+                if (window.currentUserId.startsWith('GUEST_')) {
+                    const myOrders = JSON.parse(localStorage.getItem('myOrders')) || [];
+                    myOrders.push(orderId);
+                    localStorage.setItem('myOrders', JSON.stringify(myOrders));
+                }
+                
                 // Clear cart
                 localStorage.removeItem('anyBeautyCart');
-                cart.length = 0; // Clear the imported cart array
+                cart.length = 0; 
                 saveCart();
 
                 // Send notification
                 await sendTelegramNotification({ ...orderData, orderId });
-                await sendNotificationForOrder(orderId); // Call OneSignal notification function
+                await sendNotificationForOrder(orderId); 
 
-                // Redirect with success message
-                                // ১. সাফল্যের বার্তা দেখানো
+                // সঠিক ট্র্যাকিং পেইজে রিডাইরেক্ট করা
                 showToast(`অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে! অর্ডার আইডি: ${orderId}`, "success");
-
-                // ২. ২.৫ সেকেন্ড অপেক্ষা করে ইউজারকে হোমপেজে রিডাইরেক্ট করা
-                setTimeout(() => {
-                    window.location.href = 'index.html'; // হোমপেজের URL
-                }, 2500); // ২৫০০ মিলিসেকেন্ড = ২.৫ সেকেন্ড
+                window.location.href = `order-track.html?orderId=${orderId}`; 
 
             } else {
                 throw new Error("Failed to commit transaction for order counter.");
             }
 
         }).catch(error => {
-            throw error; // Re-throw to be caught by the outer catch block
+            throw error; 
         });
 
     } catch (error) {
