@@ -80,11 +80,6 @@
                 document.getElementById('footer').innerHTML = await footerRes.text();
             }
             
-            // Load main.js only if it exists
-            const script = document.createElement('script');
-            script.src = 'js/main.js';
-            script.type = 'module';
-            document.body.appendChild(script);
         } catch (error) { 
             console.error("Layout load failed:", error); 
         }
@@ -128,51 +123,48 @@
         let allOrders = [];
         
         try {
-            if (user) {
-                // Logged in user - fetch all orders and filter by email
-                console.log("Fetching orders for logged in user:", user.email, user.uid);
+            console.log("Fetching orders for:", user ? user.email : "Guest");
+            
+            // সব অর্ডার লোড করি
+            const ordersRef = ref(database, 'orders');
+            const snapshot = await get(ordersRef);
+            
+            if (snapshot.exists()) {
+                const ordersData = snapshot.val();
                 
-                const ordersRef = ref(database, 'orders');
-                const snapshot = await get(ordersRef);
-                
-                if (snapshot.exists()) {
-                    const ordersData = snapshot.val();
+                Object.keys(ordersData).forEach(orderId => {
+                    const order = ordersData[orderId];
                     
-                    Object.keys(ordersData).forEach(orderId => {
-                        const order = ordersData[orderId];
-                        // Check if order belongs to this user by email or userId
-                        if (order.customerEmail === user.email || order.userId === user.uid) {
+                    if (user) {
+                        // লগইন ইউজারের জন্য: userId বা userEmail বা customerEmail মিললে শো করবে
+                        if (order.userId === user.uid || 
+                            order.userEmail === user.email || 
+                            order.customerEmail === user.email) {
                             allOrders.push({ 
                                 key: orderId, 
                                 ...order 
                             });
                         }
-                    });
-                }
-            } else {
-                // Guest user - fetch from localStorage order IDs
-                const localOrderKeys = JSON.parse(localStorage.getItem('myOrders') || '[]');
-                console.log("Fetching orders for guest:", localOrderKeys);
-                
-                if (localOrderKeys.length > 0) {
-                    const orderPromises = localOrderKeys.map(key => 
-                        get(ref(database, `orders/${key}`))
-                    );
-                    
-                    const snapshots = await Promise.all(orderPromises);
-                    allOrders = snapshots
-                        .filter(s => s.exists())
-                        .map(s => ({ key: s.key, ...s.val() }));
-                }
+                    } else {
+                        // গেস্ট ইউজারের জন্য: localStorage-এর অর্ডার আইডি মিললে শো করবে
+                        const localOrderKeys = JSON.parse(localStorage.getItem('myOrders') || '[]');
+                        if (localOrderKeys.includes(orderId)) {
+                            allOrders.push({ 
+                                key: orderId, 
+                                ...order 
+                            });
+                        }
+                    }
+                });
             }
             
-            console.log("Total orders found:", allOrders.length);
+            console.log("Found orders:", allOrders);
             
         } catch (error) {
             console.error("Order fetch failed:", error);
             orderListDiv.innerHTML = `
                 <p class="text-center text-red-500 p-8">
-                    অর্ডার লোড করা সম্ভব হয়নি। দয়া করে পেজ রিলোড করুন অথবা সাপোর্টে যোগাযোগ করুন।
+                    অর্ডার লোড করা সম্ভব হয়নি: ${error.message}
                 </p>
             `;
             return;
@@ -226,7 +218,7 @@
                 <p><strong>তারিখ:</strong> ${order.orderDate ? new Date(order.orderDate).toLocaleString('bn-BD') : 'N/A'}</p>
                 <p><strong>নাম:</strong> ${order.customerName || 'N/A'}</p>
                 <p><strong>ফোন:</strong> ${order.phoneNumber || 'N/A'}</p>
-                <p><strong>ইমেইল:</strong> ${order.customerEmail || 'N/A'}</p>
+                <p><strong>ইমেইল:</strong> ${order.customerEmail || order.userEmail || 'N/A'}</p>
                 <p><strong>ঠিকানা:</strong> ${order.address || 'N/A'}</p>
             </div>
             <hr class="my-3">
@@ -304,7 +296,7 @@
         document.getElementById('loginButton')?.addEventListener('click', () => {
             signInWithPopup(auth, provider).catch(error => {
                 console.error("Login failed:", error);
-                showToast('লগইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।', 'error');
+                alert('লগইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।');
             });
         });
 
@@ -338,6 +330,15 @@
                 if (snapshot.exists()) {
                     const orderData = { key: snapshot.key, ...snapshot.val() };
                     showOrderDetailsModal(orderData);
+                    
+                    // ইউজারের অন্যান্য অর্ডারও লোড করি
+                    onAuthStateChanged(auth, user => {
+                        if (user) {
+                            fetchOrders(user);
+                        } else {
+                            fetchOrders(null);
+                        }
+                    });
                 } else {
                     orderListDiv.innerHTML = '<p class="text-center text-red-500 p-8">দুঃখিত, এই অর্ডার আইডিটি খুঁজে পাওয়া যায়নি।</p>';
                 }
@@ -347,20 +348,6 @@
             }
         }
     });
-
-    // Toast function for error messages
-    function showToast(message, type = 'error') {
-        const toast = document.createElement('div');
-        toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
-            type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
-        }`;
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            document.body.removeChild(toast);
-        }, 3000);
-    }
 </script>
 
     <script type="module" src="js/main.js"></script>
