@@ -1,6 +1,6 @@
 @font-face {
     font-family: 'SolaimanLipi';
-    src: url('./fonts/SolaimanLipi.ttf') format('truetype'); /* Adjust path if necessary */
+    src: url('./fonts/SolaimanLipi.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 }
@@ -10,8 +10,8 @@ body {
 }
 
 /* Order Form Page Styles */
-/* Add any custom styles here */
 @import url("loading-spinner.css");
+
 /* কাস্টম কালার */
 .bg-brushstroke { background-color: #F4A7B9; }
 .text-lipstick { color: #A52A2A; }
@@ -23,122 +23,513 @@ body {
 .bg-background { background-color: #FFF5F7; }
 
 /* ফর্ম ফিল্ড স্টাইল */
-.form-group { margin-bottom: 1.5rem; }
-.form-group label { display: block; font-size: 0.95rem; font-weight: 500; color: #4a5568; margin-bottom: 0.5rem; }
-.form-group label .required-star { color: #ef4444; margin-left: 2px; }
-.form-group input, .form-group textarea, .form-group select {
-    width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; font-size: 1rem; color: #333; background: #fafafa; transition: border-color 0.3s ease, box-shadow 0.3s ease;
+.form-group { 
+    margin-bottom: 1.5rem; 
 }
-.form-group input:focus, .form-group textarea:focus, .form-group select:focus {
-    border-color: #A52A2A; box-shadow: 0 0 0 3px rgba(165, 42, 42, 0.1); outline: none;
+.form-group label { 
+    display: block; 
+    font-size: 0.95rem; 
+    font-weight: 500; 
+    color: #4a5568; 
+    margin-bottom: 0.5rem; 
 }
-.form-group textarea { resize: vertical; }
+.form-group label .required-star { 
+    color: #ef4444; 
+    margin-left: 2px; 
+}
+.form-group input, 
+.form-group textarea, 
 .form-group select {
-    -webkit-appearance: none; -moz-appearance: none; appearance: none;
-    background: url('data:image/svg+xml;utf8,<svg fill="gray" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 10px center;
-    background-size: 20px; background-color: #fafafa;
+    width: 100%; 
+    padding: 0.75rem; 
+    border: 1px solid #e2e8f0; 
+    border-radius: 0.5rem; 
+    font-size: 1rem; 
+    color: #333; 
+    background: #fafafa; 
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    font-family: 'SolaimanLipi', sans-serif;
 }
-.form-group input[disabled], .form-group select[disabled], .form-group input[readonly] { background-color: #f3f4f6; cursor: not-allowed; opacity: 0.7; }
+.form-group input:focus, 
+.form-group textarea:focus, 
+.form-group select:focus {
+    border-color: #A52A2A; 
+    box-shadow: 0 0 0 3px rgba(165, 42, 42, 0.1); 
+    outline: none;
+}
+.form-group textarea { 
+    resize: vertical; 
+    min-height: 80px;
+}
+.form-group select {
+    -webkit-appearance: none; 
+    -moz-appearance: none; 
+    appearance: none;
+    background: url('data:image/svg+xml;utf8,<svg fill="gray" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 10px center;
+    background-size: 20px; 
+    background-color: #fafafa;
+    padding-right: 2.5rem;
+}
+.form-group input[disabled], 
+.form-group select[disabled], 
+.form-group input[readonly] { 
+    background-color: #f3f4f6; 
+    cursor: not-allowed; 
+    opacity: 0.7; 
+}
+
+/* ফর্ম ইনপুট প্লেসহোল্ডার স্টাইল */
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: #9ca3af;
+    font-size: 0.9rem;
+    font-family: 'SolaimanLipi', sans-serif;
+}
 
 /* রেডিও বাটন স্টাইল */
-.radio-group { display: flex; gap: 1.25rem; flex-wrap: wrap; }
-.radio-group label { display: flex; align-items: center; font-size: 0.95rem; color: #4a5568; margin-bottom: 0; cursor:pointer; }
-.radio-group input[type="radio"] { accent-color: #A52A2A; margin-right: 0.5rem; }
+.radio-group { 
+    display: flex; 
+    gap: 1.25rem; 
+    flex-wrap: wrap; 
+}
+.radio-group label { 
+    display: flex; 
+    align-items: center; 
+    font-size: 0.95rem; 
+    color: #4a5568; 
+    margin-bottom: 0; 
+    cursor: pointer; 
+    transition: color 0.3s ease;
+}
+.radio-group label:hover {
+    color: #A52A2A;
+}
+.radio-group input[type="radio"] { 
+    accent-color: #A52A2A; 
+    margin-right: 0.5rem; 
+    transform: scale(1.1);
+}
 
 /* পেমেন্ট নোটিশ */
-.payment-notice { background: #fef2f2; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.9rem; color: #a52a2a; margin-bottom: 1.5rem; display: none; border: 1px solid #e0b2b2; }
+.payment-notice { 
+    background: #fef2f2; 
+    padding: 0.75rem; 
+    border-radius: 0.5rem; 
+    font-size: 0.9rem; 
+    color: #a52a2a; 
+    margin-bottom: 1.5rem; 
+    border: 1px solid #e0b2b2;
+    line-height: 1.5;
+}
+.payment-notice strong {
+    font-weight: 600;
+}
 
 /* কার্ট আইটেম স্টাইল */
-.checkout-items { margin-bottom: 1.5rem; }
-.checkout-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-bottom: 1px solid #e2e8f0; margin-bottom: 0.625rem; }
-.checkout-item:last-child { border-bottom: none; margin-bottom: 0; }
-.checkout-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 5px; background-color: #eee; }
-.checkout-item-details { flex: 1; margin-left: 0.9375rem; }
-.checkout-item-details p { font-size: 0.95rem; color: #4a5568; margin-bottom: 0.3125rem; line-height: 1.4; }
-.checkout-item-details p.item-name { font-weight: 600; color: #1f2937; }
+.checkout-items { 
+    margin-bottom: 1.5rem; 
+}
+.checkout-item { 
+    display: flex; 
+    align-items: center; 
+    padding: 0.75rem; 
+    border-bottom: 1px solid #e2e8f0; 
+    margin-bottom: 0.625rem; 
+    transition: background-color 0.3s ease;
+}
+.checkout-item:hover {
+    background-color: #f8fafc;
+}
+.checkout-item:last-child { 
+    border-bottom: none; 
+    margin-bottom: 0; 
+}
+.checkout-item img { 
+    width: 60px; 
+    height: 60px; 
+    object-fit: cover; 
+    border-radius: 5px; 
+    background-color: #eee;
+    flex-shrink: 0;
+}
+.checkout-item-details { 
+    flex: 1; 
+    margin-left: 0.9375rem; 
+}
+.checkout-item-details p { 
+    font-size: 0.95rem; 
+    color: #4a5568; 
+    margin-bottom: 0.3125rem; 
+    line-height: 1.4; 
+}
+.checkout-item-details p.item-name { 
+    font-weight: 600; 
+    color: #1f2937; 
+    margin-bottom: 0.5rem;
+}
 
+/* খালি কার্ট মেসেজ */
+.empty-cart-message {
+    text-align: center;
+    color: #6b7280;
+    font-style: italic;
+    padding: 2rem 1rem;
+    background-color: #f9fafb;
+    border-radius: 0.5rem;
+    border: 1px dashed #d1d5db;
+}
 
 /* ডেলিভারি ফি এবং মোট মূল্য */
-.price-summary { background: #f9fafb; padding: 0.9375rem; border-radius: 0.5rem; margin-bottom: 1.5rem; border: 1px solid #e5e7eb; }
-.price-summary p { font-size: 0.95rem; color: #4a5568; margin-bottom: 0.5rem; display: flex; justify-content: space-between; }
-.price-summary p span:last-child { font-weight: 500; color: #374151; }
-.price-summary p.total-row { font-weight: 700; color: #1f2937; border-top: 1px solid #e2e8f0; padding-top: 0.75rem; margin-top: 0.5rem; margin-bottom: 0; font-size: 1.05rem; }
-.price-summary p.total-row span:last-child { font-weight: 700; color: #A52A2A; }
+.price-summary { 
+    background: #f9fafb; 
+    padding: 1.25rem; 
+    border-radius: 0.5rem; 
+    margin-bottom: 1.5rem; 
+    border: 1px solid #e5e7eb; 
+}
+.price-summary p { 
+    font-size: 0.95rem; 
+    color: #4a5568; 
+    margin-bottom: 0.75rem; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+}
+.price-summary p:last-child {
+    margin-bottom: 0;
+}
+.price-summary p span:last-child { 
+    font-weight: 500; 
+    color: #374151; 
+}
+.price-summary p.total-row { 
+    font-weight: 700; 
+    color: #1f2937; 
+    border-top: 1px solid #e2e8f0; 
+    padding-top: 0.75rem; 
+    margin-top: 0.5rem; 
+    margin-bottom: 0; 
+    font-size: 1.1rem; 
+}
+.price-summary p.total-row span:last-child { 
+    font-weight: 700; 
+    color: #A52A2A; 
+    font-size: 1.2rem;
+}
 
 /* সাবমিট বাটন */
 .submit-btn {
-    width: 100%; padding: 0.875rem; background: #A52A2A; color: white; border: none; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background-color 0.3s ease, opacity 0.3s ease; display: inline-flex; align-items: center; justify-content: center; letter-spacing: 0.5px;
+    width: 100%; 
+    padding: 1rem; 
+    background: #A52A2A; 
+    color: white; 
+    border: none; 
+    border-radius: 0.5rem; 
+    font-size: 1.1rem; 
+    font-weight: 600; 
+    cursor: pointer; 
+    transition: all 0.3s ease; 
+    display: inline-flex; 
+    align-items: center; 
+    justify-content: center; 
+    letter-spacing: 0.5px;
+    font-family: 'SolaimanLipi', sans-serif;
+    position: relative;
+    overflow: hidden;
 }
-.submit-btn:hover:not(:disabled) { background: #7a1f1f; }
-.submit-btn:disabled { background: #cccccc; cursor: not-allowed; opacity: 0.7; }
+.submit-btn:hover:not(:disabled) { 
+    background: #7a1f1f; 
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(165, 42, 42, 0.3);
+}
+.submit-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+.submit-btn:disabled { 
+    background: #9ca3af; 
+    cursor: not-allowed; 
+    opacity: 0.7; 
+    transform: none;
+    box-shadow: none;
+}
+.submit-btn .fa-spinner {
+    margin-right: 0.5rem;
+}
+
+/* লোডিং স্টেট */
+.loading {
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+/* সফল/এরর মেসেজ */
+.success-message {
+    background-color: #dcfce7;
+    color: #166534;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #bbf7d0;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.error-message {
+    background-color: #fef2f2;
+    color: #dc2626;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #fecaca;
+    margin-bottom: 1rem;
+    text-align: center;
+}
 
 /* অর্ডার লিস্ট লিঙ্ক */
-.order-list-link { display: inline-flex; align-items:center; justify-content: center; text-align: center; margin-top: 1.25rem; color: #A52A2A; text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: color 0.3s ease, background-color 0.3s ease; width: 100%; padding: 0.6rem; border: 1px solid #e0b2b2; border-radius: 0.5rem; background-color: #fff5f7; } 
-.order-list-link:hover { color: #7a1f1f; background-color: #f5e0e0; border-color: #d4a3a3; }
-
-/* Hide scrollbar utility */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-/* Responsive */
-@media (max-width: 768px) {
-    .checkout-item img { width: 50px; height: 50px; }
-    .checkout-item-details p { font-size: 0.9rem; }
-    .radio-group { flex-direction: column; gap: 0.75rem; align-items: flex-start; }
-    h2 { font-size: 1.25rem; }
-    h3 { font-size: 1.1rem; }
+.order-list-link { 
+    display: inline-flex; 
+    align-items: center; 
+    justify-content: center; 
+    text-align: center; 
+    margin-top: 1.25rem; 
+    color: #A52A2A; 
+    text-decoration: none; 
+    font-size: 0.95rem; 
+    font-weight: 500; 
+    transition: all 0.3s ease; 
+    width: 100%; 
+    padding: 0.75rem; 
+    border: 1px solid #e0b2b2; 
+    border-radius: 0.5rem; 
+    background-color: #fff5f7; 
+    font-family: 'SolaimanLipi', sans-serif;
+} 
+.order-list-link:hover { 
+    color: #7a1f1f; 
+    background-color: #f5e0e0; 
+    border-color: #d4a3a3; 
+    text-decoration: none;
+    transform: translateY(-1px);
 }
-@media (max-width: 480px) {
-     .checkout-item { padding: 0.6rem; }
-     .checkout-item img { width: 45px; height: 45px; }
-     .checkout-item-details { margin-left: 0.75rem; }
-     .checkout-item-details p { font-size: 0.85rem; }
-     .price-summary p { font-size: 0.9rem; }
-     .submit-btn { font-size: 0.95rem; padding: 0.75rem; }
-     .submit-btn { font-size: 0.95rem; padding: 0.75rem; }
-     .order-list-link { font-size: 0.9rem; padding: 0.5rem; }
- }
 
-/* Modal Styles */
-.modal {
-    display: none; /* Hidden by default */
-    position: fixed; /* Stay in place */
-    z-index: 100; /* Sit on top */
-    left: 0;
-    top: 0;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgb(0,0,0); /* Fallback color */
-    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+/* টার্মস লিঙ্ক */
+.terms-link {
+    color: #A52A2A;
+    text-decoration: underline;
+    transition: color 0.3s ease;
+}
+.terms-link:hover {
+    color: #7a1f1f;
+}
+
+/* হিডেন ইউটিলিটি */
+.hidden {
+    display: none !important;
+}
+
+/* স্ক্রলবার হাইড ইউটিলিটি */
+.no-scrollbar::-webkit-scrollbar { 
+    display: none; 
+}
+.no-scrollbar { 
+    -ms-overflow-style: none; 
+    scrollbar-width: none; 
+}
+
+/* কার্ট স্ক্রল কন্টেইনার */
+.cart-scroll-container {
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.cart-scroll-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.cart-scroll-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.cart-scroll-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+.cart-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* লোডিং ইনডিকেটর */
+.loading-indicator {
+    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    padding: 3rem 1rem;
+}
+
+.loading-indicator .fa-spinner {
+    color: #A52A2A;
+    margin-bottom: 1rem;
+}
+
+.loading-indicator p {
+    color: #6b7280;
+    font-size: 1rem;
+}
+
+/* রেস্পন্সিভ ডিজাইন */
+@media (max-width: 768px) {
+    .checkout-item img { 
+        width: 50px; 
+        height: 50px; 
+    }
+    .checkout-item-details p { 
+        font-size: 0.9rem; 
+    }
+    .radio-group { 
+        flex-direction: column; 
+        gap: 0.75rem; 
+        align-items: flex-start; 
+    }
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    .price-summary {
+        padding: 1rem;
+    }
+    .price-summary p {
+        font-size: 0.9rem;
+    }
+    .price-summary p.total-row {
+        font-size: 1rem;
+    }
+    .submit-btn {
+        padding: 0.875rem;
+        font-size: 1rem;
+    }
+    h2 { 
+        font-size: 1.25rem; 
+    }
+    h3 { 
+        font-size: 1.1rem; 
+    }
+}
+
+@media (max-width: 480px) {
+    .checkout-item { 
+        padding: 0.6rem; 
+    }
+    .checkout-item img { 
+        width: 45px; 
+        height: 45px; 
+    }
+    .checkout-item-details { 
+        margin-left: 0.75rem; 
+    }
+    .checkout-item-details p { 
+        font-size: 0.85rem; 
+    }
+    .price-summary p { 
+        font-size: 0.9rem; 
+    }
+    .submit-btn { 
+        font-size: 0.95rem; 
+        padding: 0.75rem; 
+    }
+    .order-list-link { 
+        font-size: 0.9rem; 
+        padding: 0.5rem; 
+    }
+    .payment-notice {
+        font-size: 0.85rem;
+        padding: 0.6rem;
+    }
+}
+
+/* মডাল স্টাইল */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
 }
 
 .modal-content {
     background-color: #fefefe;
     margin: auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%;
+    padding: 2rem;
+    border: none;
+    width: 90%;
     max-width: 500px;
-    border-radius: 10px;
+    border-radius: 12px;
     position: relative;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    animation: slideIn 0.3s ease;
 }
 
 .modal-close {
-    color: #aaa;
+    color: #6b7280;
     float: right;
-    font-size: 28px;
+    font-size: 1.5rem;
     font-weight: bold;
     position: absolute;
-    top: 10px;
-    right: 20px;
+    top: 1rem;
+    right: 1.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.3s ease;
 }
 
 .modal-close:hover,
 .modal-close:focus {
-    color: black;
+    color: #374151;
     text-decoration: none;
-    cursor: pointer;
+}
+
+/* অ্যানিমেশন */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { 
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ফোকাস ভিজিবিলিটি */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid #A52A2A;
+    outline-offset: 2px;
+}
+
+/* প্রিন্ট স্টাইল */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .submit-btn,
+    .order-list-link {
+        display: none !important;
+    }
 }
