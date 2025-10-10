@@ -4,9 +4,7 @@
 
 import { auth, database, ref, get, set, runTransaction } from '../modules/firebase-config.js';
 import { showToast } from '../modules/ui-utilities.js';
-import { onAuthStateChanged } from '../modules/auth-manager.js'; 
 import { sendTelegramNotification, sendNotificationForOrder } from '../modules/notification-manager.js';
-import { cart, saveCart } from '../modules/cart-manager.js';
 
 let checkoutCart = [];
 let isBuyNowMode = false;
@@ -24,7 +22,7 @@ async function initializeOrderFormPage() {
         checkoutForm.classList.remove('hidden');
 
         // Initialize checkout process
-        onAuthStateChanged(auth, async user => {
+        auth.onAuthStateChanged(async user => {
             if (user) {
                 // লগইন করা ইউজার: UID এবং ইমেইল সেভ করা হলো
                 window.currentUserId = user.uid;
@@ -38,7 +36,7 @@ async function initializeOrderFormPage() {
                 initializeCheckout(null);
                 handleDeliveryLocationChange();
             }
-            resolve(); // Resolve the promise after auth state is handled and checkout initialized
+            resolve();
         });
 
         // Add event listeners
@@ -79,25 +77,25 @@ function renderCheckoutItems(items) {
         submitButton.disabled = true;
         return;
     }
+    
     items.forEach(item => {
-        // Add checks for item properties
         const itemId = item.id || 'N/A';
         const itemName = item.name || 'Unknown Product';
         const itemPrice = parseFloat(item.price) || 0;
         const itemQuantity = item.quantity || 1;
-        const itemImage = item.image || 'placeholder.jpg';
+        const itemImage = item.image || 'https://via.placeholder.com/60';
         const itemVariant = item.variant || '';
 
-        const itemHtml = `
-            <div class="checkout-item">
-                <img src="${itemImage}" alt="${itemName}" loading="lazy">
-                <div class="checkout-item-details">
-                    <p class="item-name">${itemName} ${itemVariant ? `(${itemVariant})` : ''}</p>
-                    <p>${itemQuantity} x ${itemPrice.toFixed(2)} টাকা = ${(itemPrice * itemQuantity).toFixed(2)} টাকা</p>
-                </div>
+        const itemElement = document.createElement('div');
+        itemElement.className = 'checkout-item';
+        itemElement.innerHTML = `
+            <img src="${itemImage}" alt="${itemName}" loading="lazy">
+            <div class="checkout-item-details">
+                <p class="item-name">${itemName} ${itemVariant ? `(${itemVariant})` : ''}</p>
+                <p>${itemQuantity} x ${itemPrice.toFixed(2)} টাকা = ${(itemPrice * itemQuantity).toFixed(2)} টাকা</p>
             </div>
         `;
-        checkoutItemsContainer.innerHTML += itemHtml;
+        checkoutItemsContainer.appendChild(itemElement);
     });
     submitButton.disabled = false;
 }
@@ -133,13 +131,15 @@ function initializeCheckout(user) {
 async function fetchUserProfile(uid) {
     const profileRef = ref(database, `users/${uid}/profile`);
     try {
-        const profile = (await get(profileRef)).val();
-        if (profile) {
-             document.getElementById('customerName').value = profile.name || '';
-             document.getElementById('phoneNumber').value = profile.phone || '';
-             document.getElementById('address').value = profile.address || '';
+        const snapshot = await get(profileRef);
+        if (snapshot.exists()) {
+            const profile = snapshot.val();
+            document.getElementById('customerName').value = profile.name || '';
+            document.getElementById('phoneNumber').value = profile.phone || '';
+            document.getElementById('address').value = profile.address || '';
         }
     } catch (err) {
+        console.error("Error fetching user profile:", err);
     }
     handleDeliveryLocationChange();
 }
@@ -153,7 +153,7 @@ function handleDeliveryLocationChange() {
     const isOutsideDhaka = location === 'outsideDhaka';
 
     outsideGroup.classList.toggle('hidden', !isOutsideDhaka);
-    notice.style.display = isOutsideDhaka ? 'block' : 'none';
+    notice.classList.toggle('hidden', !isOutsideDhaka);
     deliveryPaymentGroup.classList.toggle('hidden', !isOutsideDhaka);
 
     document.getElementById('outsideDhakaLocation').required = isOutsideDhaka;
@@ -198,25 +198,29 @@ async function placeOrder(event) {
         const deliveryLocation = deliveryLocationElement ? deliveryLocationElement.value : 'insideDhaka';
         const deliveryNote = document.getElementById('deliveryNote').value.trim();
 
-        // Price calculation
+        // Validation
+        if (!customerName || !phoneNumber || !address) {
+            throw new Error("সমস্ত প্রয়োজনীয় তথ্য প্রদান করুন।");
+        }
+
+        // Price calculation - FIXED
         const deliveryFee = deliveryLocation === 'insideDhaka' ? 70 : 160;
-        const subTotal = itemsToOrder.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
+        const subTotal = itemsToOrder.reduce((sum, item) => sum + (parseFloat(item.price) * (item.quantity || 1)), 0);
         const totalAmount = subTotal + deliveryFee;
 
         // Generate Custom Order ID
         const today = new Date();
         const year = today.getFullYear().toString().slice(-2);
         const day = String(today.getDate()).padStart(2, '0');
-        const month = String(today.getMonth() + 1);
-        const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${day}`;
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const dateString = `${today.getFullYear()}-${month}-${day}`;
 
         const counterRef = ref(database, `counters/${dateString}`);
 
         await runTransaction(counterRef, (currentData) => {
             if (currentData === null) {
                 return 1;
-            }
-            else {
+            } else {
                 return currentData + 1;
             }
         }).then(async (result) => {
@@ -225,22 +229,24 @@ async function placeOrder(event) {
                 const paddedOrderNumber = String(orderNumber).padStart(3, '0');
                 const orderId = `${year}${day}${month}${paddedOrderNumber}`;
 
+                // FIXED: subTotal এবং totalAmount সঠিকভাবে সেট করা
                 const orderData = {
                     customerName,
                     phoneNumber,
                     address,
                     deliveryLocation: deliveryLocation === 'insideDhaka' ? 'ঢাকার ভেতরে' : 'ঢাকার বাইরে',
                     deliveryFee,
-                    subTotal: totalAmount.toFixed(2),
-                    totalAmount: totalAmount.toFixed(2),
+                    subTotal: subTotal.toFixed(2), // FIXED: subTotal সঠিকভাবে সেট
+                    totalAmount: totalAmount.toFixed(2), // FIXED: totalAmount সঠিকভাবে সেট
                     cartItems: itemsToOrder,
                     orderDate: new Date().toISOString(),
-                    status: 'Pending',
-                    // ✅ FIX: userId-এ গ্লোবাল ভেরিয়েবল ব্যবহার
+                    status: 'processing', // FIXED: 'Pending' থেকে 'processing' করা
                     userId: window.currentUserId, 
                     customerEmail: window.currentUserEmail || 'N/A',
+                    userEmail: window.currentUserEmail || 'N/A', // Backward compatibility
                     deliveryNote: deliveryNote || 'N/A',
                     outsideDhakaLocation: deliveryLocation === 'outsideDhaka' ? document.getElementById('outsideDhakaLocation').value : 'N/A',
+                    paymentMethod: deliveryLocation === 'outsideDhaka' ? document.getElementById('deliveryPaymentMethod').value : 'N/A',
                     paymentNumber: deliveryLocation === 'outsideDhaka' ? document.getElementById('paymentNumber').value : 'N/A',
                     transactionId: deliveryLocation === 'outsideDhaka' ? document.getElementById('transactionId').value : 'N/A',
                     orderId: orderId
@@ -249,36 +255,36 @@ async function placeOrder(event) {
                 const newOrderRef = ref(database, 'orders/' + orderId);
                 await set(newOrderRef, orderData);
 
-                // ✅ FIX: Local Storage সেভ করার আগে GUEST চেক করা হলো
-                // শুধুমাত্র GUEST_ দিয়ে শুরু হলে লোকাল স্টোরেজে সেভ হবে
-                if (window.currentUserId.startsWith('GUEST_')) {
-                    const myOrders = JSON.parse(localStorage.getItem('myOrders')) || [];
-                    myOrders.push(orderId);
-                    localStorage.setItem('myOrders', JSON.stringify(myOrders));
-                }
-                
+                // Local Storage-এ অর্ডার আইডি সেভ করা
+                const myOrders = JSON.parse(localStorage.getItem('myOrders')) || [];
+                myOrders.push(orderId);
+                localStorage.setItem('myOrders', JSON.stringify(myOrders));
+
                 // Clear cart
                 localStorage.removeItem('anyBeautyCart');
-                cart.length = 0; 
-                saveCart();
+                if (window.cart) {
+                    window.cart.length = 0;
+                }
 
                 // Send notification
                 await sendTelegramNotification({ ...orderData, orderId });
                 await sendNotificationForOrder(orderId); 
 
-                // সঠিক ট্র্যাকিং পেইজে রিডাইরেক্ট করা
+                // সঠিক ট্র্যাকিং পেইজে রিডাইরেক্ট করা - FIXED
                 showToast(`অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে! অর্ডার আইডি: ${orderId}`, "success");
-                window.location.href = `index.html`; 
+                setTimeout(() => {
+                    window.location.href = `order-track.html?orderId=${orderId}`;
+                }, 2000);
 
             } else {
-                throw new Error("Failed to commit transaction for order counter.");
+                throw new Error("অর্ডার কাউন্টার ট্রানজেকশন ব্যর্থ হয়েছে।");
             }
-
         }).catch(error => {
             throw error; 
         });
 
     } catch (error) {
+        console.error("Order placement error:", error);
         showToast(`অর্ডার সাবমিট করতে সমস্যা হয়েছে: ${error.message || 'Unknown Error'}। অনুগ্রহ করে আবার চেষ্টা করুন।`, "error");
         submitButton.disabled = false;
         submitButton.innerHTML = 'অর্ডার কনফার্ম করুন';
