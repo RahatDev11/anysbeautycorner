@@ -43,14 +43,18 @@
                     
                     <div class="form-group">
                         <label class="form-label">ডেলিভারি এলাকা <span class="required-star">*</span></label>
-                        <div class="radio-group">
-                            <label>
-                                <input type="radio" name="deliveryLocation" value="insideDhaka" class="form-radio" checked> 
-                                <span class="ml-2">ঢাকার ভেতরে</span>
+                        <div class="radio-group justify-between">
+                            <label class="flex-1 text-center">
+                                <input type="radio" name="deliveryLocation" value="insideDhaka" class="form-radio hidden" checked> 
+                                <span class="radio-custom bg-white border-2 border-lipstick text-lipstick py-3 px-6 rounded-lg font-semibold cursor-pointer transition-all duration-300 hover:bg-lipstick hover:text-white block">
+                                    ঢাকার ভেতরে
+                                </span>
                             </label>
-                            <label>
-                                <input type="radio" name="deliveryLocation" value="outsideDhaka" class="form-radio"> 
-                                <span class="ml-2">ঢাকার বাইরে</span>
+                            <label class="flex-1 text-center ml-4">
+                                <input type="radio" name="deliveryLocation" value="outsideDhaka" class="form-radio hidden"> 
+                                <span class="radio-custom bg-white border-2 border-lipstick text-lipstick py-3 px-6 rounded-lg font-semibold cursor-pointer transition-all duration-300 hover:bg-lipstick hover:text-white block">
+                                    ঢাকার বাইরে
+                                </span>
                             </label>
                         </div>
                     </div>
@@ -71,7 +75,7 @@
                     <h2 class="text-2xl font-bold mb-6 text-lipstick">আপনার অর্ডার</h2>
                     
                     <div class="checkout-items">
-                        <div id="checkoutItems" class="max-h-64 overflow-y-auto mb-4 border-b pb-4"></div>
+                        <div id="checkoutItems" class="cart-scroll-container"></div>
                     </div>
                     
                     <div class="price-summary">
@@ -83,6 +87,10 @@
                             <span>ডেলিভারি ফি</span> 
                             <span id="deliveryFeeDisplay">৭০.০০ টাকা</span>
                         </p>
+                        <p id="advancePaymentRow" class="hidden text-orange-600 font-semibold">
+                            <span>অগ্রিম পেমেন্ট</span> 
+                            <span id="advancePaymentDisplay">১৩০.০০ টাকা</span>
+                        </p>
                         <p class="total-row">
                             <span>মোট</span> 
                             <span id="totalAmountDisplay">৭০.০০ টাকা</span>
@@ -90,8 +98,14 @@
                     </div>
                     
                     <div id="paymentNotice" class="payment-notice hidden">
-                        <strong>নোট:</strong> ডেলিভারি চার্জ <strong>১৬০ টাকা</strong> অগ্রিম প্রযোজ্য। 
-                        অনুগ্রহ করে <strong>01972580114</strong> নম্বরে সেন্ড মানি করুন।
+                        <div class="flex items-start">
+                            <i class="fas fa-exclamation-circle mt-1 mr-3"></i>
+                            <div>
+                                <strong class="block mb-2">অগ্রিম পেমেন্ট প্রয়োজন</strong>
+                                <p class="text-sm">ঢাকার বাইরের অর্ডারের জন্য <strong>১৩০ টাকা</strong> ডেলিভারি চার্জ অগ্রিম প্রদান করতে হবে।</p>
+                                <p class="text-sm mt-2">অনুগ্রহ করে <strong>01972580114</strong> নম্বরে সেন্ড মানি করুন এবং নিচের তথ্য গুলো প্রদান করুন।</p>
+                            </div>
+                        </div>
                     </div>
                     
                     <div id="deliveryPaymentGroup" class="hidden space-y-4 mt-4">
