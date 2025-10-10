@@ -1,5 +1,5 @@
 // =================================================================
-// SECTION: ORDER FORM PAGE LOGIC (আপডেটেড)
+// SECTION: ORDER FORM PAGE LOGIC (আপডেটেড - ডেলিভারি চার্জ ১৩০ টাকা)
 // =================================================================
 
 import { auth, database, ref, get, set, runTransaction } from '../modules/firebase-config.js';
@@ -21,6 +21,9 @@ async function initializeOrderFormPage() {
             // Show form and hide loader
             document.getElementById('loadingIndicator')?.classList.add('hidden');
             checkoutForm.classList.remove('hidden');
+
+            // Initialize radio button styles
+            initializeRadioButtons();
 
             // Initialize checkout process
             auth.onAuthStateChanged(async (user) => {
@@ -60,23 +63,68 @@ async function initializeOrderFormPage() {
     });
 }
 
+function initializeRadioButtons() {
+    const radioButtons = document.querySelectorAll('input[name="deliveryLocation"]');
+    radioButtons.forEach(radio => {
+        // Set initial state
+        if (radio.checked) {
+            const customRadio = radio.parentElement.querySelector('.radio-custom');
+            if (customRadio) {
+                customRadio.classList.add('bg-lipstick', 'text-white');
+                customRadio.classList.remove('bg-white', 'text-lipstick');
+            }
+        }
+
+        // Add change event
+        radio.addEventListener('change', function() {
+            // Reset all custom radios
+            document.querySelectorAll('.radio-custom').forEach(custom => {
+                custom.classList.remove('bg-lipstick', 'text-white');
+                custom.classList.add('bg-white', 'text-lipstick');
+            });
+
+            // Activate selected custom radio
+            if (this.checked) {
+                const customRadio = this.parentElement.querySelector('.radio-custom');
+                if (customRadio) {
+                    customRadio.classList.add('bg-lipstick', 'text-white');
+                    customRadio.classList.remove('bg-white', 'text-lipstick');
+                }
+            }
+        });
+    });
+}
+
 function calculateAndDisplayPrices(items) {
     const subTotalDisplay = document.getElementById('subTotalDisplay');
     const deliveryFeeDisplay = document.getElementById('deliveryFeeDisplay');
     const totalAmountDisplay = document.getElementById('totalAmountDisplay');
+    const advancePaymentRow = document.getElementById('advancePaymentRow');
+    const advancePaymentDisplay = document.getElementById('advancePaymentDisplay');
     
     if (!subTotalDisplay || !deliveryFeeDisplay || !totalAmountDisplay) return;
 
     let subTotal = items.reduce((sum, item) => sum + (parseFloat(item.price) || 0) * (item.quantity || 1), 0);
     const deliveryLocation = document.querySelector('input[name="deliveryLocation"]:checked')?.value || 'insideDhaka';
+    
+    // Updated delivery fees
     const deliveryFee = deliveryLocation === 'outsideDhaka' ? 160 : 70;
+    const advancePayment = deliveryLocation === 'outsideDhaka' ? 130 : 0;
     const totalAmount = subTotal + deliveryFee;
 
     subTotalDisplay.textContent = `${subTotal.toFixed(2)} টাকা`;
     deliveryFeeDisplay.textContent = `${deliveryFee.toFixed(2)} টাকা`;
     totalAmountDisplay.textContent = `${totalAmount.toFixed(2)} টাকা`;
 
-    return { subTotal, deliveryFee, totalAmount };
+    // Show/hide advance payment row
+    if (deliveryLocation === 'outsideDhaka') {
+        advancePaymentRow.classList.remove('hidden');
+        advancePaymentDisplay.textContent = `${advancePayment.toFixed(2)} টাকা`;
+    } else {
+        advancePaymentRow.classList.add('hidden');
+    }
+
+    return { subTotal, deliveryFee, advancePayment, totalAmount };
 }
 
 function renderCheckoutItems(items) {
@@ -88,7 +136,7 @@ function renderCheckoutItems(items) {
     checkoutItemsContainer.innerHTML = '';
     
     if (!items || items.length === 0) {
-        checkoutItemsContainer.innerHTML = '<p class="text-center text-red-500 font-medium p-4">আপনার কার্ট খালি। অর্ডার করার জন্য প্রোডাক্ট যোগ করুন।</p>';
+        checkoutItemsContainer.innerHTML = '<p class="empty-cart-message">আপনার কার্ট খালি। অর্ডার করার জন্য প্রোডাক্ট যোগ করুন।</p>';
         submitButton.disabled = true;
         return;
     }
@@ -254,8 +302,9 @@ async function placeOrder(event) {
             if (!transactionId) throw new Error("ট্রানজেকশন আইডি প্রদান করুন।");
         }
 
-        // Price calculation
+        // Price calculation with updated delivery fees
         const deliveryFee = deliveryLocation === 'insideDhaka' ? 70 : 160;
+        const advancePayment = deliveryLocation === 'outsideDhaka' ? 130 : 0;
         const subTotal = itemsToOrder.reduce((sum, item) => sum + (parseFloat(item.price) || 0) * (item.quantity || 1), 0);
         const totalAmount = subTotal + deliveryFee;
 
@@ -288,6 +337,7 @@ async function placeOrder(event) {
                 address,
                 deliveryLocation: deliveryLocation === 'insideDhaka' ? 'ঢাকার ভেতরে' : 'ঢাকার বাইরে',
                 deliveryFee,
+                advancePayment, // নতুন ফিল্ড যোগ করা হলো
                 subTotal: subTotal.toFixed(2),
                 totalAmount: totalAmount.toFixed(2),
                 cartItems: itemsToOrder,
