@@ -47,174 +47,311 @@
 
     <!-- Firebase এবং স্ক্রিপ্ট -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
-        import { getDatabase, ref, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+    import { getDatabase, ref, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCVSzQS1c7H4BLhsDF_fW8wnqUN4B35LPA",
-            authDomain: "nahid-6714.firebaseapp.com",
-            databaseURL: "https://nahid-6714-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "nahid-6714",
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyCVSzQS1c7H4BLhsDF_fW8wnqUN4B35LPA",
+        authDomain: "nahid-6714.firebaseapp.com",
+        databaseURL: "https://nahid-6714-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "nahid-6714",
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const database = getDatabase(app);
-        const provider = new GoogleAuthProvider();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const database = getDatabase(app);
+    const provider = new GoogleAuthProvider();
 
-        const loginPrompt = document.getElementById('loginPrompt');
-        const orderListDiv = document.getElementById('orderList');
+    const loginPrompt = document.getElementById('loginPrompt');
+    const orderListDiv = document.getElementById('orderList');
 
-        async function loadLayout() {
-            try {
-                const [headerRes, footerRes] = await Promise.all([fetch('header.html'), fetch('footer.html')]);
-                document.getElementById('header').innerHTML = await headerRes.text();
-                document.getElementById('footer').innerHTML = await footerRes.text();
-                const script = document.createElement('script');
-                script.src = 'script.js';
-                script.type = 'module';
-                document.body.appendChild(script);
-            } catch (error) { console.error("Layout load failed:", error); }
-        }
-        
-        function displayOrdersAsCards(orders) {
-            if (!orders || orders.length === 0) {
-                orderListDiv.innerHTML = '<p class="text-center text-gray-600 p-8">আপনি এখনো কোনো অর্ডার করেননি।</p>';
-                return;
-            }
-            orderListDiv.innerHTML = `<div class="hidden md:grid grid-cols-4 gap-4 font-bold p-4 bg-gray-100 rounded-t-lg text-sm text-gray-700"><div>অর্ডার আইডি</div><div>অর্ডারের তারিখ</div><div>মোট মূল্য</div><div>স্ট্যাটাস</div></div>`;
-            orders.forEach(order => {
-                const card = document.createElement('div');
-                card.className = 'grid grid-cols-2 md:grid-cols-4 gap-4 p-4 border-b cursor-pointer hover:bg-gray-50 text-sm items-center';
-                card.innerHTML = `
-                    <div><span class="md:hidden font-semibold">আইডি: </span>${order.orderId || 'N/A'}</div>
-                    <div class="hidden md:block">${order.orderDate ? new Date(order.orderDate).toLocaleString('bn-BD') : 'N/A'}</div>
-                    <div><span class="md:hidden font-semibold">মূল্য: </span>${order.totalAmount || 0} টাকা</div>
-                    <div class="text-right md:text-left"><span class="px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}">${getStatusText(order.status)}</span></div>
-                `;
-                card.onclick = () => showOrderDetailsModal(order);
-                orderListDiv.appendChild(card);
-            });
-        }
-        
-        async function fetchOrders(user) {
-            orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-8">আপনার অর্ডারগুলো লোড হচ্ছে...</p>';
-            let allOrders = [];
-            try {
-                const ordersRef = ref(database, 'orders');
-                if (user) {
-                    const [newOrdersSnap, oldOrdersSnap] = await Promise.all([
-                        get(query(ordersRef, orderByChild('userId'), equalTo(user.uid))),
-                        get(query(ordersRef, orderByChild('userEmail'), equalTo(user.email)))
-                    ]);
-                    if (newOrdersSnap.exists()) newOrdersSnap.forEach(child => allOrders.push({ key: child.key, ...child.val() }));
-                    if (oldOrdersSnap.exists()) oldOrdersSnap.forEach(child => {
-                        if (!allOrders.some(o => o.key === child.key)) allOrders.push({ key: child.key, ...child.val() });
-                    });
-                } else {
-                    const localOrderKeys = JSON.parse(localStorage.getItem('myOrders') || '[]');
-                    if (localOrderKeys.length > 0) {
-                        const snapshots = await Promise.all(localOrderKeys.map(key => get(ref(database, `orders/${key}`))));
-                        allOrders = snapshots.filter(s => s.exists()).map(s => ({ key: s.key, ...s.val() }));
-                    }
-                }
-            } catch (error) {
-                console.error("Order fetch failed:", error);
-                orderListDiv.innerHTML = `<p class="text-center text-red-500 p-8">অর্ডার লোড করা সম্ভব হয়নি।</p>`;
-                return;
-            }
-            allOrders.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
-            displayOrdersAsCards(allOrders);
-        }
-        
-        document.addEventListener("DOMContentLoaded", async () => {
-            await loadLayout();
+    async function loadLayout() {
+        try {
+            const [headerRes, footerRes] = await Promise.all([
+                fetch('header.html'), 
+                fetch('footer.html')
+            ]);
             
-            const urlParams = new URLSearchParams(window.location.search);
-            const urlOrderId = urlParams.get('orderId');
-
-            if (urlOrderId) {
-                orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-8">আপনার অর্ডারটি লোড হচ্ছে...</p>';
-                try {
-                    const orderRef = ref(database, `orders/${urlOrderId}`);
-                    const snapshot = await get(orderRef);
-
-                    if (snapshot.exists()) {
-                        const orderData = { key: snapshot.key, ...snapshot.val() };
-                        showOrderDetailsModal(orderData);
-                        onAuthStateChanged(auth, user => fetchOrders(user));
-                    } else {
-                        orderListDiv.innerHTML = '<p class="text-center text-red-500 p-8">দুঃখিত, এই অর্ডার আইডিটি খুঁজে পাওয়া যায়নি।</p>';
-                    }
-                } catch (error) {
-                     console.error("Failed to fetch single order:", error);
-                     orderListDiv.innerHTML = '<p class="text-center text-red-500 p-8">অর্ডারটি লোড করার সময় একটি সমস্যা হয়েছে।</p>';
+            if (headerRes.ok) {
+                document.getElementById('header').innerHTML = await headerRes.text();
+            }
+            if (footerRes.ok) {
+                document.getElementById('footer').innerHTML = await footerRes.text();
+            }
+            
+            // Load main.js only if it exists
+            const script = document.createElement('script');
+            script.src = 'js/main.js';
+            script.type = 'module';
+            document.body.appendChild(script);
+        } catch (error) { 
+            console.error("Layout load failed:", error); 
+        }
+    }
+    
+    function displayOrdersAsCards(orders) {
+        if (!orders || orders.length === 0) {
+            orderListDiv.innerHTML = '<p class="text-center text-gray-600 p-8">আপনি এখনো কোনো অর্ডার করেননি।</p>';
+            return;
+        }
+        
+        orderListDiv.innerHTML = `
+            <div class="hidden md:grid grid-cols-4 gap-4 font-bold p-4 bg-gray-100 rounded-t-lg text-sm text-gray-700">
+                <div>অর্ডার আইডি</div>
+                <div>অর্ডারের তারিখ</div>
+                <div>মোট মূল্য</div>
+                <div>স্ট্যাটাস</div>
+            </div>
+        `;
+        
+        orders.forEach(order => {
+            const card = document.createElement('div');
+            card.className = 'grid grid-cols-2 md:grid-cols-4 gap-4 p-4 border-b cursor-pointer hover:bg-gray-50 text-sm items-center';
+            card.innerHTML = `
+                <div><span class="md:hidden font-semibold">আইডি: </span>${order.orderId || 'N/A'}</div>
+                <div><span class="md:hidden font-semibold">তারিখ: </span>${order.orderDate ? new Date(order.orderDate).toLocaleString('bn-BD') : 'N/A'}</div>
+                <div><span class="md:hidden font-semibold">মূল্য: </span>${order.totalAmount || 0} টাকা</div>
+                <div class="text-right md:text-left">
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}">
+                        ${getStatusText(order.status)}
+                    </span>
+                </div>
+            `;
+            card.onclick = () => showOrderDetailsModal(order);
+            orderListDiv.appendChild(card);
+        });
+    }
+    
+    async function fetchOrders(user) {
+        orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-8">আপনার অর্ডারগুলো লোড হচ্ছে...</p>';
+        let allOrders = [];
+        
+        try {
+            const ordersRef = ref(database, 'orders');
+            
+            if (user) {
+                // Logged in user - fetch by userId and email
+                console.log("Fetching orders for user:", user.uid, user.email);
+                
+                const [userIdQuery, emailQuery] = await Promise.all([
+                    get(query(ordersRef, orderByChild('userId'), equalTo(user.uid))),
+                    get(query(ordersRef, orderByChild('customerEmail'), equalTo(user.email)))
+                ]);
+                
+                if (userIdQuery.exists()) {
+                    userIdQuery.forEach(child => {
+                        allOrders.push({ key: child.key, ...child.val() });
+                    });
+                }
+                
+                if (emailQuery.exists()) {
+                    emailQuery.forEach(child => {
+                        // Avoid duplicates
+                        if (!allOrders.some(o => o.key === child.key)) {
+                            allOrders.push({ key: child.key, ...child.val() });
+                        }
+                    });
                 }
             } else {
-                document.getElementById('loginButton')?.addEventListener('click', () => signInWithPopup(auth, provider));
-                onAuthStateChanged(auth, (user) => {
-                    const hasLocalOrders = (JSON.parse(localStorage.getItem('myOrders') || '[]')).length > 0;
-                    if (user) {
-                        loginPrompt.style.display = 'none';
-                        fetchOrders(user);
-                    } else if (hasLocalOrders) {
-                        loginPrompt.style.display = 'none';
-                        fetchOrders(null);
-                    } else {
-                        loginPrompt.style.display = 'block';
-                        orderListDiv.innerHTML = '';
-                    }
-                });
-            }
-        });
-        
-        function showOrderDetailsModal(order) {
-            const modal = document.getElementById('orderModal');
-            const modalContent = document.getElementById('modalContent');
-            const statuses = ['processing', 'confirmed', 'packaging', 'shipped', 'delivered'];
-            const currentStatusIndex = statuses.indexOf(order.status || 'processing');
-            let trackerHTML = '<div class="flex justify-between items-center mb-6 text-xs text-center">';
-            statuses.forEach((status, index) => {
-                const isActive = index <= currentStatusIndex;
-                const isCompleted = index < currentStatusIndex;
-                trackerHTML += `<div class="step-item flex-1 relative"><div class="step-icon w-8 h-8 mx-auto rounded-full flex items-center justify-center font-bold ${isActive ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'} transition-colors duration-300">${isCompleted ? '<i class="fas fa-check"></i>' : (index + 1)}</div><p class="mt-2 ${isActive ? 'text-green-600 font-semibold' : 'text-gray-500'}">${getStatusText(status)}</p>${ index < statuses.length - 1 ? `<div class="step-connector absolute top-4 left-1/2 w-full h-0.5 ${isCompleted ? 'bg-green-500' : 'bg-gray-200'}"></div>` : '' }</div>`;
-            });
-            trackerHTML += '</div>';
-
-            let detailsHTML = `<h3 class="text-xl font-bold text-lipstick mb-4">অর্ডারের বিস্তারিত</h3>${trackerHTML}<div class="space-y-1 text-sm bg-gray-50 p-3 rounded-lg"><p><strong>অর্ডার আইডি:</strong> ${order.orderId || 'N/A'}</p><p><strong>তারিখ:</strong> ${order.orderDate ? new Date(order.orderDate).toLocaleString('bn-BD') : 'N/A'}</p><p><strong>নাম:</strong> ${order.customerName || 'N/A'}</p><p><strong>ফোন:</strong> ${order.phoneNumber || 'N/A'}</p><p><strong>ঠিকানা:</strong> ${order.address || 'N/A'}</p></div><hr class="my-3"><h4 class="font-semibold mb-2">প্রোডাক্টস</h4>`;
-            
-            (order.cartItems || []).forEach(item => {
-                const productId = item.id || '';
-                const isClickable = !!productId;
-                const tag = isClickable ? 'a' : 'div';
-                const linkHref = isClickable ? `href="product-detail.html?id=${productId}"` : '';
-                const extraClasses = isClickable ? 'hover:bg-gray-100 transition-colors cursor-pointer' : '';
+                // Guest user - fetch from localStorage order IDs
+                const localOrderKeys = JSON.parse(localStorage.getItem('myOrders') || '[]');
+                console.log("Local order keys:", localOrderKeys);
                 
-                detailsHTML += `
-                <${tag} ${linkHref} class="flex items-center mb-2 p-2 bg-gray-50 rounded-md ${extraClasses}">
-                    <img src="${item.image || 'https://via.placeholder.com/64'}" alt="${item.name}" class="w-12 h-12 object-cover rounded mr-3">
-                    <div class="text-sm flex-grow">
-                        <p class="font-semibold">${item.name || 'অজানা প্রোডাক্ট'}</p>
-                        <p>${item.quantity || 1} x ${item.price || 0} টাকা</p>
-                    </div>
-                    <div class="text-sm font-semibold">
-                        ${((item.quantity || 1) * (item.price || 0)).toFixed(2)} টাকা
-                    </div>
-                </${tag}>`;
-            });
-
-            detailsHTML += `<hr class="my-3"><div class="text-right space-y-1"><p><strong>ডেলিভারি ফি:</strong> ${order.deliveryFee || 0} টাকা</p><p class="text-lg font-bold"><strong>মোট মূল্য:</strong> ${order.totalAmount || 0} টাকা</p></div>`;
-
-            modalContent.innerHTML = detailsHTML;
-            modal.classList.add('flex');
-            document.getElementById('modalClose').onclick = () => modal.classList.remove('flex');
-            modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('flex'); };
+                if (localOrderKeys.length > 0) {
+                    const orderPromises = localOrderKeys.map(key => 
+                        get(ref(database, `orders/${key}`))
+                    );
+                    
+                    const snapshots = await Promise.all(orderPromises);
+                    allOrders = snapshots
+                        .filter(s => s.exists())
+                        .map(s => ({ key: s.key, ...s.val() }));
+                }
+            }
+            
+            console.log("Fetched orders:", allOrders);
+            
+        } catch (error) {
+            console.error("Order fetch failed:", error);
+            orderListDiv.innerHTML = `<p class="text-center text-red-500 p-8">অর্ডার লোড করা সম্ভব হয়নি: ${error.message}</p>`;
+            return;
         }
+        
+        // Sort by date (newest first)
+        allOrders.sort((a, b) => new Date(b.orderDate || 0) - new Date(a.orderDate || 0));
+        displayOrdersAsCards(allOrders);
+    }
+    
+    function showOrderDetailsModal(order) {
+        const modal = document.getElementById('orderModal');
+        const modalContent = document.getElementById('modalContent');
+        
+        if (!modal || !modalContent) {
+            console.error("Modal elements not found");
+            return;
+        }
+        
+        const statuses = ['processing', 'confirmed', 'packaging', 'shipped', 'delivered'];
+        const currentStatusIndex = statuses.indexOf(order.status || 'processing');
+        
+        let trackerHTML = '<div class="flex justify-between items-center mb-6 text-xs text-center">';
+        statuses.forEach((status, index) => {
+            const isActive = index <= currentStatusIndex;
+            const isCompleted = index < currentStatusIndex;
+            
+            trackerHTML += `
+                <div class="step-item flex-1 relative">
+                    <div class="step-icon w-8 h-8 mx-auto rounded-full flex items-center justify-center font-bold ${
+                        isActive ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'
+                    } transition-colors duration-300">
+                        ${isCompleted ? '<i class="fas fa-check"></i>' : (index + 1)}
+                    </div>
+                    <p class="mt-2 ${isActive ? 'text-green-600 font-semibold' : 'text-gray-500'}">
+                        ${getStatusText(status)}
+                    </p>
+                    ${index < statuses.length - 1 ? 
+                        `<div class="step-connector absolute top-4 left-1/2 w-full h-0.5 ${
+                            isCompleted ? 'bg-green-500' : 'bg-gray-200'
+                        }"></div>` : ''}
+                </div>`;
+        });
+        trackerHTML += '</div>';
 
-        function getStatusText(status) { const s = { processing: 'প্রসেসিং', confirmed: 'কনফার্মড', packaging: 'প্যাকেজিং', shipped: 'ডেলিভারি হয়েছে', delivered: 'সম্পন্ন হয়েছে' }; return s[status] || 'প্রসেসিং'; }
-        function getStatusColor(status) { const c = { processing: 'bg-yellow-100 text-yellow-800', confirmed: 'bg-blue-100 text-blue-800', packaging: 'bg-purple-100 text-purple-800', shipped: 'bg-cyan-100 text-cyan-800', delivered: 'bg-green-100 text-green-800' }; return c[status] || c.processing; }
-    </script>
+        let detailsHTML = `
+            <h3 class="text-xl font-bold text-lipstick mb-4">অর্ডারের বিস্তারিত</h3>
+            ${trackerHTML}
+            <div class="space-y-1 text-sm bg-gray-50 p-3 rounded-lg">
+                <p><strong>অর্ডার আইডি:</strong> ${order.orderId || 'N/A'}</p>
+                <p><strong>তারিখ:</strong> ${order.orderDate ? new Date(order.orderDate).toLocaleString('bn-BD') : 'N/A'}</p>
+                <p><strong>নাম:</strong> ${order.customerName || 'N/A'}</p>
+                <p><strong>ফোন:</strong> ${order.phoneNumber || 'N/A'}</p>
+                <p><strong>ইমেইল:</strong> ${order.customerEmail || 'N/A'}</p>
+                <p><strong>ঠিকানা:</strong> ${order.address || 'N/A'}</p>
+            </div>
+            <hr class="my-3">
+            <h4 class="font-semibold mb-2">প্রোডাক্টস</h4>
+        `;
+        
+        (order.cartItems || []).forEach(item => {
+            const productId = item.id || '';
+            const isClickable = !!productId;
+            const tag = isClickable ? 'a' : 'div';
+            const linkHref = isClickable ? `href="product-detail.html?id=${productId}"` : '';
+            const extraClasses = isClickable ? 'hover:bg-gray-100 transition-colors cursor-pointer' : '';
+            
+            detailsHTML += `
+            <${tag} ${linkHref} class="flex items-center mb-2 p-2 bg-gray-50 rounded-md ${extraClasses}">
+                <img src="${item.image || 'https://via.placeholder.com/64'}" alt="${item.name}" class="w-12 h-12 object-cover rounded mr-3">
+                <div class="text-sm flex-grow">
+                    <p class="font-semibold">${item.name || 'অজানা প্রোডাক্ট'}</p>
+                    <p>${item.quantity || 1} x ${item.price || 0} টাকা</p>
+                </div>
+                <div class="text-sm font-semibold">
+                    ${((item.quantity || 1) * (item.price || 0)).toFixed(2)} টাকা
+                </div>
+            </${tag}>`;
+        });
+
+        detailsHTML += `
+            <hr class="my-3">
+            <div class="text-right space-y-1">
+                <p><strong>ডেলিভারি ফি:</strong> ${order.deliveryFee || 0} টাকা</p>
+                <p class="text-lg font-bold"><strong>মোট মূল্য:</strong> ${order.totalAmount || 0} টাকা</p>
+            </div>
+        `;
+
+        modalContent.innerHTML = detailsHTML;
+        modal.classList.add('flex');
+        
+        // Close modal handlers
+        document.getElementById('modalClose').onclick = () => modal.classList.remove('flex');
+        modal.onclick = (e) => { 
+            if (e.target === modal) modal.classList.remove('flex'); 
+        };
+    }
+
+    function getStatusText(status) { 
+        const s = { 
+            processing: 'প্রসেসিং', 
+            confirmed: 'কনফার্মড', 
+            packaging: 'প্যাকেজিং', 
+            shipped: 'ডেলিভারি হয়েছে', 
+            delivered: 'সম্পন্ন হয়েছে' 
+        }; 
+        return s[status] || 'প্রসেসিং'; 
+    }
+    
+    function getStatusColor(status) { 
+        const c = { 
+            processing: 'bg-yellow-100 text-yellow-800', 
+            confirmed: 'bg-blue-100 text-blue-800', 
+            packaging: 'bg-purple-100 text-purple-800', 
+            shipped: 'bg-cyan-100 text-cyan-800', 
+            delivered: 'bg-green-100 text-green-800' 
+        }; 
+        return c[status] || c.processing; 
+    }
+
+    // Main initialization
+    document.addEventListener("DOMContentLoaded", async () => {
+        await loadLayout();
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlOrderId = urlParams.get('orderId');
+
+        if (urlOrderId) {
+            // Single order view
+            orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-8">আপনার অর্ডারটি লোড হচ্ছে...</p>';
+            
+            try {
+                const orderRef = ref(database, `orders/${urlOrderId}`);
+                const snapshot = await get(orderRef);
+
+                if (snapshot.exists()) {
+                    const orderData = { key: snapshot.key, ...snapshot.val() };
+                    showOrderDetailsModal(orderData);
+                    
+                    // Also load all orders for the user
+                    onAuthStateChanged(auth, user => {
+                        if (user) {
+                            fetchOrders(user);
+                        } else {
+                            fetchOrders(null);
+                        }
+                    });
+                } else {
+                    orderListDiv.innerHTML = '<p class="text-center text-red-500 p-8">দুঃখিত, এই অর্ডার আইডিটি খুঁজে পাওয়া যায়নি।</p>';
+                }
+            } catch (error) {
+                console.error("Failed to fetch single order:", error);
+                orderListDiv.innerHTML = '<p class="text-center text-red-500 p-8">অর্ডারটি লোড করার সময় একটি সমস্যা হয়েছে।</p>';
+            }
+        } else {
+            // Orders list view
+            document.getElementById('loginButton')?.addEventListener('click', () => {
+                signInWithPopup(auth, provider).catch(error => {
+                    console.error("Login failed:", error);
+                });
+            });
+            
+            onAuthStateChanged(auth, (user) => {
+                const hasLocalOrders = (JSON.parse(localStorage.getItem('myOrders') || '[]')).length > 0;
+                
+                if (user) {
+                    loginPrompt.style.display = 'none';
+                    fetchOrders(user);
+                } else if (hasLocalOrders) {
+                    loginPrompt.style.display = 'none';
+                    fetchOrders(null);
+                } else {
+                    loginPrompt.style.display = 'block';
+                    orderListDiv.innerHTML = '';
+                }
+            });
+        }
+    });
+</script>
 
     <script type="module" src="js/main.js"></script>
 </body>
