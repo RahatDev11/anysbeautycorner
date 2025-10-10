@@ -1,5 +1,5 @@
 // =================================================================
-// SECTION: ORDER FORM PAGE LOGIC (চূড়ান্ত সংশোধিত)
+// SECTION: ORDER FORM PAGE LOGIC (আপডেটেড)
 // =================================================================
 
 import { auth, database, ref, get, set, runTransaction } from '../modules/firebase-config.js';
@@ -10,41 +10,53 @@ let checkoutCart = [];
 let isBuyNowMode = false;
 
 async function initializeOrderFormPage() {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
         const checkoutForm = document.getElementById('checkoutForm');
         if (!checkoutForm) {
-            resolve();
+            reject('Checkout form not found');
             return;
         }
 
-        // Show form and hide loader
-        document.getElementById('loadingIndicator')?.classList.add('hidden');
-        checkoutForm.classList.remove('hidden');
+        try {
+            // Show form and hide loader
+            document.getElementById('loadingIndicator')?.classList.add('hidden');
+            checkoutForm.classList.remove('hidden');
 
-        // Initialize checkout process
-        auth.onAuthStateChanged(async user => {
-            if (user) {
-                // লগইন করা ইউজার: UID এবং ইমেইল সেভ করা হলো
-                window.currentUserId = user.uid;
-                window.currentUserEmail = user.email;
-                await fetchUserProfile(user.uid);
-                initializeCheckout(user);
-            } else {
-                // গেস্ট ইউজার: GUEST_ দিয়ে আইডি সেভ করা হলো
-                window.currentUserId = 'GUEST_' + Date.now();
-                window.currentUserEmail = 'guest@checkout.com';
-                initializeCheckout(null);
-                handleDeliveryLocationChange();
-            }
-            resolve();
-        });
+            // Initialize checkout process
+            auth.onAuthStateChanged(async (user) => {
+                try {
+                    if (user) {
+                        // লগইন করা ইউজার: UID এবং ইমেইল সেভ করা হলো
+                        window.currentUserId = user.uid;
+                        window.currentUserEmail = user.email;
+                        console.log("User logged in:", user.email);
+                        await fetchUserProfile(user.uid);
+                    } else {
+                        // গেস্ট ইউজার: GUEST_ দিয়ে আইডি সেভ করা হলো
+                        window.currentUserId = 'GUEST_' + Date.now();
+                        window.currentUserEmail = 'guest@checkout.com';
+                        console.log("Guest user created:", window.currentUserId);
+                    }
+                    
+                    initializeCheckout();
+                    handleDeliveryLocationChange();
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
 
-        // Add event listeners
-        document.querySelectorAll('input[name="deliveryLocation"]').forEach(radio => {
-            radio.addEventListener('change', handleDeliveryLocationChange);
-        });
-        document.getElementById('deliveryPaymentMethod')?.addEventListener('change', handleDeliveryPaymentMethodChange);
-        checkoutForm.addEventListener('submit', placeOrder);
+            // Add event listeners
+            document.querySelectorAll('input[name="deliveryLocation"]').forEach(radio => {
+                radio.addEventListener('change', handleDeliveryLocationChange);
+            });
+            
+            document.getElementById('deliveryPaymentMethod')?.addEventListener('change', handleDeliveryPaymentMethodChange);
+            checkoutForm.addEventListener('submit', placeOrder);
+
+        } catch (error) {
+            reject(error);
+        }
     });
 }
 
@@ -52,16 +64,17 @@ function calculateAndDisplayPrices(items) {
     const subTotalDisplay = document.getElementById('subTotalDisplay');
     const deliveryFeeDisplay = document.getElementById('deliveryFeeDisplay');
     const totalAmountDisplay = document.getElementById('totalAmountDisplay');
+    
     if (!subTotalDisplay || !deliveryFeeDisplay || !totalAmountDisplay) return;
 
-    let subTotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    let subTotal = items.reduce((sum, item) => sum + (parseFloat(item.price) || 0) * (item.quantity || 1), 0);
     const deliveryLocation = document.querySelector('input[name="deliveryLocation"]:checked')?.value || 'insideDhaka';
     const deliveryFee = deliveryLocation === 'outsideDhaka' ? 160 : 70;
     const totalAmount = subTotal + deliveryFee;
 
-    subTotalDisplay.textContent = `${subTotal.toLocaleString('bn-BD', { minimumFractionDigits: 2 })} টাকা`;
-    deliveryFeeDisplay.textContent = `${deliveryFee.toLocaleString('bn-BD', { minimumFractionDigits: 2 })} টাকা`;
-    totalAmountDisplay.textContent = `${totalAmount.toLocaleString('bn-BD', { minimumFractionDigits: 2 })} টাকা`;
+    subTotalDisplay.textContent = `${subTotal.toFixed(2)} টাকা`;
+    deliveryFeeDisplay.textContent = `${deliveryFee.toFixed(2)} টাকা`;
+    totalAmountDisplay.textContent = `${totalAmount.toFixed(2)} টাকা`;
 
     return { subTotal, deliveryFee, totalAmount };
 }
@@ -69,9 +82,11 @@ function calculateAndDisplayPrices(items) {
 function renderCheckoutItems(items) {
     const checkoutItemsContainer = document.getElementById('checkoutItems');
     const submitButton = document.getElementById('submitButton');
+    
     if (!checkoutItemsContainer || !submitButton) return;
 
     checkoutItemsContainer.innerHTML = '';
+    
     if (!items || items.length === 0) {
         checkoutItemsContainer.innerHTML = '<p class="text-center text-red-500 font-medium p-4">আপনার কার্ট খালি। অর্ডার করার জন্য প্রোডাক্ট যোগ করুন।</p>';
         submitButton.disabled = true;
@@ -79,7 +94,6 @@ function renderCheckoutItems(items) {
     }
     
     items.forEach(item => {
-        const itemId = item.id || 'N/A';
         const itemName = item.name || 'Unknown Product';
         const itemPrice = parseFloat(item.price) || 0;
         const itemQuantity = item.quantity || 1;
@@ -97,10 +111,11 @@ function renderCheckoutItems(items) {
         `;
         checkoutItemsContainer.appendChild(itemElement);
     });
+    
     submitButton.disabled = false;
 }
 
-function initializeCheckout(user) {
+function initializeCheckout() {
     const urlParams = new URLSearchParams(window.location.search);
     const urlCartData = urlParams.get('cart');
 
@@ -109,7 +124,9 @@ function initializeCheckout(user) {
         isBuyNowMode = true;
         try {
             checkoutCart = JSON.parse(decodeURIComponent(urlCartData));
+            console.log("Buy Now mode activated with items:", checkoutCart);
         } catch (e) {
+            console.error("Error parsing cart data:", e);
             showToast("কার্ট ডেটা লোড করতে সমস্যা হয়েছে।", "error");
             checkoutCart = [];
         }
@@ -118,7 +135,9 @@ function initializeCheckout(user) {
         isBuyNowMode = false;
         try {
             checkoutCart = JSON.parse(localStorage.getItem('anyBeautyCart') || '[]');
+            console.log("Cart loaded from localStorage:", checkoutCart);
         } catch (e) {
+            console.error("Error loading cart from localStorage:", e);
             showToast("কার্ট ডেটা লোড করতে সমস্যা হয়েছে।", "error");
             checkoutCart = [];
         }
@@ -137,11 +156,11 @@ async function fetchUserProfile(uid) {
             document.getElementById('customerName').value = profile.name || '';
             document.getElementById('phoneNumber').value = profile.phone || '';
             document.getElementById('address').value = profile.address || '';
+            console.log("User profile loaded:", profile);
         }
     } catch (err) {
         console.error("Error fetching user profile:", err);
     }
-    handleDeliveryLocationChange();
 }
 
 function handleDeliveryLocationChange() {
@@ -152,12 +171,21 @@ function handleDeliveryLocationChange() {
 
     const isOutsideDhaka = location === 'outsideDhaka';
 
+    // Toggle visibility
     outsideGroup.classList.toggle('hidden', !isOutsideDhaka);
     notice.classList.toggle('hidden', !isOutsideDhaka);
     deliveryPaymentGroup.classList.toggle('hidden', !isOutsideDhaka);
 
+    // Set required fields
     document.getElementById('outsideDhakaLocation').required = isOutsideDhaka;
     document.getElementById('deliveryPaymentMethod').required = isOutsideDhaka;
+
+    // Reset payment fields when location changes
+    if (!isOutsideDhaka) {
+        document.getElementById('deliveryPaymentMethod').value = '';
+        document.getElementById('paymentNumber').value = '';
+        document.getElementById('transactionId').value = '';
+    }
 
     handleDeliveryPaymentMethodChange();
     calculateAndDisplayPrices(checkoutCart);
@@ -170,8 +198,10 @@ function handleDeliveryPaymentMethodChange() {
     const transactionIdGroup = document.getElementById('transactionIdGroup');
 
     const shouldShow = location === 'outsideDhaka' && method;
+    
     paymentNumberGroup.classList.toggle('hidden', !shouldShow);
     transactionIdGroup.classList.toggle('hidden', !shouldShow);
+    
     document.getElementById('paymentNumber').required = shouldShow;
     document.getElementById('transactionId').required = shouldShow;
 }
@@ -180,6 +210,8 @@ async function placeOrder(event) {
     if (event) event.preventDefault();
 
     const submitButton = document.getElementById('submitButton');
+    const originalText = submitButton.innerHTML;
+    
     submitButton.disabled = true;
     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>অর্ডার কনফার্ম হচ্ছে...';
 
@@ -190,7 +222,7 @@ async function placeOrder(event) {
             throw new Error("আপনার কার্ট খালি। অর্ডার করা সম্ভব নয়।");
         }
 
-        // Form data collection
+        // Form data collection and validation
         const customerName = document.getElementById('customerName').value.trim();
         const phoneNumber = document.getElementById('phoneNumber').value.trim();
         const address = document.getElementById('address').value.trim();
@@ -199,13 +231,32 @@ async function placeOrder(event) {
         const deliveryNote = document.getElementById('deliveryNote').value.trim();
 
         // Validation
-        if (!customerName || !phoneNumber || !address) {
-            throw new Error("সমস্ত প্রয়োজনীয় তথ্য প্রদান করুন।");
+        if (!customerName) throw new Error("আপনার নাম প্রদান করুন।");
+        if (!phoneNumber) throw new Error("ফোন নম্বর প্রদান করুন।");
+        if (!address) throw new Error("ঠিকানা প্রদান করুন।");
+        
+        // Phone number validation
+        const phoneRegex = /^01[3-9]\d{8}$/;
+        if (!phoneRegex.test(phoneNumber)) {
+            throw new Error("সঠিক ফোন নম্বর প্রদান করুন (01XXXXXXXXX)");
         }
 
-        // Price calculation - FIXED
+        // Outside Dhaka validation
+        if (deliveryLocation === 'outsideDhaka') {
+            const outsideLocation = document.getElementById('outsideDhakaLocation').value.trim();
+            const paymentMethod = document.getElementById('deliveryPaymentMethod').value;
+            const paymentNumber = document.getElementById('paymentNumber').value.trim();
+            const transactionId = document.getElementById('transactionId').value.trim();
+
+            if (!outsideLocation) throw new Error("জেলা ও থানা প্রদান করুন।");
+            if (!paymentMethod) throw new Error("পেমেন্ট মাধ্যম সিলেক্ট করুন।");
+            if (!paymentNumber) throw new Error("পেমেন্ট নাম্বার প্রদান করুন।");
+            if (!transactionId) throw new Error("ট্রানজেকশন আইডি প্রদান করুন।");
+        }
+
+        // Price calculation
         const deliveryFee = deliveryLocation === 'insideDhaka' ? 70 : 160;
-        const subTotal = itemsToOrder.reduce((sum, item) => sum + (parseFloat(item.price) * (item.quantity || 1)), 0);
+        const subTotal = itemsToOrder.reduce((sum, item) => sum + (parseFloat(item.price) || 0) * (item.quantity || 1), 0);
         const totalAmount = subTotal + deliveryFee;
 
         // Generate Custom Order ID
@@ -215,79 +266,87 @@ async function placeOrder(event) {
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const dateString = `${today.getFullYear()}-${month}-${day}`;
 
+        console.log("Generating order ID for date:", dateString);
+
         const counterRef = ref(database, `counters/${dateString}`);
 
-        await runTransaction(counterRef, (currentData) => {
-            if (currentData === null) {
-                return 1;
-            } else {
-                return currentData + 1;
-            }
-        }).then(async (result) => {
-            if (result.committed) {
-                const orderNumber = result.snapshot.val();
-                const paddedOrderNumber = String(orderNumber).padStart(3, '0');
-                const orderId = `${year}${day}${month}${paddedOrderNumber}`;
-
-                // FIXED: subTotal এবং totalAmount সঠিকভাবে সেট করা
-                const orderData = {
-                    customerName,
-                    phoneNumber,
-                    address,
-                    deliveryLocation: deliveryLocation === 'insideDhaka' ? 'ঢাকার ভেতরে' : 'ঢাকার বাইরে',
-                    deliveryFee,
-                    subTotal: subTotal.toFixed(2), // FIXED: subTotal সঠিকভাবে সেট
-                    totalAmount: totalAmount.toFixed(2), // FIXED: totalAmount সঠিকভাবে সেট
-                    cartItems: itemsToOrder,
-                    orderDate: new Date().toISOString(),
-                    status: 'processing', // FIXED: 'Pending' থেকে 'processing' করা
-                    userId: window.currentUserId, 
-                    customerEmail: window.currentUserEmail || 'N/A',
-                    userEmail: window.currentUserEmail || 'N/A', // Backward compatibility
-                    deliveryNote: deliveryNote || 'N/A',
-                    outsideDhakaLocation: deliveryLocation === 'outsideDhaka' ? document.getElementById('outsideDhakaLocation').value : 'N/A',
-                    paymentMethod: deliveryLocation === 'outsideDhaka' ? document.getElementById('deliveryPaymentMethod').value : 'N/A',
-                    paymentNumber: deliveryLocation === 'outsideDhaka' ? document.getElementById('paymentNumber').value : 'N/A',
-                    transactionId: deliveryLocation === 'outsideDhaka' ? document.getElementById('transactionId').value : 'N/A',
-                    orderId: orderId
-                };
-
-                const newOrderRef = ref(database, 'orders/' + orderId);
-                await set(newOrderRef, orderData);
-
-                // Local Storage-এ অর্ডার আইডি সেভ করা
-                const myOrders = JSON.parse(localStorage.getItem('myOrders')) || [];
-                myOrders.push(orderId);
-                localStorage.setItem('myOrders', JSON.stringify(myOrders));
-
-                // Clear cart
-                localStorage.removeItem('anyBeautyCart');
-                if (window.cart) {
-                    window.cart.length = 0;
-                }
-
-                // Send notification
-                await sendTelegramNotification({ ...orderData, orderId });
-                await sendNotificationForOrder(orderId); 
-
-                // সঠিক ট্র্যাকিং পেইজে রিডাইরেক্ট করা - FIXED
-                showToast(`অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে! অর্ডার আইডি: ${orderId}`, "success");
-                setTimeout(() => {
-                    window.location.href = `order-track.html?orderId=${orderId}`;
-                }, 2000);
-
-            } else {
-                throw new Error("অর্ডার কাউন্টার ট্রানজেকশন ব্যর্থ হয়েছে।");
-            }
-        }).catch(error => {
-            throw error; 
+        const result = await runTransaction(counterRef, (currentData) => {
+            return (currentData || 0) + 1;
         });
+
+        if (result.committed) {
+            const orderNumber = result.snapshot.val();
+            const paddedOrderNumber = String(orderNumber).padStart(3, '0');
+            const orderId = `${year}${day}${month}${paddedOrderNumber}`;
+
+            console.log("Order ID generated:", orderId);
+
+            // Prepare order data
+            const orderData = {
+                customerName,
+                phoneNumber,
+                address,
+                deliveryLocation: deliveryLocation === 'insideDhaka' ? 'ঢাকার ভেতরে' : 'ঢাকার বাইরে',
+                deliveryFee,
+                subTotal: subTotal.toFixed(2),
+                totalAmount: totalAmount.toFixed(2),
+                cartItems: itemsToOrder,
+                orderDate: new Date().toISOString(),
+                status: 'processing',
+                userId: window.currentUserId, 
+                customerEmail: window.currentUserEmail || 'N/A',
+                userEmail: window.currentUserEmail || 'N/A', // Backward compatibility
+                deliveryNote: deliveryNote || 'N/A',
+                outsideDhakaLocation: deliveryLocation === 'outsideDhaka' ? document.getElementById('outsideDhakaLocation').value : 'N/A',
+                paymentMethod: deliveryLocation === 'outsideDhaka' ? document.getElementById('deliveryPaymentMethod').value : 'N/A',
+                paymentNumber: deliveryLocation === 'outsideDhaka' ? document.getElementById('paymentNumber').value : 'N/A',
+                transactionId: deliveryLocation === 'outsideDhaka' ? document.getElementById('transactionId').value : 'N/A',
+                orderId: orderId
+            };
+
+            // Save to Firebase
+            const newOrderRef = ref(database, 'orders/' + orderId);
+            await set(newOrderRef, orderData);
+            console.log("Order saved to Firebase:", orderId);
+
+            // Save to localStorage for tracking
+            const myOrders = JSON.parse(localStorage.getItem('myOrders') || '[]');
+            myOrders.push(orderId);
+            localStorage.setItem('myOrders', JSON.stringify(myOrders));
+            console.log("Order ID saved to localStorage");
+
+            // Clear cart
+            localStorage.removeItem('anyBeautyCart');
+            if (window.cart) {
+                window.cart.length = 0;
+            }
+            console.log("Cart cleared");
+
+            // Send notifications
+            try {
+                await sendTelegramNotification({ ...orderData, orderId });
+                await sendNotificationForOrder(orderId);
+                console.log("Notifications sent");
+            } catch (notifError) {
+                console.warn("Notification failed:", notifError);
+            }
+
+            // Success message and redirect
+            showToast(`অর্ডার সফলভাবে তৈরি হয়েছে! অর্ডার আইডি: ${orderId}`, "success");
+            
+            setTimeout(() => {
+                window.location.href = `order-track.html?orderId=${orderId}`;
+            }, 2000);
+
+        } else {
+            throw new Error("অর্ডার আইডি জেনারেট করতে সমস্যা হয়েছে।");
+        }
 
     } catch (error) {
         console.error("Order placement error:", error);
-        showToast(`অর্ডার সাবমিট করতে সমস্যা হয়েছে: ${error.message || 'Unknown Error'}। অনুগ্রহ করে আবার চেষ্টা করুন।`, "error");
+        showToast(`অর্ডার সাবমিট করতে সমস্যা হয়েছে: ${error.message}`, "error");
         submitButton.disabled = false;
-        submitButton.innerHTML = 'অর্ডার কনফার্ম করুন';
+        submitButton.innerHTML = originalText;
     }
 }
 
