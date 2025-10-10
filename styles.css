@@ -21,6 +21,7 @@ body {
 .bg-highlight { background-color: #FFD700; }
 .text-highlight { color: black; }
 .bg-background { background-color: #FFF5F7; }
+.text-orange-600 { color: #ea580c; }
 
 /* ফর্ম ফিল্ড স্টাইল */
 .form-group { 
@@ -92,6 +93,11 @@ body {
     gap: 1.25rem; 
     flex-wrap: wrap; 
 }
+.radio-group.justify-between {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
 .radio-group label { 
     display: flex; 
     align-items: center; 
@@ -101,6 +107,11 @@ body {
     cursor: pointer; 
     transition: color 0.3s ease;
 }
+.radio-group.justify-between label {
+    flex: 1;
+    text-align: center;
+    margin-bottom: 0;
+}
 .radio-group label:hover {
     color: #A52A2A;
 }
@@ -109,11 +120,39 @@ body {
     margin-right: 0.5rem; 
     transform: scale(1.1);
 }
+.radio-group.justify-between input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+}
+
+/* কাস্টম রেডিও বাটন */
+.radio-custom {
+    border: 2px solid #A52A2A;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    display: block;
+    width: 100%;
+}
+.radio-custom:hover {
+    background-color: #A52A2A !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(165, 42, 42, 0.2);
+}
+.radio-group.justify-between .flex-1 {
+    margin-left: 0;
+}
+.radio-group.justify-between .flex-1:last-child {
+    margin-left: 1rem;
+}
 
 /* পেমেন্ট নোটিশ */
 .payment-notice { 
     background: #fef2f2; 
-    padding: 0.75rem; 
+    padding: 1rem; 
     border-radius: 0.5rem; 
     font-size: 0.9rem; 
     color: #a52a2a; 
@@ -123,6 +162,10 @@ body {
 }
 .payment-notice strong {
     font-weight: 600;
+}
+.payment-notice .fa-exclamation-circle {
+    color: #a52a2a;
+    flex-shrink: 0;
 }
 
 /* কার্ট আইটেম স্টাইল */
@@ -136,6 +179,7 @@ body {
     border-bottom: 1px solid #e2e8f0; 
     margin-bottom: 0.625rem; 
     transition: background-color 0.3s ease;
+    border-radius: 0.375rem;
 }
 .checkout-item:hover {
     background-color: #f8fafc;
@@ -215,6 +259,10 @@ body {
     font-weight: 700; 
     color: #A52A2A; 
     font-size: 1.2rem;
+}
+.price-summary p.text-orange-600 span:last-child {
+    color: #ea580c;
+    font-weight: 600;
 }
 
 /* সাবমিট বাটন */
@@ -342,7 +390,7 @@ body {
 }
 
 .cart-scroll-container::-webkit-scrollbar {
-    width: 4px;
+    width: 6px;
 }
 
 .cart-scroll-container::-webkit-scrollbar-track {
@@ -378,6 +426,22 @@ body {
     font-size: 1rem;
 }
 
+/* ফর্ম সেকশন স্টাইল */
+.form-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+.form-section h2 {
+    color: #A52A2A;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
 /* রেস্পন্সিভ ডিজাইন */
 @media (max-width: 768px) {
     .checkout-item img { 
@@ -391,6 +455,20 @@ body {
         flex-direction: column; 
         gap: 0.75rem; 
         align-items: flex-start; 
+    }
+    .radio-group.justify-between {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .radio-group.justify-between .flex-1 {
+        margin-left: 0 !important;
+    }
+    .radio-group.justify-between .flex-1:last-child {
+        margin-left: 0 !important;
+    }
+    .radio-custom {
+        padding: 0.75rem 1rem;
+        text-align: center;
     }
     .form-group {
         margin-bottom: 1.25rem;
@@ -408,11 +486,21 @@ body {
         padding: 0.875rem;
         font-size: 1rem;
     }
+    .payment-notice {
+        padding: 0.875rem;
+        font-size: 0.85rem;
+    }
     h2 { 
         font-size: 1.25rem; 
     }
     h3 { 
         font-size: 1.1rem; 
+    }
+    .form-section {
+        padding: 1.25rem;
+    }
+    .form-section h2 {
+        font-size: 1.25rem;
     }
 }
 
@@ -444,6 +532,9 @@ body {
     .payment-notice {
         font-size: 0.85rem;
         padding: 0.6rem;
+    }
+    .cart-scroll-container {
+        max-height: 220px;
     }
 }
 
@@ -513,6 +604,21 @@ body {
     }
 }
 
+@keyframes bounce {
+    0%, 20%, 53%, 80%, 100% {
+        transform: translate3d(0,0,0);
+    }
+    40%, 43% {
+        transform: translate3d(0,-8px,0);
+    }
+    70% {
+        transform: translate3d(0,-4px,0);
+    }
+    90% {
+        transform: translate3d(0,-2px,0);
+    }
+}
+
 /* ফোকাস ভিজিবিলিটি */
 button:focus-visible,
 input:focus-visible,
@@ -532,4 +638,222 @@ textarea:focus-visible {
     .order-list-link {
         display: none !important;
     }
+}
+
+/* ইউটিলিটি ক্লাস */
+.flex-1 {
+    flex: 1 1 0%;
+}
+
+.ml-4 {
+    margin-left: 1rem;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.block {
+    display: block;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.transition-all {
+    transition: all 0.3s ease;
+}
+
+.duration-300 {
+    transition-duration: 300ms;
+}
+
+/* শেডো ইফেক্ট */
+.shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.shadow-md {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* বর্ডার রেডিয়াস */
+.rounded-lg {
+    border-radius: 0.5rem;
+}
+
+.rounded-xl {
+    border-radius: 0.75rem;
+}
+
+/* স্পেসিং */
+.p-6 {
+    padding: 1.5rem;
+}
+
+.px-6 {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+.py-3 {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+.mt-6 {
+    margin-top: 1.5rem;
+}
+
+.mb-6 {
+    margin-bottom: 1.5rem;
+}
+
+/* টেক্সট সাইজ */
+.text-sm {
+    font-size: 0.875rem;
+}
+
+.text-lg {
+    font-size: 1.125rem;
+}
+
+.text-xl {
+    font-size: 1.25rem;
+}
+
+.text-2xl {
+    font-size: 1.5rem;
+}
+
+/* ফন্ট ওয়েট */
+.font-semibold {
+    font-weight: 600;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+/* ব্যাকগ্রাউন্ড কালার */
+.bg-white {
+    background-color: #ffffff;
+}
+
+.bg-gray-50 {
+    background-color: #f9fafb;
+}
+
+/* টেক্সট কালার */
+.text-gray-600 {
+    color: #6b7280;
+}
+
+.text-gray-700 {
+    color: #374151;
+}
+
+.text-gray-800 {
+    color: #1f2937;
+}
+
+/* গ্রিড সিস্টেম */
+.grid {
+    display: grid;
+}
+
+.grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gap-8 {
+    gap: 2rem;
+}
+
+/* কন্টেইনার */
+.container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (min-width: 640px) {
+    .container {
+        max-width: 640px;
+    }
+}
+
+@media (min-width: 768px) {
+    .container {
+        max-width: 768px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .container {
+        max-width: 1024px;
+    }
+    
+    .lg\:grid-cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    
+    .lg\:col-span-2 {
+        grid-column: span 2 / span 2;
+    }
+}
+
+@media (min-width: 1280px) {
+    .container {
+        max-width: 1280px;
+    }
+}
+
+/* প্যাডিং এবং মার্জিন */
+.pt-24 {
+    padding-top: 6rem;
+}
+
+.pb-12 {
+    padding-bottom: 3rem;
+}
+
+.px-4 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.py-12 {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+}
+
+.mt-4 {
+    margin-top: 1rem;
+}
+
+.mb-4 {
+    margin-bottom: 1rem;
+}
+
+/* স্ক্রিন রিডার এর জন্য */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
