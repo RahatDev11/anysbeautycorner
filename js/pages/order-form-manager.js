@@ -1,10 +1,10 @@
 // =================================================================
-// SECTION: ORDER FORM PAGE LOGIC (সংশোধিত)
+// SECTION: ORDER FORM PAGE LOGIC
 // =================================================================
 
 import { auth, database, ref, get, set, runTransaction } from '../modules/firebase-config.js';
 import { showToast } from '../modules/ui-utilities.js';
-import { onAuthStateChanged } from '../modules/auth-manager.js'; // getUserId() ফাংশনটি বাদ দেওয়া হয়েছে
+import { getUserId, onAuthStateChanged } from '../modules/auth-manager.js';
 import { sendTelegramNotification, sendNotificationForOrder } from '../modules/notification-manager.js';
 import { cart, saveCart } from '../modules/cart-manager.js';
 
@@ -26,13 +26,11 @@ async function initializeOrderFormPage() {
         // Initialize checkout process
         onAuthStateChanged(auth, async user => {
             if (user) {
-                // লগইন করা ইউজার: UID এবং ইমেইল সেভ করা হলো
                 window.currentUserId = user.uid;
                 window.currentUserEmail = user.email;
                 await fetchUserProfile(user.uid);
                 initializeCheckout(user);
             } else {
-                // গেস্ট ইউজার: GUEST_ দিয়ে আইডি সেভ করা হলো
                 window.currentUserId = 'GUEST_' + Date.now();
                 window.currentUserEmail = 'guest@checkout.com';
                 initializeCheckout(null);
@@ -236,8 +234,7 @@ async function placeOrder(event) {
                     cartItems: itemsToOrder,
                     orderDate: new Date().toISOString(),
                     status: 'Pending',
-                    // ✅ FIX 1: getUserId() এর পরিবর্তে window.currentUserId ব্যবহার করা হলো
-                    userId: window.currentUserId, 
+                    userId: getUserId(),
                     customerEmail: window.currentUserEmail || 'N/A',
                     deliveryNote: deliveryNote || 'N/A',
                     outsideDhakaLocation: deliveryLocation === 'outsideDhaka' ? document.getElementById('outsideDhakaLocation').value : 'N/A',
@@ -249,14 +246,11 @@ async function placeOrder(event) {
                 const newOrderRef = ref(database, 'orders/' + orderId);
                 await set(newOrderRef, orderData);
 
-                // ✅ FIX 2: Local Storage সেভ করার আগে GUEST চেক করা হলো
-                // শুধুমাত্র GUEST ইউজারদের জন্য অর্ডার আইডি লোকাল স্টোরেজে সেভ করা হচ্ছে
-                if (window.currentUserId.startsWith('GUEST_')) {
-                    const myOrders = JSON.parse(localStorage.getItem('myOrders')) || [];
-                    myOrders.push(orderId);
-                    localStorage.setItem('myOrders', JSON.stringify(myOrders));
-                }
-                
+                // Save order ID to localStorage
+                const myOrders = JSON.parse(localStorage.getItem('myOrders')) || [];
+                myOrders.push(orderId);
+                localStorage.setItem('myOrders', JSON.stringify(myOrders));
+
                 // Clear cart
                 localStorage.removeItem('anyBeautyCart');
                 cart.length = 0; // Clear the imported cart array
@@ -266,10 +260,14 @@ async function placeOrder(event) {
                 await sendTelegramNotification({ ...orderData, orderId });
                 await sendNotificationForOrder(orderId); // Call OneSignal notification function
 
-                // ✅ FIX 3: সঠিক ট্র্যাকিং পেইজে রিডাইরেক্ট করা
+                // Redirect with success message
+                                // ১. সাফল্যের বার্তা দেখানো
                 showToast(`অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে! অর্ডার আইডি: ${orderId}`, "success");
-                // সাথে সাথে ট্র্যাকিং পেইজে রিডাইরেক্ট করা হচ্ছে
-                window.location.href = `order-track.html?orderId=${orderId}`; 
+
+                // ২. ২.৫ সেকেন্ড অপেক্ষা করে ইউজারকে হোমপেজে রিডাইরেক্ট করা
+                setTimeout(() => {
+                    window.location.href = 'index.html'; // হোমপেজের URL
+                }, 2500); // ২৫০০ মিলিসেকেন্ড = ২.৫ সেকেন্ড
 
             } else {
                 throw new Error("Failed to commit transaction for order counter.");
