@@ -7,19 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
-    <style>
-        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; }
-        .form-input, .form-radio { width: 100%; padding: 0.75rem; border: 1px solid #D1D5DB; border-radius: 0.375rem; }
-        .form-input:focus { outline: none; border-color: #D92C66; }
-        .form-radio { width: auto; }
-        .required-star { color: #EF4444; }
-        
-        /* Checkout items styles */
-        .checkout-item { display: flex; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #e5e7eb; }
-        .checkout-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 0.375rem; margin-right: 1rem; }
-        .checkout-item-details { flex: 1; }
-        .item-name { font-weight: 600; margin-bottom: 0.25rem; }
-    </style>
     <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
 </head>
 <body class="bg-gray-50">
@@ -31,80 +18,101 @@
             <i class="fas fa-spinner fa-spin text-4xl text-lipstick"></i>
         </div>
 
-        <form id="checkoutForm" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- কাস্টমারের তথ্য -->
-            <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-2xl font-bold mb-6 text-lipstick">বিলিং ডিটেইলস</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="customerName" class="form-label">আপনার নাম <span class="required-star">*</span></label>
-                        <input type="text" id="customerName" class="form-input" required>
+        <form id="checkoutForm" class="hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- কাস্টমারের তথ্য -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-6 text-lipstick">বিলিং ডিটেইলস</h2>
+                    
+                    <div class="form-group grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="customerName" class="form-label">আপনার নাম <span class="required-star">*</span></label>
+                            <input type="text" id="customerName" class="form-input" required>
+                        </div>
+                        <div>
+                            <label for="phoneNumber" class="form-label">ফোন নম্বর <span class="required-star">*</span></label>
+                            <input type="tel" id="phoneNumber" class="form-input" required pattern="01[3-9][0-9]{8}">
+                        </div>
                     </div>
-                    <div>
-                        <label for="phoneNumber" class="form-label">ফোন নম্বর <span class="required-star">*</span></label>
-                        <input type="tel" id="phoneNumber" class="form-input" required pattern="01[3-9][0-9]{8}">
+                    
+                    <div class="form-group">
+                        <label for="address" class="form-label">সম্পূর্ণ ঠিকানা <span class="required-star">*</span></label>
+                        <textarea id="address" rows="3" class="form-input" required></textarea>
                     </div>
-                </div>
-                <div class="mt-6">
-                    <label for="address" class="form-label">সম্পূর্ণ ঠিকানা <span class="required-star">*</span></label>
-                    <textarea id="address" rows="3" class="form-input" required></textarea>
-                </div>
-                <div class="mt-6">
-                    <label class="form-label">ডেলিভারি এলাকা <span class="required-star">*</span></label>
-                    <div class="flex space-x-4 mt-2">
-                        <label class="flex items-center">
-                            <input type="radio" name="deliveryLocation" value="insideDhaka" class="form-radio" checked> 
-                            <span class="ml-2">ঢাকার ভেতরে</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="deliveryLocation" value="outsideDhaka" class="form-radio"> 
-                            <span class="ml-2">ঢাকার বাইরে</span>
-                        </label>
+                    
+                    <div class="form-group">
+                        <label class="form-label">ডেলিভারি এলাকা <span class="required-star">*</span></label>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="deliveryLocation" value="insideDhaka" class="form-radio" checked> 
+                                <span class="ml-2">ঢাকার ভেতরে</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="deliveryLocation" value="outsideDhaka" class="form-radio"> 
+                                <span class="ml-2">ঢাকার বাইরে</span>
+                            </label>
+                        </div>
                     </div>
-                </div>
-                <div id="outsideDhakaLocationGroup" class="mt-6 hidden">
-                    <label for="outsideDhakaLocation" class="form-label">জেলা ও থানা <span class="required-star">*</span></label>
-                    <input type="text" id="outsideDhakaLocation" class="form-input">
-                </div>
-                <div class="mt-6">
-                    <label for="deliveryNote" class="form-label">অতিরিক্ত তথ্য (ঐচ্ছিক)</label>
-                    <textarea id="deliveryNote" rows="2" class="form-input"></textarea>
-                </div>
-            </div>
-            <!-- অর্ডারের সারাংশ -->
-            <div class="bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-2xl font-bold mb-6 text-lipstick">আপনার অর্ডার</h2>
-                <div id="checkoutItems" class="space-y-4 max-h-64 overflow-y-auto mb-4 border-b pb-4"></div>
-                <div class="space-y-2 text-gray-700">
-                    <div class="flex justify-between"><span>সাব-টোটাল</span> <span id="subTotalDisplay">০.০০ টাকা</span></div>
-                    <div class="flex justify-between"><span>ডেলিভারি ফি</span> <span id="deliveryFeeDisplay">৭০.০০ টাকা</span></div>
-                    <div class="flex justify-between font-bold text-lg border-t pt-2 mt-2">
-                        <span>মোট</span> <span id="totalAmountDisplay">৭০.০০ টাকা</span>
+                    
+                    <div id="outsideDhakaLocationGroup" class="form-group hidden">
+                        <label for="outsideDhakaLocation" class="form-label">জেলা ও থানা <span class="required-star">*</span></label>
+                        <input type="text" id="outsideDhakaLocation" class="form-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="deliveryNote" class="form-label">অতিরিক্ত তথ্য (ঐচ্ছিক)</label>
+                        <textarea id="deliveryNote" rows="2" class="form-input"></textarea>
                     </div>
                 </div>
-                <div id="paymentNotice" class="mt-4 text-sm text-red-600 bg-red-50 p-3 rounded-md hidden">
-                    <strong>নোট:</strong> ডেলিভারি চার্জ <strong>১৬০ টাকা</strong> অগ্রিম প্রযোজ্য। অনুগ্রহ করে <strong>01972580114</strong> নম্বরে সেন্ড মানি করুন।
-                </div>
-                <div id="deliveryPaymentGroup" class="mt-4 hidden space-y-4">
-                    <div>
-                        <label for="deliveryPaymentMethod" class="form-label">পেমেন্ট মাধ্যম <span class="required-star">*</span></label>
-                        <select id="deliveryPaymentMethod" class="form-input">
-                            <option value="">সিলেক্ট করুন</option>
-                            <option value="bkash">বিকাশ</option>
-                            <option value="nagad">নগদ</option>
-                        </select>
+                
+                <!-- অর্ডারের সারাংশ -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-6 text-lipstick">আপনার অর্ডার</h2>
+                    
+                    <div class="checkout-items">
+                        <div id="checkoutItems" class="space-y-4 max-h-64 overflow-y-auto mb-4 border-b pb-4"></div>
                     </div>
-                    <div id="paymentNumberGroup" class="hidden">
-                        <label for="paymentNumber" class="form-label">আপনার পেমেন্ট নাম্বার <span class="required-star">*</span></label>
-                        <input type="text" id="paymentNumber" class="form-input">
+                    
+                    <div class="price-summary">
+                        <div class="flex justify-between">
+                            <span>সাব-টোটাল</span> 
+                            <span id="subTotalDisplay">০.০০ টাকা</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>ডেলিভারি ফি</span> 
+                            <span id="deliveryFeeDisplay">৭০.০০ টাকা</span>
+                        </div>
+                        <div class="total-row flex justify-between font-bold text-lg border-t pt-2 mt-2">
+                            <span>মোট</span> 
+                            <span id="totalAmountDisplay">৭০.০০ টাকা</span>
+                        </div>
                     </div>
-                    <div id="transactionIdGroup" class="hidden">
-                        <label for="transactionId" class="form-label">ট্রানজেকশন আইডি <span class="required-star">*</span></label>
-                        <input type="text" id="transactionId" class="form-input">
+                    
+                    <div id="paymentNotice" class="payment-notice">
+                        <strong>নোট:</strong> ডেলিভারি চার্জ <strong>১৬০ টাকা</strong> অগ্রিম প্রযোজ্য। 
+                        অনুগ্রহ করে <strong>01972580114</strong> নম্বরে সেন্ড মানি করুন।
                     </div>
-                </div>
-                <div class="mt-6">
-                    <button type="submit" id="submitButton" class="w-full bg-lipstick text-white py-3 rounded-lg font-semibold hover:bg-opacity-90 disabled:bg-gray-400">
+                    
+                    <div id="deliveryPaymentGroup" class="hidden space-y-4">
+                        <div class="form-group">
+                            <label for="deliveryPaymentMethod" class="form-label">পেমেন্ট মাধ্যম <span class="required-star">*</span></label>
+                            <select id="deliveryPaymentMethod" class="form-input">
+                                <option value="">সিলেক্ট করুন</option>
+                                <option value="bkash">বিকাশ</option>
+                                <option value="nagad">নগদ</option>
+                            </select>
+                        </div>
+                        <div id="paymentNumberGroup" class="form-group hidden">
+                            <label for="paymentNumber" class="form-label">আপনার পেমেন্ট নাম্বার <span class="required-star">*</span></label>
+                            <input type="text" id="paymentNumber" class="form-input">
+                        </div>
+                        <div id="transactionIdGroup" class="form-group hidden">
+                            <label for="transactionId" class="form-label">ট্রানজেকশন আইডি <span class="required-star">*</span></label>
+                            <input type="text" id="transactionId" class="form-input">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" id="submitButton" class="submit-btn">
                         অর্ডার কনফার্ম করুন
                     </button>
                 </div>
