@@ -9,47 +9,72 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <style>
-    .text-lipstick { color: #A52A2A; }
-    .bg-background { background-color: #FFF5F7; }
+        .text-lipstick { color: #A52A2A; }
+        .bg-background { background-color: #FFF5F7; }
 
-    /* ইমেজ গ্যালারি স্টাইল */
-    .image-gallery { display: flex; gap: 15px; margin-bottom: 20px; }
-    .main-image-container { flex: 1; max-width: 500px; }
-    #mainImage { width: 100%; max-height: 400px; object-fit: contain; border: 1px solid #e5e7eb; border-radius: 4px; cursor: pointer; }
-    .thumbnail-container { display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; }
-    .thumbnail { width: 70px; height: 70px; object-fit: cover; border: 2px solid transparent; border-radius: 4px; cursor: pointer; transition: border-color 0.3s ease; }
-    .thumbnail.active { border-color: #A52A2A; }
-    @media (max-width: 768px) {
-        .image-gallery { flex-direction: column; }
-        .thumbnail-container { flex-direction: row; overflow-x: auto; max-height: none; padding-bottom: 5px; }
-    }
+        /* ইমেজ গ্যালারি স্টাইল */
+        .image-gallery { display: flex; gap: 15px; margin-bottom: 20px; }
+        .main-image-container { flex: 1; max-width: 500px; }
+        #mainImage { width: 100%; max-height: 400px; object-fit: contain; border: 1px solid #e5e7eb; border-radius: 4px; cursor: pointer; }
+        .thumbnail-container { display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; }
+        .thumbnail { width: 70px; height: 70px; object-fit: cover; border: 2px solid transparent; border-radius: 4px; cursor: pointer; transition: border-color 0.3s ease; }
+        .thumbnail.active { border-color: #A52A2A; }
+        @media (max-width: 768px) {
+            .image-gallery { flex-direction: column; }
+            .thumbnail-container { flex-direction: row; overflow-x: auto; max-height: none; padding-bottom: 5px; }
+        }
 
-    /* ফুল-স্ক্রিন মোডাল স্টাইল */
-    #imageModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); z-index: 1000; display: none; justify-content: center; align-items: center; }
-    #modalImage { max-width: 90%; max-height: 80%; }
-    #modalCloseBtn { position: absolute; top: 20px; right: 20px; color: white; font-size: 24px; cursor: pointer; }
-    #modalPrevBtn, #modalNextBtn { position: absolute; top: 50%; transform: translateY(-50%); color: white; font-size: 30px; cursor: pointer; padding: 10px; }
-    #modalPrevBtn { left: 20px; }
-    #modalNextBtn { right: 20px; }
+        /* ফুল-স্ক্রিন মোডাল স্টাইল */
+        #imageModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); z-index: 1000; display: none; justify-content: center; align-items: center; }
+        #modalImage { max-width: 90%; max-height: 80%; }
+        #modalCloseBtn { position: absolute; top: 20px; right: 20px; color: white; font-size: 24px; cursor: pointer; }
+        #modalPrevBtn, #modalNextBtn { position: absolute; top: 50%; transform: translateY(-50%); color: white; font-size: 30px; cursor: pointer; padding: 10px; }
+        #modalPrevBtn { left: 20px; }
+        #modalNextBtn { right: 20px; }
 
-    /* রিলেটেড প্রোডাক্ট স্টাইল - হোম পেজের মতো */
-    .product-card {
-        transition: all 0.3s ease;
-        border: 1px solid #e5e7eb;
-    }
-    .product-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    }
-    
-    /* কোয়েন্টিটি কন্ট্রোল স্টাইল */
-    .quantity-control {
-        background-color: #f8fafc;
-        border-radius: 0.5rem;
-        padding: 0.5rem;
-    }
-</style>
+        /* রিলেটেড প্রোডাক্টস স্টাইল */
+        #relatedProductsSection {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        #relatedProductsContainer {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        
+        @media (min-width: 768px) {
+            #relatedProductsContainer {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            #relatedProductsContainer {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        /* কার্ট কন্ট্রোলস স্টাইল - ফিক্সড সাইজের জন্য */
+        .cart-controls {
+            height: 2.5rem; /* h-10 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .cart-controls-buttons {
+            height: 2.5rem; /* h-10 */
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            width: 100%;
+        }
+    </style>
     <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
+
 </head>
 <body>
     <!-- Global Loading Spinner -->
@@ -61,7 +86,7 @@
         </div>
     </div>
     <div id="header"></div>
-    <main class="p-4 pt-24 md:pt-28 max-w-6xl mx-auto"> 
+    <main class="p-4 pt-24 md:pt-28 max-w-4xl mx-auto"> 
         <div id="loadingSpinner" class="text-center p-10">
             <div class="animate-spin inline-block w-8 h-8 border-4 rounded-full border-t-lipstick" role="status">
                 <span class="visually-hidden"></span>
@@ -70,35 +95,27 @@
         </div>
 
         <div id="productContent" class="hidden">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-                <div class="image-gallery">
-                    <div class="main-image-container">
-                        <img id="mainImage" src="https://via.placeholder.com/500x400.png?text=Loading..." alt="Main Product Image">
-                    </div>
-                    <div class="thumbnail-container" id="thumbnailContainer"></div>
+            <div class="image-gallery">
+                <div class="main-image-container">
+                    <img id="mainImage" src="https://via.placeholder.com/500x400.png?text=Loading..." alt="Main Product Image">
                 </div>
-                <div class="product-info">
-                    <h1 id="productTitle" class="text-2xl lg:text-3xl font-bold mb-4 text-gray-800">প্রোডাক্ট</h1>
-                    <p id="productPrice" class="text-lipstick text-xl lg:text-2xl font-bold mb-4">দাম</p>
-                    <div id="productDetailsExtra" class="mb-6"></div>
-                    <p id="productDescription" class="text-gray-700 mb-6 leading-relaxed">বিবরণ</p>
-                    
-                    <div id="actionButtons" class="flex flex-col sm:flex-row gap-3 mb-8">
-                        <!-- Action buttons will be loaded here -->
-                    </div>
-                </div>
+                <div class="thumbnail-container" id="thumbnailContainer"></div>
             </div>
+            <h1 id="productTitle" class="text-2xl lg:text-3xl font-bold mb-4 text-gray-800">প্রোডাক্ট</h1>
+            <p id="productPrice" class="text-lipstick text-xl lg:text-2xl font-bold mb-4">দাম</p>
+            <div id="productDetailsExtra" class="mb-6"></div>
+            <p id="productDescription" class="text-gray-700 mb-6 leading-relaxed">বিবরণ</p>
+            
+            <div id="actionButtons" class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+                </div>
         </div>
-
-        <!-- রিলেটেড প্রোডাক্ট সেকশন -->
-        <section id="relatedProductsSection" class="mt-12 hidden">
-            <h2 class="text-2xl font-bold text-center mb-8 text-lipstick-dark border-b pb-2">সম্পর্কিত প্রোডাক্ট</h2>
+        <section id="relatedProductsSection" class="mt-8 hidden">
+            <h2 class="text-2xl font-bold text-center mb-4 text-lipstick-dark">সম্পর্কিত প্রোডাক্টস</h2>
             <div id="relatedProductsContainer" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 <!-- Related products will be loaded here -->
             </div>
         </section>
     </main>
-
     <div id="place-order-bar" class="fixed bottom-0 left-0 w-full bg-white p-3 shadow-lg z-40 hidden" style="box-shadow: 0 -2px 10px rgba(0,0,0,0.1);">
         <div class="flex justify-between items-center">
             <div>
@@ -116,5 +133,6 @@
         <img id="modalImage" src="" alt="Full Screen Product Image">
         <span id="modalNextBtn" title="পরবর্তী ছবি"><i class="fas fa-chevron-right"></i></span>
     </div>
+
 </body>
 </html>
