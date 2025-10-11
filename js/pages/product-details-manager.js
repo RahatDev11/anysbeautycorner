@@ -9,7 +9,7 @@ import { openCartSidebar } from '../modules/ui-utilities.js';
 
 let currentProduct = null;
 let allProducts = [];
-let relatedProductQuantities = {}; // রিলেটেড প্রোডাক্টের কোয়েন্টিটি স্টোর করবে
+let relatedProductStates = {};
 
 async function initializeProductDetailPage() {
     const productContent = document.getElementById('productContent');
@@ -61,7 +61,6 @@ function displayProductDetails(product) {
     document.title = product.name || "প্রোডাক্ট বিস্তারিত";
     document.getElementById('productTitle').textContent = product.name;
     document.getElementById('productPrice').textContent = `দাম: ${product.price} টাকা`;
-    document.getElementById('productDescription').textContent = product.description;
 
     const detailsExtraContainer = document.getElementById('productDetailsExtra');
     const stockStatus = product.stockStatus === 'in_stock'
@@ -83,20 +82,23 @@ function displayProductDetails(product) {
     }
     detailsExtraContainer.innerHTML = extraHTML;
 
+    // বাটনগুলো ডেসক্রিপশনের আগে দেখান
     const actionButtonsContainer = document.getElementById('actionButtons');
     const whatsappMessage = `প্রোডাক্ট: ${product.name}\nদাম: ${product.price} টাকা\nআমি এই প্রোডাক্টটি কিনতে আগ্রহী।`;
     const whatsappLink = `https://wa.me/8801931866636?text=${encodeURIComponent(whatsappMessage)}`;
     
     let buttonsHTML = `
-        <button id="buyNowDetailBtn" onclick="window.buyNowWithQuantity()" class="w-full sm:w-auto bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 font-semibold flex items-center justify-center transition-colors">
-            <i class="fas fa-credit-card mr-2"></i>এখনই কিনুন
-        </button>
-        <button id="addToCartDetailBtn" onclick="window.addToCartWithQuantity()" class="w-full sm:w-auto bg-teal-500 text-white px-6 py-3 rounded-lg hover:bg-teal-600 font-semibold flex items-center justify-center transition-colors">
-            <i class="fas fa-cart-plus mr-2"></i>কার্টে যোগ করুন
-        </button>
-        <a href="${whatsappLink}" target="_blank" class="w-full sm:w-auto bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 font-semibold inline-flex items-center justify-center transition-colors">
-            <i class="fab fa-whatsapp mr-2"></i>WhatsApp এ অর্ডার
-        </a>`;
+        <div class="flex flex-col sm:flex-row gap-3 mb-6">
+            <button id="buyNowDetailBtn" onclick="window.buyNowWithQuantity()" class="w-full sm:w-auto bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 font-semibold flex items-center justify-center transition-colors">
+                <i class="fas fa-credit-card mr-2"></i>এখনই কিনুন
+            </button>
+            <button id="addToCartDetailBtn" onclick="window.addToCartWithQuantity()" class="w-full sm:w-auto bg-teal-500 text-white px-6 py-3 rounded-lg hover:bg-teal-600 font-semibold flex items-center justify-center transition-colors">
+                <i class="fas fa-cart-plus mr-2"></i>কার্টে যোগ করুন
+            </button>
+            <a href="${whatsappLink}" target="_blank" class="w-full sm:w-auto bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 font-semibold inline-flex items-center justify-center transition-colors">
+                <i class="fab fa-whatsapp mr-2"></i>WhatsApp এ অর্ডার
+            </a>
+        </div>`;
     
     actionButtonsContainer.innerHTML = buttonsHTML;
     
@@ -106,6 +108,9 @@ function displayProductDetails(product) {
         document.getElementById('buyNowDetailBtn').classList.add('opacity-50', 'cursor-not-allowed');
         document.getElementById('addToCartDetailBtn').classList.add('opacity-50', 'cursor-not-allowed');
     }
+
+    // ডেসক্রিপশন বাটনের পরে দেখান
+    document.getElementById('productDescription').textContent = product.description;
 
     const images = product.image ? product.image.split(',').map(img => img.trim()).filter(Boolean) : [];
     setupImageGallery(images);
@@ -129,14 +134,18 @@ function displayRelatedProducts(currentProduct) {
         return;
     }
 
-    // রিলেটেড প্রোডাক্টের কোয়েন্টিটি ইনিশিয়ালাইজ করুন
+    // রিলেটেড প্রোডাক্টের স্টেট ইনিশিয়ালাইজ করুন
     relatedProducts.forEach(product => {
-        relatedProductQuantities[product.id] = 1;
+        const cartItem = cart.find(item => item.id === product.id);
+        relatedProductStates[product.id] = {
+            quantity: cartItem ? cartItem.quantity : 0,
+            showQuantityControl: cartItem ? cartItem.quantity > 0 : false
+        };
     });
 
     relatedContainer.innerHTML = relatedProducts.map(product => {
-        const cartItem = cart.find(item => item.id === product.id);
-        const currentQuantity = cartItem ? cartItem.quantity : 0;
+        const state = relatedProductStates[product.id];
+        const currentQuantity = state.quantity;
         
         return `
         <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 product-card">
@@ -163,30 +172,38 @@ function displayRelatedProducts(currentProduct) {
                 <p class="text-lipstick font-bold text-lg mb-3">${product.price} টাকা</p>
                 
                 ${product.stockStatus === 'in_stock' ? `
-                    <!-- কোয়েন্টিটি কন্ট্রোল - হোম পেজ স্টাইল -->
-                    <div class="flex items-center justify-between bg-gray-50 rounded-lg p-2">
-                        <button onclick="window.changeRelatedProductQuantity('${product.id}', -1)" 
-                                class="w-8 h-8 bg-white border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors font-bold text-gray-600">
-                            -
-                        </button>
-                        
-                        <div class="flex flex-col items-center">
-                            <span class="text-sm text-gray-600">কার্টে আছে</span>
-                            <span id="relatedQuantity-${product.id}" class="text-lg font-bold text-lipstick">
-                                ${currentQuantity} টি
-                            </span>
+                    ${state.showQuantityControl ? `
+                        <!-- কোয়েন্টিটি কন্ট্রোল - শো যখন কার্টে আছে -->
+                        <div class="flex items-center justify-between bg-gray-50 rounded-lg p-2 mb-2">
+                            <button onclick="window.changeRelatedProductQuantity('${product.id}', -1)" 
+                                    class="w-8 h-8 bg-white border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors font-bold text-gray-600">
+                                -
+                            </button>
+                            
+                            <div class="flex flex-col items-center">
+                                <span class="text-sm text-gray-600">কার্টে আছে</span>
+                                <span id="relatedQuantity-${product.id}" class="text-lg font-bold text-lipstick">
+                                    ${currentQuantity} টি
+                                </span>
+                            </div>
+                            
+                            <button onclick="window.changeRelatedProductQuantity('${product.id}', 1)" 
+                                    class="w-8 h-8 bg-white border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors font-bold text-gray-600">
+                                +
+                            </button>
                         </div>
-                        
-                        <button onclick="window.changeRelatedProductQuantity('${product.id}', 1)" 
-                                class="w-8 h-8 bg-white border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors font-bold text-gray-600">
-                            +
+                    ` : `
+                        <!-- "কার্টে যোগ" বাটন - শো যখন কার্টে নেই -->
+                        <button onclick="window.addRelatedToCart('${product.id}')" 
+                                class="w-full bg-teal-500 text-white px-3 py-2 rounded text-sm font-semibold hover:bg-teal-600 transition-colors flex items-center justify-center mb-2">
+                            <i class="fas fa-cart-plus mr-1"></i> কার্টে যোগ
                         </button>
-                    </div>
+                    `}
                     
                     <!-- WhatsApp বাটন -->
                     <a href="https://wa.me/8801931866636?text=${encodeURIComponent(`প্রোডাক্ট: ${product.name}\nদাম: ${product.price} টাকা\nপরিমাণ: ${currentQuantity} টি\nআমি এই প্রোডাক্টটি কিনতে আগ্রহী।`)}" 
                        target="_blank" 
-                       class="w-full mt-2 bg-green-500 text-white px-3 py-2 rounded text-sm font-semibold hover:bg-green-600 transition-colors flex items-center justify-center">
+                       class="w-full bg-green-500 text-white px-3 py-2 rounded text-sm font-semibold hover:bg-green-600 transition-colors flex items-center justify-center">
                         <i class="fab fa-whatsapp mr-1"></i> WhatsApp এ অর্ডার
                     </a>
                 ` : `
@@ -201,7 +218,40 @@ function displayRelatedProducts(currentProduct) {
     relatedSection.classList.remove('hidden');
 }
 
-// রিলেটেড প্রোডাক্টের কোয়েন্টিটি পরিবর্তন - অটো কার্টে যোগ
+// রিলেটেড প্রোডাক্ট কার্টে যোগ করুন (প্রথমবার)
+function addRelatedToCart(productId) {
+    const product = allProducts.find(p => p.id === productId);
+    if (!product || product.stockStatus !== 'in_stock') return;
+    
+    // কার্টে যোগ করুন
+    const cartItem = cart.find(item => item.id === productId);
+    if (cartItem) {
+        cartItem.quantity += 1;
+    } else {
+        cart.push({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.image ? product.image.split(',')[0].trim() : '',
+            quantity: 1
+        });
+    }
+    
+    saveCart();
+    showToast(`${product.name} কার্টে যোগ করা হয়েছে`, "success");
+    
+    // স্টেট আপডেট করুন
+    relatedProductStates[productId] = {
+        quantity: cart.find(item => item.id === productId).quantity,
+        showQuantityControl: true
+    };
+    
+    // ডিসপ্লে আপডেট করুন
+    updateRelatedProductDisplay(productId);
+    openCartSidebar();
+}
+
+// রিলেটেড প্রোডাক্টের কোয়েন্টিটি পরিবর্তন
 function changeRelatedProductQuantity(productId, amount) {
     const product = allProducts.find(p => p.id === productId);
     if (!product || product.stockStatus !== 'in_stock') return;
@@ -217,9 +267,15 @@ function changeRelatedProductQuantity(productId, amount) {
         if (itemIndex > -1) {
             cart.splice(itemIndex, 1);
             showToast(`${product.name} কার্ট থেকে সরানো হয়েছে`, "info");
+            
+            // স্টেট আপডেট করুন - আবার "কার্টে যোগ" বাটন দেখাবে
+            relatedProductStates[productId] = {
+                quantity: 0,
+                showQuantityControl: false
+            };
         }
     } else {
-        // কার্টে আপডেট বা যোগ করুন
+        // কার্টে আপডেট করুন
         if (cartItem) {
             cartItem.quantity = newQuantity;
         } else {
@@ -237,10 +293,16 @@ function changeRelatedProductQuantity(productId, amount) {
         } else {
             showToast(`${product.name} কার্ট থেকে কমানো হয়েছে`, "info");
         }
+        
+        // স্টেট আপডেট করুন
+        relatedProductStates[productId] = {
+            quantity: newQuantity,
+            showQuantityControl: true
+        };
     }
     
     saveCart();
-    updateRelatedProductDisplay(productId, newQuantity);
+    updateRelatedProductDisplay(productId);
     
     // কার্ট সাইডবার খুলুন যদি যোগ করা হয়
     if (amount > 0 && newQuantity > 0) {
@@ -249,13 +311,79 @@ function changeRelatedProductQuantity(productId, amount) {
 }
 
 // রিলেটেড প্রোডাক্ট ডিসপ্লে আপডেট
-function updateRelatedProductDisplay(productId, quantity) {
-    const quantityElement = document.getElementById(`relatedQuantity-${productId}`);
-    if (quantityElement) {
-        quantityElement.textContent = `${quantity} টি`;
+function updateRelatedProductDisplay(productId) {
+    const productElement = document.querySelector(`[onclick*="${productId}"]`)?.closest('.product-card');
+    if (!productElement) return;
+    
+    const state = relatedProductStates[productId];
+    const currentQuantity = state.quantity;
+    const product = allProducts.find(p => p.id === productId);
+    
+    if (!product) return;
+
+    const newButtonHTML = product.stockStatus === 'in_stock' ? `
+        ${state.showQuantityControl ? `
+            <!-- কোয়েন্টিটি কন্ট্রোল - শো যখন কার্টে আছে -->
+            <div class="flex items-center justify-between bg-gray-50 rounded-lg p-2 mb-2">
+                <button onclick="window.changeRelatedProductQuantity('${productId}', -1)" 
+                        class="w-8 h-8 bg-white border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors font-bold text-gray-600">
+                    -
+                </button>
+                
+                <div class="flex flex-col items-center">
+                    <span class="text-sm text-gray-600">কার্টে আছে</span>
+                    <span class="text-lg font-bold text-lipstick">
+                        ${currentQuantity} টি
+                    </span>
+                </div>
+                
+                <button onclick="window.changeRelatedProductQuantity('${productId}', 1)" 
+                        class="w-8 h-8 bg-white border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors font-bold text-gray-600">
+                    +
+                </button>
+            </div>
+        ` : `
+            <!-- "কার্টে যোগ" বাটন - শো যখন কার্টে নেই -->
+            <button onclick="window.addRelatedToCart('${productId}')" 
+                    class="w-full bg-teal-500 text-white px-3 py-2 rounded text-sm font-semibold hover:bg-teal-600 transition-colors flex items-center justify-center mb-2">
+                <i class="fas fa-cart-plus mr-1"></i> কার্টে যোগ
+            </button>
+        `}
+        
+        <!-- WhatsApp বাটন -->
+        <a href="https://wa.me/8801931866636?text=${encodeURIComponent(`প্রোডাক্ট: ${product.name}\nদাম: ${product.price} টাকা\nপরিমাণ: ${currentQuantity} টি\nআমি এই প্রোডাক্টটি কিনতে আগ্রহী।`)}" 
+           target="_blank" 
+           class="w-full bg-green-500 text-white px-3 py-2 rounded text-sm font-semibold hover:bg-green-600 transition-colors flex items-center justify-center">
+            <i class="fab fa-whatsapp mr-1"></i> WhatsApp এ অর্ডার
+        </a>
+    ` : `
+        <div class="text-center py-3">
+            <span class="text-red-500 font-semibold">স্টকে নেই</span>
+        </div>
+    `;
+    
+    // শুধু বাটন সেকশন আপডেট করুন
+    const buttonContainer = productElement.querySelector('.p-3 > div:last-child');
+    if (buttonContainer) {
+        buttonContainer.innerHTML = newButtonHTML;
     }
     
-    // কার্ট আইকন আপডেট করুন (যদি প্রয়োজন হয়)
+    // কোয়েন্টিটি ব্যাজ আপডেট করুন
+    const badgeElement = productElement.querySelector('.absolute.top-2.left-2');
+    if (currentQuantity > 0) {
+        if (!badgeElement) {
+            const newBadge = document.createElement('div');
+            newBadge.className = 'absolute top-2 left-2 bg-lipstick text-white px-2 py-1 rounded-full text-xs font-semibold';
+            newBadge.textContent = `${currentQuantity} টি`;
+            productElement.querySelector('.relative').appendChild(newBadge);
+        } else {
+            badgeElement.textContent = `${currentQuantity} টি`;
+        }
+    } else if (badgeElement) {
+        badgeElement.remove();
+    }
+    
+    // কার্ট কাউন্টার আপডেট করুন
     const cartCount = document.getElementById('cartCount');
     if (cartCount) {
         const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -367,6 +495,7 @@ function updateModalImage() {
 
 // গ্লোবাল ফাংশন হিসেবে অ্যাসাইন করুন
 Object.assign(window, {
+    addRelatedToCart,
     changeRelatedProductQuantity,
     showProductDetail: (productId) => {
         window.location.href = `product-detail.html?id=${productId}`;
@@ -378,5 +507,6 @@ export {
     changeDetailQuantity,
     addToCartWithQuantity,
     buyNowWithQuantity,
+    addRelatedToCart,
     changeRelatedProductQuantity
 };
