@@ -22,7 +22,7 @@ import { loadProducts, showProductDetail, showLoadingSpinner, displayProductsAsC
 
 // Import Page Managers
 import { initHomePage } from '../js/pages/home-manager.js';
-import { initializeProductDetailPage, changeDetailQuantity, addToCartWithQuantity, buyNowWithQuantity } from '../js/pages/product-details-manager.js';
+import { initializeProductDetailPage, changeDetailQuantity, addToCartWithQuantity, buyNowWithQuantity, changeRelatedProductQuantity, addRelatedToCart } from '../js/pages/product-details-manager.js';
 import { initializeOrderTrackPage } from '../js/pages/order-track-manager.js';
 
 import { initializeOrderFormPage, placeOrder } from '../js/pages/order-form-manager.js';
@@ -115,9 +115,10 @@ Object.assign(window, {
     // Product Detail
     showProductDetail, changeDetailQuantity, addToCartWithQuantity, buyNowWithQuantity,
     initializeProductDetailPage, 
+    // Related Products
+    changeRelatedProductQuantity, addRelatedToCart,
     // Order Track
     initializeOrderTrackPage,
-    // Order List 
     // Order Form
     initializeOrderFormPage, placeOrder
 });
@@ -158,7 +159,6 @@ function main() {
             initializeOrderFormPage();
         }
 
-
         // Add event listener for mobile search
         document.getElementById('searchInput')?.addEventListener('input', searchProductsMobile);
 
@@ -175,6 +175,7 @@ function main() {
 
         hideGlobalLoadingSpinner();
     }).catch(error => {
+        console.error('Initialization error:', error);
         hideGlobalLoadingSpinner(); // Hide even if there's an error
     });
 
@@ -197,7 +198,9 @@ document.addEventListener("click", (event) => {
     }
 
     const searchResultsDesktop = document.getElementById('searchResultsDesktop');
-    if (searchResultsDesktop && !searchResultsDesktop.contains(event.target) && !event.target.closest('#searchInputDesktop')) { searchResultsDesktop.classList.add('hidden'); }
+    if (searchResultsDesktop && !searchResultsDesktop.contains(event.target) && !event.target.closest('#searchInputDesktop')) { 
+        searchResultsDesktop.classList.add('hidden'); 
+    }
 });
 
 // Scroll handler to close mobile search
@@ -207,3 +210,8 @@ window.addEventListener('scroll', () => {
         mobileSearchBar.classList.add('hidden');
     }
 });
+
+// প্রোডাক্ট ডিটেইল পেজে নেভিগেট করার ফাংশন
+window.showProductDetail = (productId) => {
+    window.location.href = `product-detail.html?id=${productId}`;
+};
