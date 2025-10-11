@@ -4,7 +4,7 @@
 
 import { database, ref, get } from '../modules/firebase-config.js';
 import { showToast, hideSocialMediaIcons } from '../modules/ui-utilities.js';
-import { cart, saveCart } from '../modules/cart-manager.js';
+import { cart, saveCart, products as globalProducts } from '../modules/cart-manager.js';
 import { openCartSidebar } from '../modules/ui-utilities.js';
 
 let currentProduct = null; // To hold the product details for the current page
@@ -32,6 +32,9 @@ async function initializeProductDetailPage() {
             displayProductDetails(currentProduct);
             if (loadingSpinner) loadingSpinner.style.display = 'none';
             productContent.classList.remove('hidden');
+            
+            // Display related products
+            displayRelatedProducts(currentProduct.id);
         } else {
             showToast('প্রোডাক্ট পাওয়া যায়নি!', 'error');
             if (loadingSpinner) loadingSpinner.innerHTML = '<p class="text-red-500">দুঃখিত, এই প্রোডাক্টটি পাওয়া যায়নি।</p>';
@@ -79,7 +82,14 @@ function displayProductDetails(product) {
     setupImageGallery(images);
 }
 
-function changeDetailQuantity(amount) { const input = document.getElementById('quantityDetailInput'); if(!input) return; let currentValue = parseInt(input.value); if (isNaN(currentValue)) currentValue = 1; const newValue = currentValue + amount; if (newValue >= 1) input.value = newValue; }
+function changeDetailQuantity(amount) { 
+    const input = document.getElementById('quantityDetailInput'); 
+    if(!input) return; 
+    let currentValue = parseInt(input.value); 
+    if (isNaN(currentValue)) currentValue = 1; 
+    const newValue = currentValue + amount; 
+    if (newValue >= 1) input.value = newValue; 
+}
 
 function addToCartWithQuantity() { 
     if (!currentProduct) return;
@@ -119,8 +129,98 @@ function buyNowWithQuantity() {
     window.location.href = `order-form.html?cart=${cartData}`;
 }
 
-let galleryImages = []; let currentImageModalIndex = 0;
-function setupImageGallery(images) { galleryImages = images; const mainImage = document.getElementById('mainImage'); const thumbnailContainer = document.getElementById('thumbnailContainer'); thumbnailContainer.innerHTML = ''; if (images.length > 0) { mainImage.src = images[0]; images.forEach((img, index) => { const thumb = document.createElement('img'); thumb.src = img; thumb.className = 'thumbnail'; if (index === 0) thumb.classList.add('active'); thumb.onclick = () => { mainImage.src = img; currentImageModalIndex = index; document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active')); thumb.classList.add('active'); }; thumbnailContainer.appendChild(thumb); }); } else { mainImage.src = 'https://via.placeholder.com/500x400.png?text=No+Image'; } mainImage.addEventListener('click', openImageModal); }
+// =================================================================
+// SECTION: RELATED PRODUCTS LOGIC
+// =================================================================
+
+function displayRelatedProducts(currentProductId) {
+    const relatedProductsSection = document.getElementById('relatedProductsSection');
+    const relatedProductsContainer = document.getElementById('relatedProductsContainer');
+    
+    if (!relatedProductsSection || !relatedProductsContainer) return;
+
+    // Use global products array from cart-manager
+    const products = globalProducts || [];
+    
+    // Filter products from same category (excluding current product)
+    const relatedProducts = products.filter(product => 
+        product.id !== currentProductId && 
+        product.category === currentProduct.category
+    ).slice(0, 4); // Show maximum 4 products
+
+    if (relatedProducts.length === 0) {
+        relatedProductsSection.classList.add('hidden');
+        return;
+    }
+
+    // Generate HTML for related products
+    let relatedHTML = relatedProducts.map(product => {
+        const cartItem = cart.find(item => item.id === product.id);
+        const cartControlsHTML = cartItem
+            ? `<div class="w-full bg-white rounded-lg font-semibold flex items-center h-10 justify-around">
+                 <button onclick="window.updateQuantity('${product.id}', -1)" class="px-3 text-xl font-bold text-lipstick-dark">-</button>
+                 <span class="text-lg text-lipstick-dark">${cartItem.quantity}</span>
+                 <button onclick="window.updateQuantity('${product.id}', 1)" class="px-3 text-xl font-bold text-lipstick-dark">+</button>
+               </div>`
+            : `<button onclick="window.addToCart('${product.id}')" class="w-full bg-white rounded-lg font-semibold flex items-center h-10 justify-center text-sm text-lipstick-dark hover:bg-gray-100">Add To Cart</button>`;
+
+        const imageUrl = product.image ? product.image.split(",")[0].trim() : "https://via.placeholder.com/150";
+
+        return `
+            <div class="bg-white rounded-xl shadow overflow-hidden flex flex-col h-full">
+                <img src="${imageUrl}" alt="${product.name}" class="w-full h-36 object-cover cursor-pointer" onclick="window.showProductDetail('${product.id}')">
+                <div class="p-3 text-white flex flex-col flex-grow" style="background-color: #F4A7B9;">
+                    <div class="flex-grow">
+                        <h3 class="font-semibold text-lg mb-1 cursor-pointer" onclick="window.showProductDetail('${product.id}')">${product.name}</h3>
+                    </div>
+                    <div>
+                        <p class="text-xl font-bold mt-3">${product.price} টাকা</p>
+                        <div class="mt-4 space-y-2">
+                            ${cartControlsHTML}
+                            <button onclick="window.buyNow('${product.id}')" class="w-full border border-white text-white py-2 rounded-lg font-semibold text-sm hover:bg-white hover:text-lipstick-dark transition-colors">Buy Now</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+    }).join('');
+
+    relatedProductsContainer.innerHTML = relatedHTML;
+    relatedProductsSection.classList.remove('hidden');
+}
+
+// =================================================================
+// SECTION: IMAGE GALLERY LOGIC
+// =================================================================
+
+let galleryImages = []; 
+let currentImageModalIndex = 0;
+
+function setupImageGallery(images) { 
+    galleryImages = images; 
+    const mainImage = document.getElementById('mainImage'); 
+    const thumbnailContainer = document.getElementById('thumbnailContainer'); 
+    thumbnailContainer.innerHTML = ''; 
+    if (images.length > 0) { 
+        mainImage.src = images[0]; 
+        images.forEach((img, index) => { 
+            const thumb = document.createElement('img'); 
+            thumb.src = img; 
+            thumb.className = 'thumbnail'; 
+            if (index === 0) thumb.classList.add('active'); 
+            thumb.onclick = () => { 
+                mainImage.src = img; 
+                currentImageModalIndex = index; 
+                document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active')); 
+                thumb.classList.add('active'); 
+            }; 
+            thumbnailContainer.appendChild(thumb); 
+        }); 
+    } else { 
+        mainImage.src = 'https://via.placeholder.com/500x400.png?text=No+Image'; 
+    } 
+    mainImage.addEventListener('click', openImageModal); 
+}
+
 function openImageModal() {
     hideSocialMediaIcons();
     if (galleryImages.length === 0) return;
@@ -131,13 +231,24 @@ function openImageModal() {
     document.getElementById('modalPrevBtn').onclick = () => changeModalImage(-1);
     document.getElementById('modalNextBtn').onclick = () => changeModalImage(1);
 }
-function closeImageModal() { document.getElementById('imageModal').style.display = 'none'; }
-function changeModalImage(direction) { currentImageModalIndex = (currentImageModalIndex + direction + galleryImages.length) % galleryImages.length; updateModalImage(); }
-function updateModalImage() { document.getElementById('modalImage').src = galleryImages[currentImageModalIndex]; }
+
+function closeImageModal() { 
+    document.getElementById('imageModal').style.display = 'none'; 
+}
+
+function changeModalImage(direction) { 
+    currentImageModalIndex = (currentImageModalIndex + direction + galleryImages.length) % galleryImages.length; 
+    updateModalImage(); 
+}
+
+function updateModalImage() { 
+    document.getElementById('modalImage').src = galleryImages[currentImageModalIndex]; 
+}
 
 export {
     initializeProductDetailPage,
     changeDetailQuantity,
     addToCartWithQuantity,
-    buyNowWithQuantity
+    buyNowWithQuantity,
+    displayRelatedProducts
 };
