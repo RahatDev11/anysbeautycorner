@@ -9,37 +9,46 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <style>
-        .text-lipstick { color: #A52A2A; }
-        .bg-background { background-color: #FFF5F7; }
+    .text-lipstick { color: #A52A2A; }
+    .bg-background { background-color: #FFF5F7; }
 
-        /* ইমেজ গ্যালারি স্টাইল */
-        .image-gallery { display: flex; gap: 15px; margin-bottom: 20px; }
-        .main-image-container { flex: 1; max-width: 500px; }
-        #mainImage { width: 100%; max-height: 400px; object-fit: contain; border: 1px solid #e5e7eb; border-radius: 4px; cursor: pointer; }
-        .thumbnail-container { display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; }
-        .thumbnail { width: 70px; height: 70px; object-fit: cover; border: 2px solid transparent; border-radius: 4px; cursor: pointer; transition: border-color 0.3s ease; }
-        .thumbnail.active { border-color: #A52A2A; }
-        @media (max-width: 768px) {
-            .image-gallery { flex-direction: column; }
-            .thumbnail-container { flex-direction: row; overflow-x: auto; max-height: none; padding-bottom: 5px; }
-        }
+    /* ইমেজ গ্যালারি স্টাইল */
+    .image-gallery { display: flex; gap: 15px; margin-bottom: 20px; }
+    .main-image-container { flex: 1; max-width: 500px; }
+    #mainImage { width: 100%; max-height: 400px; object-fit: contain; border: 1px solid #e5e7eb; border-radius: 4px; cursor: pointer; }
+    .thumbnail-container { display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; }
+    .thumbnail { width: 70px; height: 70px; object-fit: cover; border: 2px solid transparent; border-radius: 4px; cursor: pointer; transition: border-color 0.3s ease; }
+    .thumbnail.active { border-color: #A52A2A; }
+    @media (max-width: 768px) {
+        .image-gallery { flex-direction: column; }
+        .thumbnail-container { flex-direction: row; overflow-x: auto; max-height: none; padding-bottom: 5px; }
+    }
 
-        /* ফুল-স্ক্রিন মোডাল স্টাইল */
-        #imageModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); z-index: 1000; display: none; justify-content: center; align-items: center; }
-        #modalImage { max-width: 90%; max-height: 80%; }
-        #modalCloseBtn { position: absolute; top: 20px; right: 20px; color: white; font-size: 24px; cursor: pointer; }
-        #modalPrevBtn, #modalNextBtn { position: absolute; top: 50%; transform: translateY(-50%); color: white; font-size: 30px; cursor: pointer; padding: 10px; }
-        #modalPrevBtn { left: 20px; }
-        #modalNextBtn { right: 20px; }
+    /* ফুল-স্ক্রিন মোডাল স্টাইল */
+    #imageModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); z-index: 1000; display: none; justify-content: center; align-items: center; }
+    #modalImage { max-width: 90%; max-height: 80%; }
+    #modalCloseBtn { position: absolute; top: 20px; right: 20px; color: white; font-size: 24px; cursor: pointer; }
+    #modalPrevBtn, #modalNextBtn { position: absolute; top: 50%; transform: translateY(-50%); color: white; font-size: 30px; cursor: pointer; padding: 10px; }
+    #modalPrevBtn { left: 20px; }
+    #modalNextBtn { right: 20px; }
 
-        /* রিলেটেড প্রোডাক্ট স্টাইল */
-        .related-product-card {
-            transition: all 0.3s ease;
-        }
-        .related-product-card:hover {
-            transform: translateY(-5px);
-        }
-    </style>
+    /* রিলেটেড প্রোডাক্ট স্টাইল - হোম পেজের মতো */
+    .product-card {
+        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
+    }
+    .product-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    /* কোয়েন্টিটি কন্ট্রোল স্টাইল */
+    .quantity-control {
+        background-color: #f8fafc;
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+    }
+</style>
     <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
 </head>
 <body>
