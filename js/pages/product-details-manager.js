@@ -68,17 +68,6 @@ function displayProductDetails(product) {
     
     let extraHTML = `<p class="text-gray-700 mb-4 font-medium"><strong>স্টক:</strong> ${stockStatus}</p>`;
 
-    if (product.stockStatus === 'in_stock') {
-        extraHTML += `
-            <div class="flex items-center space-x-3 my-4">
-                <span class="text-gray-700 font-medium">পরিমাণ:</span>
-                <div class="flex items-center border border-gray-300 rounded-lg">
-                    <button onclick="window.changeDetailQuantity(-1)" class="bg-gray-200 px-4 py-2 font-bold hover:bg-gray-300 transition-colors">-</button>
-                    <input type="number" id="quantityDetailInput" value="1" min="1" class="w-16 text-center border-0 focus:ring-0">
-                    <button onclick="window.changeDetailQuantity(1)" class="bg-gray-200 px-4 py-2 font-bold hover:bg-gray-300 transition-colors">+</button>
-                </div>
-            </div>`;
-    }
     detailsExtraContainer.innerHTML = extraHTML;
 
     // বাটনগুলো ডেসক্রিপশনের আগে দেখান
@@ -90,12 +79,13 @@ function displayProductDetails(product) {
     
     if (product.stockStatus === 'in_stock') {
         if (currentQuantity > 0) {
-            // কার্টে থাকলে প্লাস/মাইনাস বাটন দেখাবে
+            // কার্টে থাকলে প্লাস/মাইনাস বাটন দেখাবে - ফিক্সড সাইজ
             buttonsHTML = `
-                <div class="flex flex-col gap-3 mb-6">
-                    <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                <div class="mb-6">
+                    <!-- কোয়েন্টিটি কন্ট্রোল - ফিক্সড হাইট -->
+                    <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3 mb-3" style="min-height: 60px;">
                         <button onclick="window.changeDetailCartQuantity('${product.id}', -1)" 
-                                class="w-8 h-8 bg-white border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors font-bold text-gray-600">
+                                class="w-10 h-10 bg-white border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors font-bold text-gray-600 text-lg">
                             -
                         </button>
                         
@@ -107,26 +97,27 @@ function displayProductDetails(product) {
                         </div>
                         
                         <button onclick="window.changeDetailCartQuantity('${product.id}', 1)" 
-                                class="w-8 h-8 bg-white border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors font-bold text-gray-600">
+                                class="w-10 h-10 bg-white border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors font-bold text-gray-600 text-lg">
                             +
                         </button>
                     </div>
                     
-                    <button onclick="window.buyNowWithQuantity()" 
-                            class="w-full bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 font-semibold flex items-center justify-center transition-colors">
+                    <!-- এখনই কিনুন বাটন - ফিক্সড সাইজ -->
+                    <button onclick="window.buyNowFromDetail()" 
+                            class="w-full bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 font-semibold flex items-center justify-center transition-colors text-base">
                         <i class="fas fa-credit-card mr-2"></i>এখনই কিনুন
                     </button>
                 </div>`;
         } else {
-            // কার্টে না থাকলে Add To Cart এবং Buy Now বাটন দেখাবে
+            // কার্টে না থাকলে Add To Cart এবং Buy Now বাটন দেখাবে - ফিক্সড সাইজ
             buttonsHTML = `
                 <div class="flex flex-col sm:flex-row gap-3 mb-6">
-                    <button onclick="window.addToCartWithQuantity()" 
-                            class="w-full sm:w-auto bg-teal-500 text-white px-6 py-3 rounded-lg hover:bg-teal-600 font-semibold flex items-center justify-center transition-colors">
+                    <button onclick="window.addToCartFromDetail()" 
+                            class="w-full sm:w-auto bg-teal-500 text-white px-6 py-3 rounded-lg hover:bg-teal-600 font-semibold flex items-center justify-center transition-colors text-base">
                         <i class="fas fa-cart-plus mr-2"></i>কার্টে যোগ করুন
                     </button>
-                    <button onclick="window.buyNowWithQuantity()" 
-                            class="w-full sm:w-auto bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 font-semibold flex items-center justify-center transition-colors">
+                    <button onclick="window.buyNowFromDetail()" 
+                            class="w-full sm:w-auto bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 font-semibold flex items-center justify-center transition-colors text-base">
                         <i class="fas fa-credit-card mr-2"></i>এখনই কিনুন
                     </button>
                 </div>`;
@@ -195,16 +186,16 @@ function displayRelatedProducts(currentProduct) {
                 
                 ${product.stockStatus === 'in_stock' ? `
                     ${currentQuantity > 0 ? `
-                        <!-- কার্টে থাকলে প্লাস/মাইনাস বাটন -->
-                        <div class="flex items-center justify-between bg-gray-50 rounded-lg p-2 mb-2">
+                        <!-- কার্টে থাকলে প্লাস/মাইনাস বাটন - ফিক্সড সাইজ -->
+                        <div class="flex items-center justify-between bg-gray-50 rounded-lg p-2 mb-2" style="min-height: 50px;">
                             <button onclick="window.changeRelatedProductQuantity('${product.id}', -1)" 
                                     class="w-8 h-8 bg-white border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors font-bold text-gray-600">
                                 -
                             </button>
                             
                             <div class="flex flex-col items-center">
-                                <span class="text-sm text-gray-600">কার্টে আছে</span>
-                                <span id="relatedQuantity-${product.id}" class="text-lg font-bold text-lipstick">
+                                <span class="text-xs text-gray-600">কার্টে আছে</span>
+                                <span id="relatedQuantity-${product.id}" class="text-sm font-bold text-lipstick">
                                     ${currentQuantity} টি
                                 </span>
                             </div>
@@ -220,7 +211,7 @@ function displayRelatedProducts(currentProduct) {
                             <i class="fas fa-credit-card mr-1"></i> এখনই কিনুন
                         </button>
                     ` : `
-                        <!-- কার্টে না থাকলে Add To Cart এবং Buy Now বাটন -->
+                        <!-- কার্টে না থাকলে Add To Cart এবং Buy Now বাটন - ফিক্সড সাইজ -->
                         <div class="flex flex-col gap-2">
                             <button onclick="window.addRelatedToCart('${product.id}')" 
                                     class="w-full bg-teal-500 text-white px-3 py-2 rounded text-sm font-semibold hover:bg-teal-600 transition-colors flex items-center justify-center">
@@ -242,6 +233,47 @@ function displayRelatedProducts(currentProduct) {
     }).join('');
 
     relatedSection.classList.remove('hidden');
+}
+
+// প্রোডাক্ট ডিটেইল থেকে কার্টে যোগ
+function addToCartFromDetail() {
+    if (!currentProduct) return;
+    
+    const cartItem = cart.find(item => item.id === currentProduct.id);
+    if (cartItem) {
+        cartItem.quantity += 1;
+    } else {
+        cart.push({
+            id: currentProduct.id,
+            name: currentProduct.name,
+            price: currentProduct.price,
+            image: currentProduct.image ? currentProduct.image.split(',')[0].trim() : '',
+            quantity: 1
+        });
+    }
+    
+    saveCart();
+    showToast(`${currentProduct.name} কার্টে যোগ করা হয়েছে`, "success");
+    updateDetailProductDisplay(currentProduct.id, cart.find(item => item.id === currentProduct.id).quantity);
+    openCartSidebar();
+}
+
+// প্রোডাক্ট ডিটেইল থেকে এখনই কিনুন
+function buyNowFromDetail() {
+    if (!currentProduct) return;
+    
+    const cartItem = cart.find(item => item.id === currentProduct.id);
+    const quantity = cartItem ? cartItem.quantity : 1;
+    
+    const tempCart = [{
+        id: currentProduct.id,
+        name: currentProduct.name,
+        price: currentProduct.price,
+        image: currentProduct.image ? currentProduct.image.split(',')[0].trim() : '',
+        quantity: quantity
+    }];
+    const cartData = encodeURIComponent(JSON.stringify(tempCart));
+    window.location.href = `order-form.html?cart=${cartData}`;
 }
 
 // রিলেটেড প্রোডাক্ট কার্টে যোগ করুন
@@ -309,11 +341,6 @@ function changeRelatedProductQuantity(productId, amount) {
     
     saveCart();
     updateRelatedProductDisplay(productId, newQuantity);
-    
-    // কার্ট সাইডবার খুলুন যদি যোগ করা হয়
-    if (amount > 0 && newQuantity > 0) {
-        openCartSidebar();
-    }
 }
 
 // মেইন প্রোডাক্টের কার্ট কোয়েন্টিটি পরিবর্তন
@@ -356,17 +383,12 @@ function changeDetailCartQuantity(productId, amount) {
     
     saveCart();
     updateDetailProductDisplay(productId, newQuantity);
-    
-    // কার্ট সাইডবার খুলুন যদি যোগ করা হয়
-    if (amount > 0 && newQuantity > 0) {
-        openCartSidebar();
-    }
 }
 
 // রিলেটেড প্রোডাক্ট ডিসপ্লে আপডেট
 function updateRelatedProductDisplay(productId, quantity) {
     const quantityElement = document.getElementById(`relatedQuantity-${productId}`);
-    if (quantityElement) {
+    if (quantityElement && quantity !== undefined) {
         quantityElement.textContent = `${quantity} টি`;
     }
     
@@ -377,7 +399,7 @@ function updateRelatedProductDisplay(productId, quantity) {
 // মেইন প্রোডাক্ট ডিসপ্লে আপডেট
 function updateDetailProductDisplay(productId, quantity) {
     const quantityElement = document.getElementById(`detailCartQuantity-${productId}`);
-    if (quantityElement) {
+    if (quantityElement && quantity !== undefined) {
         quantityElement.textContent = `${quantity} টি`;
     }
     
@@ -398,54 +420,6 @@ function buyNowRelatedProduct(productId) {
         name: product.name,
         price: product.price,
         image: product.image ? product.image.split(',')[0].trim() : '',
-        quantity: quantity
-    }];
-    const cartData = encodeURIComponent(JSON.stringify(tempCart));
-    window.location.href = `order-form.html?cart=${cartData}`;
-}
-
-function changeDetailQuantity(amount) { 
-    const input = document.getElementById('quantityDetailInput'); 
-    if(!input) return; 
-    let currentValue = parseInt(input.value); 
-    if (isNaN(currentValue)) currentValue = 1; 
-    const newValue = currentValue + amount; 
-    if (newValue >= 1) input.value = newValue; 
-}
-
-function addToCartWithQuantity() { 
-    if (!currentProduct) return;
-    const quantityInput = document.getElementById('quantityDetailInput');
-    const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
-    
-    const cartItem = cart.find(item => item.id === currentProduct.id); 
-    if (cartItem) { 
-        cartItem.quantity += quantity; 
-    } else { 
-        cart.push({ 
-            id: currentProduct.id,
-            name: currentProduct.name,
-            price: currentProduct.price,
-            image: currentProduct.image ? currentProduct.image.split(',')[0].trim() : '',
-            quantity: quantity 
-        }); 
-    } 
-    saveCart(); 
-    showToast(`${quantity}টি ${currentProduct.name} কার্টে যোগ করা হয়েছে`, "success"); 
-    updateDetailProductDisplay(currentProduct.id, cart.find(item => item.id === currentProduct.id).quantity);
-    openCartSidebar(); 
-}
-
-function buyNowWithQuantity() {
-    if (!currentProduct) return;
-    const quantityInput = document.getElementById('quantityDetailInput');
-    const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
-
-    const tempCart = [{
-        id: currentProduct.id,
-        name: currentProduct.name,
-        price: currentProduct.price,
-        image: currentProduct.image ? currentProduct.image.split(',')[0].trim() : '',
         quantity: quantity
     }];
     const cartData = encodeURIComponent(JSON.stringify(tempCart));
@@ -508,6 +482,8 @@ function updateModalImage() {
 
 // গ্লোবাল ফাংশন হিসেবে অ্যাসাইন করুন
 Object.assign(window, {
+    addToCartFromDetail,
+    buyNowFromDetail,
     addRelatedToCart,
     changeRelatedProductQuantity,
     changeDetailCartQuantity,
@@ -519,9 +495,8 @@ Object.assign(window, {
 
 export {
     initializeProductDetailPage,
-    changeDetailQuantity,
-    addToCartWithQuantity,
-    buyNowWithQuantity,
+    addToCartFromDetail,
+    buyNowFromDetail,
     addRelatedToCart,
     changeRelatedProductQuantity,
     changeDetailCartQuantity,
