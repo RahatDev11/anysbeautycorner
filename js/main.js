@@ -24,6 +24,13 @@ function initializeLoadingSystem() {
 // Start loading system immediately
 initializeLoadingSystem();
 
+// Update loading progress function
+function updateLoadingProgress(step, percentage) {
+    if (window.globalLoadingSystem) {
+        window.globalLoadingSystem.setProgress(step, percentage);
+    }
+}
+
 // =================================================================
 // SECTION: MAIN APPLICATION ENTRY POINT
 // =================================================================
@@ -56,13 +63,6 @@ import { initializeOrderFormPage, placeOrder } from '../js/pages/order-form-mana
 // Global Variables (declared once and assigned)
 let products = [];
 let eventSlider;
-
-// Update loading progress function
-function updateLoadingProgress(step, percentage) {
-    if (window.globalLoadingSystem) {
-        window.globalLoadingSystem.setProgress(step, percentage);
-    }
-}
 
 async function loadHeaderAndSetup() {
     return new Promise(async (resolve, reject) => {
@@ -317,3 +317,12 @@ window.addEventListener('error', (event) => {
         hideGlobalLoadingSpinner();
     }, 2000);
 });
+
+// Emergency timeout to force complete loading after 10 seconds
+setTimeout(() => {
+    if (window.globalLoadingSystem && !document.body.classList.contains('loading-complete')) {
+        console.log('Emergency loading complete triggered');
+        window.globalLoadingSystem.forceComplete();
+        hideGlobalLoadingSpinner();
+    }
+}, 10000);
