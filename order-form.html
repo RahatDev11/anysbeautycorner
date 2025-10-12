@@ -7,17 +7,18 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
+    <script src="loading-system.js"></script>
     <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
 </head>
 <body class="bg-gray-50">
+
+    <div id="website-content" style="display: none;">
+
     <!-- হেডার -->
     <div id="header"></div>
 
     <main class="container mx-auto pt-24 pb-12 px-4">
-        <div id="loadingIndicator" class="text-center py-12">
-            <i class="fas fa-spinner fa-spin text-4xl text-lipstick"></i>
-            <p class="mt-4 text-gray-600">লোড হচ্ছে...</p>
-        </div>
+
 
         <form id="checkoutForm" class="hidden">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -143,6 +144,7 @@
     <!-- ফুটার -->
     <div id="footer"></div>
 
+    </div>
     <script type="module" src="js/main.js"></script>
 </body>
 </html>

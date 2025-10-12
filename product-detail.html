@@ -8,6 +8,7 @@
     <script type="module" src="js/main.js"></script> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
+    <script src="loading-system.js"></script>
     <style>
         .text-lipstick { color: #A52A2A; }
         .bg-background { background-color: #FFF5F7; }
@@ -36,22 +37,12 @@
 
 </head>
 <body>
-    <!-- Global Loading Spinner -->
-    <div id="global-loading-spinner">
-        <div class="spinner-dots">
-            <div></div>
-            <div></div>
-            <div></div>
-        </div>
-    </div>
+
+    <div id="website-content" style="display: none;">
+
     <div id="header"></div>
     <main class="p-4 pt-24 md:pt-28 max-w-4xl mx-auto"> 
-        <div id="loadingSpinner" class="text-center p-10">
-            <div class="animate-spin inline-block w-8 h-8 border-4 rounded-full border-t-lipstick" role="status">
-                <span class="visually-hidden"></span>
-            </div>
-            <p class="mt-2 text-gray-600"></p>
-        </div>
+
 
         <div id="productContent" class="hidden">
             <div class="image-gallery">
@@ -93,5 +84,6 @@
         <span id="modalNextBtn" title="পরবর্তী ছবি"><i class="fas fa-chevron-right"></i></span>
     </div>
 
+    </div>
 </body>
 </html>
