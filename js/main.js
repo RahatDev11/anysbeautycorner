@@ -1,3 +1,55 @@
+// main.js - Connection with Loading System
+
+// Wait for loading system to be ready
+function initializeApp() {
+    // Your existing main.js code here
+    
+    // Example: If you need to manually update loading progress
+    if (window.globalLoadingSystem) {
+        // Update progress when specific components are loaded
+        window.globalLoadingSystem.setProgress('App initialized', 10);
+    }
+    
+    // Your existing initialization code
+    initializeModules();
+    initializePages();
+    
+    // When everything in your app is ready
+    setTimeout(() => {
+        if (window.globalLoadingSystem) {
+            window.globalLoadingSystem.setProgress('Application ready', 10);
+        }
+    }, 1000);
+}
+
+// Start app initialization when loading system is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    initializeApp();
+}
+
+// Your existing functions
+function initializeModules() {
+    // Your module initialization code
+    console.log('Initializing modules...');
+}
+
+function initializePages() {
+    // Your page initialization code
+    console.log('Initializing pages...');
+}
+
+
+
+
+
+
+
+
+
+
+
 // =================================================================
 // SECTION: MAIN APPLICATION ENTRY POINT
 // =================================================================
