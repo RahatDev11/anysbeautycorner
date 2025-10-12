@@ -458,3 +458,16 @@ class LoadingSystem {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = LoadingSystem;
 }
+
+
+
+
+
+
+// Emergency timeout to force complete loading after 8 seconds
+setTimeout(() => {
+    if (window.globalLoadingSystem && !document.body.classList.contains('loading-complete')) {
+        console.log('Emergency loading complete triggered');
+        window.globalLoadingSystem.forceComplete();
+    }
+}, 8000);
