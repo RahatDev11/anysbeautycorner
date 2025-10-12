@@ -1,54 +1,28 @@
-// main.js - Connection with Loading System
+// =================================================================
+// SECTION: LOADING SYSTEM INITIALIZATION (MUST BE FIRST)
+// =================================================================
 
-// Wait for loading system to be ready
-function initializeApp() {
-    // Your existing main.js code here
-    
-    // Example: If you need to manually update loading progress
+// Initialize loading system immediately when script loads
+function initializeLoadingSystem() {
     if (window.globalLoadingSystem) {
-        // Update progress when specific components are loaded
-        window.globalLoadingSystem.setProgress('App initialized', 10);
+        console.log('Loading system already initialized');
+        return true;
     }
     
-    // Your existing initialization code
-    initializeModules();
-    initializePages();
+    // If loading system script hasn't loaded yet, wait for it
+    if (typeof LoadingSystem === 'undefined') {
+        console.log('Waiting for loading system...');
+        setTimeout(initializeLoadingSystem, 100);
+        return false;
+    }
     
-    // When everything in your app is ready
-    setTimeout(() => {
-        if (window.globalLoadingSystem) {
-            window.globalLoadingSystem.setProgress('Application ready', 10);
-        }
-    }, 1000);
+    window.globalLoadingSystem = new LoadingSystem();
+    console.log('Loading system initialized in main.js');
+    return true;
 }
 
-// Start app initialization when loading system is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeApp);
-} else {
-    initializeApp();
-}
-
-// Your existing functions
-function initializeModules() {
-    // Your module initialization code
-    console.log('Initializing modules...');
-}
-
-function initializePages() {
-    // Your page initialization code
-    console.log('Initializing pages...');
-}
-
-
-
-
-
-
-
-
-
-
+// Start loading system immediately
+initializeLoadingSystem();
 
 // =================================================================
 // SECTION: MAIN APPLICATION ENTRY POINT
@@ -83,9 +57,18 @@ import { initializeOrderFormPage, placeOrder } from '../js/pages/order-form-mana
 let products = [];
 let eventSlider;
 
+// Update loading progress function
+function updateLoadingProgress(step, percentage) {
+    if (window.globalLoadingSystem) {
+        window.globalLoadingSystem.setProgress(step, percentage);
+    }
+}
+
 async function loadHeaderAndSetup() {
     return new Promise(async (resolve, reject) => {
         try {
+            updateLoadingProgress('Loading header', 10);
+            
             const response = await fetch('header.html');
             if (!response.ok) {
                 reject('Failed to load header.html');
@@ -97,12 +80,17 @@ async function loadHeaderAndSetup() {
                 headerEl.innerHTML = headerHTML;
             }
 
+            updateLoadingProgress('Setting up authentication', 15);
+
             // Wait for initial auth state to be determined and login button updated
             onAuthStateChanged(auth, user => {
                 updateLoginButton(user);
             });
             
+            updateLoadingProgress('Loading cart', 20);
             await loadCart(); // Await the loadCart promise
+
+            updateLoadingProgress('Setting up UI events', 25);
 
             document.getElementById('mobileMenuButton')?.addEventListener('click', openSidebar);
             document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);
@@ -124,9 +112,12 @@ async function loadHeaderAndSetup() {
             }
 
             setupSocialMediaButtons();
+            
+            updateLoadingProgress('Header setup complete', 30);
             resolve();
 
         } catch (error) {
+            console.error('Error in loadHeaderAndSetup:', error);
             reject(error);
         }
     });
@@ -134,6 +125,8 @@ async function loadHeaderAndSetup() {
 
 async function loadFooter() {
     try {
+        updateLoadingProgress('Loading footer', 35);
+        
         const response = await fetch('footer.html');
         if (!response.ok) {
             return;
@@ -143,7 +136,10 @@ async function loadFooter() {
         if (footerEl) {
             footerEl.innerHTML = footerHTML;
         }
+        
+        updateLoadingProgress('Footer loaded', 40);
     } catch (error) {
+        console.error('Error loading footer:', error);
     }
 }
 
@@ -175,10 +171,16 @@ Object.assign(window, {
 });
 
 function main() {
+    console.log('Main application starting...');
+    updateLoadingProgress('Starting main application', 5);
+    
     let pageLoadPromises = [];
+    
     // Load header and footer and set up their functionality
     pageLoadPromises.push(loadHeaderAndSetup());
     pageLoadPromises.push(loadFooter());
+
+    updateLoadingProgress('Loading products data', 45);
 
     // Load all products once
     const productsLoadPromise = new Promise(resolve => {
@@ -188,28 +190,45 @@ function main() {
                 products = Object.keys(snapshot.val()).map(key => ({ id: key, ...snapshot.val()[key] }));
                 setCartManagerProducts(products); // Update products in cart-manager
                 setProductManagerProducts(products);
+                updateLoadingProgress('Products data loaded', 60);
+            } else {
+                updateLoadingProgress('No products found', 60);
             }
             resolve(); // Resolve after products are loaded
+        }, error => {
+            console.error('Error loading products:', error);
+            updateLoadingProgress('Error loading products', 60);
+            resolve(); // Still resolve to continue
         });
     });
     pageLoadPromises.push(productsLoadPromise);
 
     Promise.all(pageLoadPromises).then(async () => {
+        updateLoadingProgress('Initial data loaded', 70);
+
         // After all initial data (header, footer, products) are loaded, then initialize page-specific logic
         const currentPage = window.location.pathname;
+        
+        updateLoadingProgress('Initializing page-specific content', 80);
+
         if (currentPage.endsWith('/') || currentPage.endsWith('index.html')) {
             initHomePage(products); // Pass products to home-manager
+            updateLoadingProgress('Home page initialized', 85);
         }
         if (currentPage.includes('product-detail.html')) {
             initializeProductDetailPage();
+            updateLoadingProgress('Product detail page initialized', 85);
         }
         if (currentPage.includes('order-track.html')) {
             initializeOrderTrackPage();
+            updateLoadingProgress('Order track page initialized', 85);
         }
         if (currentPage.includes('order-form.html')) {
             initializeOrderFormPage();
+            updateLoadingProgress('Order form page initialized', 85);
         }
 
+        updateLoadingProgress('Setting up search functionality', 90);
 
         // Add event listener for mobile search
         document.getElementById('searchInput')?.addEventListener('input', searchProductsMobile);
@@ -217,6 +236,7 @@ function main() {
         // Check for admin status
         const user = auth.currentUser;
         if (user) {
+            updateLoadingProgress('Checking admin privileges', 95);
             const userIsAdmin = await isAdmin(user.uid);
             if (userIsAdmin) {
                 document.getElementById('product-management')?.classList.remove('hidden');
@@ -225,14 +245,38 @@ function main() {
             }
         }
 
+        updateLoadingProgress('Application fully loaded', 100);
+
+        // Hide both loading systems
         hideGlobalLoadingSpinner();
+        
+        // Force complete the loading system after a short delay
+        setTimeout(() => {
+            if (window.globalLoadingSystem) {
+                window.globalLoadingSystem.forceComplete();
+            }
+        }, 1000);
+
     }).catch(error => {
+        console.error('Error in main application:', error);
+        
+        // Force complete loading even if there's an error
+        if (window.globalLoadingSystem) {
+            window.globalLoadingSystem.forceComplete();
+        }
         hideGlobalLoadingSpinner(); // Hide even if there's an error
     });
 
 }
 
-document.addEventListener('DOMContentLoaded', main);
+// Start the application when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(main, 100);
+    });
+} else {
+    setTimeout(main, 100);
+}
 
 // গ্লোবাল ক্লিক হ্যান্ডলার
 document.addEventListener("click", (event) => {
@@ -249,7 +293,9 @@ document.addEventListener("click", (event) => {
     }
 
     const searchResultsDesktop = document.getElementById('searchResultsDesktop');
-    if (searchResultsDesktop && !searchResultsDesktop.contains(event.target) && !event.target.closest('#searchInputDesktop')) { searchResultsDesktop.classList.add('hidden'); }
+    if (searchResultsDesktop && !searchResultsDesktop.contains(event.target) && !event.target.closest('#searchInputDesktop')) { 
+        searchResultsDesktop.classList.add('hidden'); 
+    }
 });
 
 // Scroll handler to close mobile search
@@ -258,4 +304,16 @@ window.addEventListener('scroll', () => {
     if (mobileSearchBar && !mobileSearchBar.classList.contains('hidden')) {
         mobileSearchBar.classList.add('hidden');
     }
+});
+
+// Error handling for the loading system
+window.addEventListener('error', (event) => {
+    console.error('Global error:', event.error);
+    // Ensure loading screen hides even if there are errors
+    setTimeout(() => {
+        if (window.globalLoadingSystem) {
+            window.globalLoadingSystem.forceComplete();
+        }
+        hideGlobalLoadingSpinner();
+    }, 2000);
 });
