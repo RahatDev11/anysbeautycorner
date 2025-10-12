@@ -16,12 +16,7 @@ function hideSocialMediaIcons() {
     document.getElementById('socialIcons')?.classList.add('hidden');
 }
 
-function hideGlobalLoadingSpinner() {
-    const spinner = document.getElementById('global-loading-spinner');
-    if (spinner) {
-        spinner.classList.add('hidden');
-    }
-}
+
 
 function openSidebar() {
     hideSocialMediaIcons();
@@ -120,10 +115,29 @@ function setupSocialMediaButtons() {
     });
 }
 
+function populateProductCategories(products) {
+    const productDropdown = document.getElementById('productDropdown');
+    if (!productDropdown) return;
+
+    // Clear existing items
+    productDropdown.innerHTML = '';
+
+    // Add "All Products" option
+    const allProductsItem = document.createElement('li');
+    allProductsItem.innerHTML = `<a class="dropdown-item block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" href="#" onclick="window.handleSubMenuItemClick('all')">All Products</a>`;
+    productDropdown.appendChild(allProductsItem);
+
+    const categories = [...new Set(products.map(p => p.category).filter(Boolean))]; // Get unique categories, filter out undefined/null
+    categories.forEach(category => {
+        const listItem = document.createElement('li');
+        listItem.innerHTML = `<a class="dropdown-item block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" href="#" onclick="window.handleSubMenuItemClick('${category}')">${category}</a>`;
+        productDropdown.appendChild(listItem);
+    });
+}
+
 export {
     showToast,
     hideSocialMediaIcons,
-    hideGlobalLoadingSpinner,
     openSidebar,
     closeSidebar,
     toggleSubMenuMobile,
@@ -132,5 +146,6 @@ export {
     openCartSidebar,
     closeCartSidebar,
     focusMobileSearch,
-    setupSocialMediaButtons
+    setupSocialMediaButtons,
+    populateProductCategories
 };

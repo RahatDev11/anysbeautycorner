@@ -94,6 +94,7 @@ function searchProductsDesktop() {
 };
 
 function filterProducts(category) {
+    console.log(`product-manager.js: Filtering products by category: ${category}`);
     const filtered = category === 'all' ? products : products.filter(p => p.category === category);
     displayProductsAsCards(filtered);
     closeSidebar();
