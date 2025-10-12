@@ -36,29 +36,28 @@ function updateLoadingProgress(step, percentage) {
 // =================================================================
 
 // Import Firebase Config (for initialization and global access to auth/db instances)
-import { auth, onAuthStateChanged, database, ref, onValue } from '../js/modules/firebase-config.js';
+import { auth, onAuthStateChanged, database, ref, onValue } from './modules/firebase-config.js';
 
 // Import UI Utilities
-import { showToast, hideGlobalLoadingSpinner, openSidebar, closeSidebar, toggleSubMenuMobile, handleSubMenuItemClick, toggleSubMenuDesktop, openCartSidebar, closeCartSidebar, focusMobileSearch, setupSocialMediaButtons } from '../js/modules/ui-utilities.js';
+import { showToast, hideGlobalLoadingSpinner, openSidebar, closeSidebar, toggleSubMenuMobile, handleSubMenuItemClick, toggleSubMenuDesktop, openCartSidebar, closeCartSidebar, focusMobileSearch, setupSocialMediaButtons } from './modules/ui-utilities.js';
 
 // Import Notification Managers
-import { sendTelegramNotification, sendNotificationForOrder } from '../js/modules/notification-manager.js';
+import { sendTelegramNotification, sendNotificationForOrder } from './modules/notification-manager.js';
 
 // Import Auth Manager
-import { loginWithGmail, confirmLogout, logout, isAdmin, updateLoginButton } from '../js/modules/auth-manager.js';
+import { loginWithGmail, confirmLogout, logout, isAdmin, updateLoginButton } from './modules/auth-manager.js';
 
 // Import Cart Manager
-import { loadCart, addToCart, updateQuantity, removeFromCart, checkout, buyNow, setProducts as setCartManagerProducts } from '../js/modules/cart-manager.js';
+import { loadCart, addToCart, updateQuantity, removeFromCart, checkout, buyNow, setProducts as setCartManagerProducts } from './modules/cart-manager.js';
 
 // Import Product Manager
-import { loadProducts, showProductDetail, showLoadingSpinner, displayProductsAsCards, initializeProductSlider, displaySearchResults, searchProductsMobile, searchProductsDesktop, filterProducts, setProducts as setProductManagerProducts } from '../js/modules/product-manager.js';
+import { loadProducts, showProductDetail, showLoadingSpinner, displayProductsAsCards, initializeProductSlider, displaySearchResults, searchProductsMobile, searchProductsDesktop, filterProducts, setProducts as setProductManagerProducts } from './modules/product-manager.js';
 
 // Import Page Managers
-import { initHomePage } from '../js/pages/home-manager.js';
-import { initializeProductDetailPage, changeDetailQuantity, addToCartWithQuantity, buyNowWithQuantity } from '../js/pages/product-details-manager.js';
-import { initializeOrderTrackPage } from '../js/pages/order-track-manager.js';
-
-import { initializeOrderFormPage, placeOrder } from '../js/pages/order-form-manager.js';
+import { initHomePage } from './pages/home-manager.js';
+import { initializeProductDetailPage, changeDetailQuantity, addToCartWithQuantity, buyNowWithQuantity } from './pages/product-details-manager.js';
+import { initializeOrderTrackPage } from './pages/order-track-manager.js';
+import { initializeOrderFormPage, placeOrder } from './pages/order-form-manager.js';
 
 // Global Variables (declared once and assigned)
 let products = [];
