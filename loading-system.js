@@ -512,3 +512,32 @@ class LoadingSystem {
         window.globalLoadingSystem = new LoadingSystem();
     }
 })();
+
+
+// loading-system.js - শেষে এই ফাংশন যোগ করুন
+completeLoading() {
+    setTimeout(() => {
+        // Add completion animation
+        this.loadingElement.classList.add('hidden');
+        
+        // SHOW THE WEBSITE CONTENT
+        const websiteContent = document.getElementById('website-content');
+        if (websiteContent) {
+            websiteContent.style.display = 'block';
+        }
+        
+        // Update body classes
+        document.body.classList.remove('loading-active');
+        document.body.classList.add('loading-complete');
+
+        // Remove from DOM after animation
+        setTimeout(() => {
+            if (this.loadingElement && this.loadingElement.parentNode) {
+                this.loadingElement.remove();
+            }
+            this.isInitialized = false;
+        }, 500);
+
+        console.log('Website loading completed - Content revealed');
+    }, 500);
+}
