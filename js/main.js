@@ -1,3 +1,11 @@
+
+
+
+
+
+
+
+
 // =================================================================
 // SECTION: MAIN APPLICATION ENTRY POINT
 // =================================================================
@@ -6,7 +14,7 @@
 import { auth, onAuthStateChanged, database, ref, onValue } from '../js/modules/firebase-config.js';
 
 // Import UI Utilities
-import { showToast, hideGlobalLoadingSpinner, openSidebar, closeSidebar, toggleSubMenuMobile, handleSubMenuItemClick, toggleSubMenuDesktop, openCartSidebar, closeCartSidebar, focusMobileSearch, setupSocialMediaButtons } from '../js/modules/ui-utilities.js';
+import { showToast, openSidebar, closeSidebar, toggleSubMenuMobile, handleSubMenuItemClick, toggleSubMenuDesktop, openCartSidebar, closeCartSidebar, focusMobileSearch, setupSocialMediaButtons, populateProductCategories } from './modules/ui-utilities.js';
 
 // Import Notification Managers
 import { sendTelegramNotification, sendNotificationForOrder } from '../js/modules/notification-manager.js';
@@ -34,6 +42,7 @@ let eventSlider;
 async function loadHeaderAndSetup() {
     return new Promise(async (resolve, reject) => {
         try {
+            console.log('Attempting to fetch header.html');
             const response = await fetch('header.html');
             if (!response.ok) {
                 reject('Failed to load header.html');
@@ -45,12 +54,19 @@ async function loadHeaderAndSetup() {
                 headerEl.innerHTML = headerHTML;
             }
 
+
+
+
             // Wait for initial auth state to be determined and login button updated
             onAuthStateChanged(auth, user => {
                 updateLoginButton(user);
             });
             
+
+
             await loadCart(); // Await the loadCart promise
+
+
 
             document.getElementById('mobileMenuButton')?.addEventListener('click', openSidebar);
             document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);
@@ -72,6 +88,7 @@ async function loadHeaderAndSetup() {
             }
 
             setupSocialMediaButtons();
+            console.log('main.js: loadHeaderAndSetup() completed');
             resolve();
 
         } catch (error) {
@@ -82,6 +99,7 @@ async function loadHeaderAndSetup() {
 
 async function loadFooter() {
     try {
+        console.log('Attempting to fetch footer.html');
         const response = await fetch('footer.html');
         if (!response.ok) {
             return;
@@ -91,6 +109,10 @@ async function loadFooter() {
         if (footerEl) {
             footerEl.innerHTML = footerHTML;
         }
+
+
+        
+        console.log('main.js: loadFooter() completed');
     } catch (error) {
     }
 }
@@ -123,10 +145,15 @@ Object.assign(window, {
 });
 
 function main() {
+    console.log('Main application starting...');
+    
     let pageLoadPromises = [];
     // Load header and footer and set up their functionality
     pageLoadPromises.push(loadHeaderAndSetup());
     pageLoadPromises.push(loadFooter());
+
+
+
 
     // Load all products once
     const productsLoadPromise = new Promise(resolve => {
@@ -136,14 +163,25 @@ function main() {
                 products = Object.keys(snapshot.val()).map(key => ({ id: key, ...snapshot.val()[key] }));
                 setCartManagerProducts(products); // Update products in cart-manager
                 setProductManagerProducts(products);
+                populateProductCategories(products); // Populate product categories in the header
+            } else {
+                // No products found, but still resolve to continue
             }
+            console.log('main.js: Products data loaded and resolved.');
             resolve(); // Resolve after products are loaded
+        }, error => {
+            console.error('Error loading products:', error);
+            resolve(); // Still resolve to continue
         });
     });
     pageLoadPromises.push(productsLoadPromise);
 
     Promise.all(pageLoadPromises).then(async () => {
+        console.log('main.js: All initial page load promises resolved.');
+
+
         // After all initial data (header, footer, products) are loaded, then initialize page-specific logic
+        console.log('main.js: Starting page-specific initialization.');
         const currentPage = window.location.pathname;
         if (currentPage.endsWith('/') || currentPage.endsWith('index.html')) {
             initHomePage(products); // Pass products to home-manager
@@ -155,9 +193,10 @@ function main() {
             initializeOrderTrackPage();
         }
         if (currentPage.includes('order-form.html')) {
+            console.log('main.js: Initializing Order Form Page');
             initializeOrderFormPage();
         }
-
+        console.log('main.js: Page-specific initialization complete.');
 
         // Add event listener for mobile search
         document.getElementById('searchInput')?.addEventListener('input', searchProductsMobile);
@@ -171,16 +210,45 @@ function main() {
                 document.getElementById('slider-management')?.classList.remove('hidden');
                 document.getElementById('event-update')?.classList.remove('hidden');
             }
+            console.log('main.js: Admin status checked.');
         }
 
-        hideGlobalLoadingSpinner();
-    }).catch(error => {
-        hideGlobalLoadingSpinner(); // Hide even if there's an error
-    });
+        // Ensure loading system completes
+        const tryCompleteLoading = (attempts = 0) => {
+            if (window.globalLoadingSystem && window.globalLoadingSystem.isInitialized) {
+                console.log('main.js: Calling forceComplete()');
+                window.globalLoadingSystem.forceComplete();
+            } else if (attempts < 10) { // Retry up to 10 times (10 * 200ms = 2 seconds)
+                console.log(`main.js: globalLoadingSystem not ready, retrying forceComplete() (attempt ${attempts + 1})`);
+                setTimeout(() => tryCompleteLoading(attempts + 1), 200);
+            } else {
+                console.error('main.js: Failed to complete loading system after multiple retries.');
+                // Fallback: ensure website content is visible even if loading system fails
+                const websiteContent = document.getElementById('website-content');
+                if (websiteContent) {
+                    websiteContent.style.display = 'block';
+                }
+            }
+        };
+        setTimeout(tryCompleteLoading, 3000); // Initial call after 3 seconds
 
+    }).catch(error => {
+        console.error('Error in main application:', error);
+        
+        // Force complete loading even if there's an error
+        if (window.globalLoadingSystem) {
+            window.globalLoadingSystem.forceComplete();
+        }
+
+
+    });
 }
 
-document.addEventListener('DOMContentLoaded', main);
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', main);
+} else {
+    main();
+}
 
 // গ্লোবাল ক্লিক হ্যান্ডলার
 document.addEventListener("click", (event) => {
@@ -207,3 +275,24 @@ window.addEventListener('scroll', () => {
         mobileSearchBar.classList.add('hidden');
     }
 });
+
+// Error handling for the loading system
+window.addEventListener('error', (event) => {
+    console.error('Global error:', event.error);
+    // Ensure loading screen hides even if there are errors
+    setTimeout(() => {
+        if (window.globalLoadingSystem) {
+            window.globalLoadingSystem.forceComplete();
+        }
+        
+    }, 2000);
+});
+
+// Emergency timeout to force complete loading after 10 seconds
+setTimeout(() => {
+    if (window.globalLoadingSystem && !document.body.classList.contains('loading-complete')) {
+        console.log('Emergency loading complete triggered');
+        window.globalLoadingSystem.forceComplete();
+        
+    }
+}, 10000);
