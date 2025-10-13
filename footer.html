@@ -1,9 +1,9 @@
 
-    <!-- Footer Section Start -->    <footer style="background-color: #F4A7B9;" class="text-gray-800 py-10">
+    <!-- Footer Section Start -->    <footer style="background-color: #F4A7B9;" class="text-gray-800 py-4">
         <div class="container mx-auto px-4 max-w-6xl">
 
             <!-- Top Row: Brand Info & Social Links -->
-            <div class="flex flex-col md:flex-row justify-between items-center md:items-start gap-8 mb-8 pb-8 border-b border-gray-800/20">
+            <div class="flex flex-col md:flex-row justify-between items-center md:items-start gap-2 mb-2 pb-2 border-b border-gray-800/20">
                 <div class="text-center md:text-left md:max-w-sm">
                      <a href="index.html" class="inline-flex items-center space-x-3 group mb-4" aria-label="Any's Beauty Corner Home">
                         <img alt="Any's Beauty Corner লোগো" class="h-10 w-10 rounded-full border-2 border-gray-800/20 group-hover:opacity-90 transition-opacity" src="img.jpg" width="40" height="40">
@@ -23,16 +23,22 @@
             <!-- Middle Row: Links -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
                 <div>
-                    <h4 class="font-semibold text-gray-900 border-b border-gray-800/20 pb-2 mb-4">দরকারি লিংক</h4>
-                    <ul class="space-y-2">
+                    <h4 class="font-semibold text-gray-900 border-b border-gray-800/20 pb-2 mb-4 cursor-pointer flex justify-between items-center" onclick="toggleFooterMenu(event)">
+                        <span>দরকারি লিংক</span>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-300"></i>
+                    </h4>
+                    <ul id="importantLinksMenu" class="space-y-2 hidden">
                         <li><a href="index.html" class="text-sm text-gray-700 hover:text-gray-900">হোম</a></li>
                         <li><a href="order-track.html" class="text-sm text-gray-700 hover:text-gray-900">অর্ডার ট্র্যাক</a></li>
                         <li><a href="order-list.html" class="text-sm text-gray-700 hover:text-gray-900">আমার অর্ডার</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h4 class="font-semibold text-gray-900 border-b border-gray-800/20 pb-2 mb-4">ক্যাটাগরি</h4>
-                    <ul class="space-y-2">
+                    <h4 class="font-semibold text-gray-900 border-b border-gray-800/20 pb-2 mb-4 cursor-pointer flex justify-between items-center" onclick="toggleFooterMenu(event)">
+                        <span>ক্যাটাগরি</span>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-300"></i>
+                    </h4>
+                    <ul id="categoriesMenu" class="space-y-2 hidden">
                         <li><a href="index.html" class="text-sm text-gray-700 hover:text-gray-900">সকল প্রোডাক্ট</a></li>
                         <li><a href="index.html" class="text-sm text-gray-700 hover:text-gray-900">মেকআপ</a></li>
                         <li><a href="index.html" class="text-sm text-gray-700 hover:text-gray-900">স্কিনকেয়ার</a></li>
@@ -40,16 +46,22 @@
                     </ul>
                 </div>
                 <div>
-                    <h4 class="font-semibold text-gray-900 border-b border-gray-800/20 pb-2 mb-4">নীতিমালা</h4>
-                    <ul class="space-y-2">
+                    <h4 class="font-semibold text-gray-900 border-b border-gray-800/20 pb-2 mb-4 cursor-pointer flex justify-between items-center" onclick="toggleFooterMenu(event)">
+                        <span>নীতিমালা</span>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-300"></i>
+                    </h4>
+                    <ul id="policiesMenu" class="space-y-2 hidden">
                         <li><a href="#" class="text-sm text-gray-700 hover:text-gray-900">প্রাইভেসি পলিসি</a></li>
                         <li><a href="#" class="text-sm text-gray-700 hover:text-gray-900">শর্তাবলী</a></li>
                         <li><a href="#" class="text-sm text-gray-700 hover:text-gray-900">রিটার্ন পলিসি</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h4 class="font-semibold text-gray-900 border-b border-gray-800/20 pb-2 mb-4">যোগাযোগ</h4>
-                     <ul class="space-y-3 text-sm">
+                    <h4 class="font-semibold text-gray-900 border-b border-gray-800/20 pb-2 mb-4 cursor-pointer flex justify-between items-center" onclick="toggleFooterMenu(event)">
+                        <span>যোগাযোগ</span>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-300"></i>
+                    </h4>
+                     <ul id="contactMenu" class="space-y-3 text-sm hidden">
                         <li class="flex items-start text-gray-700"><i class="fas fa-map-marker-alt mt-1 mr-2 w-3 text-center"></i><span>মিরপুর ১০, ঢাকা</span></li>
                         <li class="flex items-center text-gray-700"><i class="fas fa-phone-alt mr-2 w-3 text-center"></i><a href="tel:+8801931866636" class="hover:text-gray-900">+880 1931-866636</a></li>
                         <li class="flex items-center text-gray-700"><i class="fas fa-envelope mr-2 w-3 text-center"></i><a href="mailto:info@anysbeautycorner.com" class="hover:text-gray-900 break-all">info@anysbeautycorner.com</a></li>

@@ -8,6 +8,14 @@
 body {
     font-family: 'SolaimanLipi', sans-serif;
     background-color: #f9fafb;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+#website-content {
+    display: none; /* Keep this */
+    flex-grow: 1; /* Add this */
 }
 
 /* Order Form Page Styles */

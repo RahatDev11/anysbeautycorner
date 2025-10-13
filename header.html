@@ -1,12 +1,12 @@
 
 
 <!-- হেডার -->
-<header class="bg-brushstroke text-white py-2 px-2 md:px-4 flex justify-between items-center fixed top-0 left-0 w-screen z-50">
+<header class="bg-brushstroke text-black py-2 px-2 md:px-4 flex justify-between items-center fixed top-0 left-0 w-screen z-50">
     <!-- লোগো -->
     <a class="flex items-center text-white" href="index.html">
         <div class="flex items-center">
             <img alt="Any's Beauty Corner লোগো" class="h-10 w-10 rounded-full mr-2 border-2 border-lipstick flex-shrink-0" height="40" src="img.jpg" width="40" onerror="this.src='https://via.placeholder.com/40'; this.alt='লোগো লোড হয়নি';">
-            <span class="text-base md:text-lg font-bold whitespace-nowrap">Any's Beauty Corner</span>
+            <span class="text-base md:text-lg font-bold whitespace-nowrap text-black">Any's Beauty Corner</span>
         </div>
     </a>
 
@@ -15,7 +15,7 @@
         <div class="hidden md:block p-2 md:flex-grow relative">
             <div class="relative">
                 <input class="w-full p-2 pl-10 border-0 rounded-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-lipstick bg-white/50 backdrop-blur-sm placeholder:text-gray-500/80" id="searchInputDesktop" oninput="searchProductsDesktop()" placeholder="প্রোডাক্ট সার্চ করুন..." type="text" />
-                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400/80"></i>
+<i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-800"></i>
             </div>
             <!-- সার্চ রেজাল্ট -->
             <div class="mt-2 max-h-60 overflow-y-auto absolute bg-white/90 backdrop-blur-sm w-full shadow-lg rounded-lg z-50" id="searchResultsDesktop"></div>
@@ -23,13 +23,18 @@
 
         <!-- মোবাইল সার্চ আইকন -->
         <div id="mobileSearchIcon" class="md:hidden cursor-pointer" onclick="focusMobileSearch()">
-            <i class="fas fa-search text-xl text-white"></i>
+            <i class="fas fa-search text-xl text-gray-800"></i>
         </div>
 
+        <!-- Notification icon -->
+        <a href="notifications.html" class="text-gray-800 w-10 h-10 rounded-full flex items-center justify-center relative">
+                    <i class="fas fa-bell"></i>
+                    <span id="notificationCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                </a>
         <!-- শপিং ব্যাগ আইকন -->
-        <button id="cartButton" class="bg-red-500 text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center relative" onclick="openCartSidebar()">
+        <button id="cartButton" class="text-gray-800 w-10 h-10 rounded-full flex items-center justify-center relative" onclick="openCartSidebar()">
             <i class="fas fa-shopping-bag"></i>
-            <span id="cartCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
+            <span id="cartCount" class="absolute -top-1 -right-1 text-gray-800 text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">0</span>
         </button>
 
         <!-- কার্ট সাইডবার -->
@@ -57,7 +62,7 @@
         <div id="toast" class="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg hidden z-50"></div>
 
         <!-- মোবাইল মেনু বাটন -->
-        <button id="mobileMenuButton" class="bg-white text-lipstick w-10 h-10 rounded md:hidden flex items-center justify-center"><i class="fas fa-bars text-xl"></i></button>
+        <button id="mobileMenuButton" class="bg-white text-gray-800 w-10 h-10 rounded md:hidden flex items-center justify-center"><i class="fas fa-bars text-xl"></i></button>
 
         <!-- মোবাইল সাইডবার ওভারলে -->
         <div class="fixed inset-0 z-40 hidden" id="sidebarOverlay">
@@ -91,9 +96,10 @@
                                 <a class="block px-4 py-2 text-gray-800" href="#mehandi" onclick="handleSubMenuItemClick('mehandi')">মেহেদী</a>
                             </div>
                         </li>
-                        <li class="py-3"> <!-- No bottom border for the last item -->
+                        <li class="py-3 border-b border-gray-200">
                             <a id="mobileOrderTrackButton" class="block text-gray-800" href="order-track.html" onclick="handleOrderTrackClick(event)">অর্ডার ট্র্যাক</a>
                         </li>
+                        
                     </ul>
                 </div>
             </div>
@@ -103,20 +109,21 @@
         <!-- ডেস্কটপ মেনু -->
         <nav class="hidden md:flex space-x-6 items-center text-white">
             <div id="desktopLoginButton">
-                <button class="flex items-center hover:text-gray-300" onclick="window.loginWithGmail()">
+                <button class="flex items-center hover:text-gray-600" onclick="window.loginWithGmail()">
                     <i class="fas fa-user-circle mr-2"></i>
                     <span>লগইন</span>
                 </button>
             </div>
-            <a class="hover:text-gray-300" href="index.html#home">হোম</a>
+            <a class="text-black hover:text-gray-600" href="index.html#home">হোম</a>
 
             <div class="relative">
-                <button class="hover:text-gray-300" onclick="toggleSubMenuDesktop()">
+                <button class="text-black hover:text-gray-600" onclick="toggleSubMenuDesktop()">
                     পণ্য সমূহ
                     <i class="fas fa-chevron-down ml-2 transition-transform duration-300" id="desktopArrowIcon"></i>
                 </button>
             </div>
-            <a id="desktopOrderTrackButton" class="hover:text-gray-300" href="order-track.html" onclick="handleOrderTrackClick(event)">অর্ডার ট্র্যাক</a>
+            <a id="desktopOrderTrackButton" class="text-black hover:text-gray-600" href="order-track.html" onclick="handleOrderTrackClick(event)">অর্ডার ট্র্যাক</a>
+            
         </nav>
     </div>
 

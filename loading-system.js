@@ -138,7 +138,6 @@ class LoadingSystem {
 
     startLoadingTracking() {
         document.body.classList.add('loading-active');
-        this.updateProgress('Loading system started', 100); // Force complete immediately
     }
 
     updateProgress(step, weight) {
@@ -173,6 +172,7 @@ class LoadingSystem {
             
             // Remove body classes (loading-active is added in startLoadingTracking)
             document.body.classList.remove('loading-active');
+            document.body.classList.add('loading-complete');
 
             // Remove from DOM after animation (if any, though display:none is immediate)
             setTimeout(() => {
@@ -221,11 +221,3 @@ if (typeof module !== 'undefined' && module.exports) {
 
 
 
-
-// Emergency timeout to force complete loading after 8 seconds
-setTimeout(() => {
-    if (window.globalLoadingSystem && !document.body.classList.contains('loading-complete')) {
-        console.log('Emergency loading complete triggered');
-        window.globalLoadingSystem.forceComplete();
-    }
-}, 8000);
