@@ -96,17 +96,16 @@ class LoadingSystem {
                     }
         
                     @keyframes letter-wave {
-                        0%, 100% { transform: translateY(0); opacity: 1; }
-                        25% { transform: translateY(-10px); opacity: 1; }
-                        75% { transform: translateY(10px); opacity: 1; }
+                        0%, 100% { transform: translateY(0); }
+                        25% { transform: translateY(-10px); }
+                        75% { transform: translateY(10px); }
                     }
         
                     .loading-text span {
                         display: inline-block;
-                        opacity: 0;
                         animation: letter-wave 2s infinite ease-in-out forwards;
                     }
-        
+
                     .loading-text span:nth-child(1) { animation-delay: 0.0s; }
                     .loading-text span:nth-child(2) { animation-delay: 0.1s; }
                     .loading-text span:nth-child(3) { animation-delay: 0.2s; }
@@ -124,9 +123,9 @@ class LoadingSystem {
                     .loading-text span:nth-child(15) { animation-delay: 1.4s; }
                     .loading-text span:nth-child(16) { animation-delay: 1.5s; }
                     .loading-text span:nth-child(17) { animation-delay: 1.6s; }
-        .loading-text span:nth-child(18) { animation-delay: 1.7s; }
-        .loading-text span:nth-child(19) { animation-delay: 1.8s; }
-        .loading-text span:nth-child(20) { animation-delay: 1.9s; }
+                    .loading-text span:nth-child(18) { animation-delay: 1.7s; }
+                    .loading-text span:nth-child(19) { animation-delay: 1.8s; }
+                    .loading-text span:nth-child(20) { animation-delay: 1.9s; }
         
                     /* Hide website content until loading complete */
                     #website-content {
