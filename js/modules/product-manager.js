@@ -8,11 +8,13 @@ import { closeSidebar } from './ui-utilities.js';
 
 window.addEventListener('cartUpdated', () => {
     if (document.getElementById("productList")) {
-        displayProductsAsCards(products);
+        const filtered = currentCategory === 'all' ? products : products.filter(p => p.category === currentCategory);
+        displayProductsAsCards(filtered);
     }
 });
 
 let products = [];
+let currentCategory = 'all';
 
 function setProducts(prods) {
     products = prods;
@@ -94,6 +96,7 @@ function searchProductsDesktop() {
 };
 
 function filterProducts(category) {
+    currentCategory = category;
     console.log(`product-manager.js: Filtering products by category: ${category}`);
     const filtered = category === 'all' ? products : products.filter(p => p.category === category);
     displayProductsAsCards(filtered);

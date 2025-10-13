@@ -53,13 +53,13 @@ function updateLoginButton(user) {
     if (user) {
         const displayName = user.displayName || user.email.split('@')[0];
         const html = `
-            <div class="relative group">
-                <button class="flex items-center space-x-2 focus:outline-none">
+            <div class="relative logout-container">
+                <button class="flex items-center space-x-2 focus:outline-none" onclick="window.toggleLogoutMenu(event)">
                     ${user.photoURL ? `<img src="${user.photoURL}" class="w-8 h-8 rounded-full border-2 border-gray-300">` : `<div class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-bold">${displayName.charAt(0).toUpperCase()}</div>`}
                     <span class="text-black font-semibold">${displayName}</span>
                     <i class="fas fa-chevron-down text-gray-600 text-xs"></i>
                 </button>
-                <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden group-hover:block z-10">
+                <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden z-10 logout-menu">
                     <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onclick="event.preventDefault(); window.confirmLogout();">লগআউট</a>
                 </div>
             </div>
@@ -72,6 +72,16 @@ function updateLoginButton(user) {
         desktopBtn.innerHTML = html;
     }
 };
+
+function toggleLogoutMenu(event) {
+    event.stopPropagation();
+    const button = event.currentTarget;
+    const container = button.closest('.logout-container');
+    const menu = container.querySelector('.logout-menu');
+    if (menu) {
+        menu.classList.toggle('hidden');
+    }
+}
 
 function confirmLogout() {
     if (confirm("আপনি কি লগআউট করতে চান?")) logout();
@@ -101,5 +111,6 @@ export {
     logout,
     saveUserToFirebase,
     onAuthStateChanged,
-    isAdmin
+    isAdmin,
+    toggleLogoutMenu
 };
