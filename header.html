@@ -15,7 +15,7 @@
         <div class="hidden md:block p-2 md:flex-grow relative">
             <div class="relative">
                 <input class="w-full p-2 pl-10 border-0 rounded-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-lipstick bg-white/50 backdrop-blur-sm placeholder:text-gray-500/80" id="searchInputDesktop" oninput="searchProductsDesktop()" placeholder="প্রোডাক্ট সার্চ করুন..." type="text" />
-<i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-800"></i>
+<i class="fas fa-search text-2xl absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-800"></i>
             </div>
             <!-- সার্চ রেজাল্ট -->
             <div class="mt-2 max-h-60 overflow-y-auto absolute bg-white/90 backdrop-blur-sm w-full shadow-lg rounded-lg z-50" id="searchResultsDesktop"></div>
@@ -23,17 +23,17 @@
 
         <!-- মোবাইল সার্চ আইকন -->
         <div id="mobileSearchIcon" class="md:hidden cursor-pointer" onclick="focusMobileSearch()">
-            <i class="fas fa-search text-xl text-gray-800"></i>
+            <i class="fas fa-search text-2xl text-gray-800"></i>
         </div>
 
         <!-- Notification icon -->
         <a href="notifications.html" class="text-gray-800 w-10 h-10 rounded-full flex items-center justify-center relative">
-                    <i class="fas fa-bell"></i>
+                    <i class="fas fa-bell text-2xl"></i>
                     <span id="notificationCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
                 </a>
         <!-- শপিং ব্যাগ আইকন -->
         <button id="cartButton" class="text-gray-800 w-10 h-10 rounded-full flex items-center justify-center relative" onclick="openCartSidebar()">
-            <i class="fas fa-shopping-bag"></i>
+            <i class="fas fa-shopping-bag text-2xl"></i>
             <span id="cartCount" class="absolute -top-1 -right-1 text-gray-800 text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">0</span>
         </button>
 
@@ -62,10 +62,10 @@
         <div id="toast" class="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg hidden z-50"></div>
 
         <!-- মোবাইল মেনু বাটন -->
-        <button id="mobileMenuButton" class="bg-white text-gray-800 w-10 h-10 rounded md:hidden flex items-center justify-center"><i class="fas fa-bars text-xl"></i></button>
+        <button id="mobileMenuButton" class="text-gray-800 w-10 h-10 rounded md:hidden flex items-center justify-center"><i class="fas fa-bars text-2xl"></i></button>
 
         <!-- মোবাইল সাইডবার ওভারলে -->
-        <div class="fixed inset-0 z-40 bg-black bg-opacity-50 opacity-0 transition-opacity duration-300 ease-in-out" id="sidebarOverlay">
+        <div class="fixed inset-0 z-40 hidden" id="sidebarOverlay">
             <div class="fixed top-0 left-0 h-full w-4/5 bg-white shadow-lg transform -translate-x-full transition-transform duration-300 ease-in-out" id="sidebar">
                 <div class="p-4 h-full flex flex-col">
                     <button id="closeSidebarButton" class="text-gray-600 hover:text-gray-900">
