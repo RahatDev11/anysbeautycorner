@@ -40,6 +40,7 @@ import { toggleFooterMenu } from '../js/pages/footer-manager.js';
 // Global Variables (declared once and assigned)
 let products = [];
 let eventSlider;
+let isMainInitialized = false; // Global flag to prevent multiple initializations
 
 async function loadHeaderAndSetup() {
     return new Promise(async (resolve, reject) => {
@@ -65,6 +66,7 @@ async function loadHeaderAndSetup() {
                 updateNotificationCountInHeader();
             });
             
+
 
 
             await loadCart(); // Await the loadCart promise
@@ -150,6 +152,12 @@ Object.assign(window, {
 });
 
 function main() {
+    if (isMainInitialized) {
+        console.log('main() already initialized. Skipping.');
+        return;
+    }
+    isMainInitialized = true;
+
     console.log('Main application starting...');
     
     let pageLoadPromises = [];
