@@ -22,27 +22,16 @@ function openSidebar() {
     hideSocialMediaIcons();
     const sidebarOverlay = document.getElementById('sidebarOverlay');
     const sidebar = document.getElementById('sidebar');
-    if (sidebarOverlay) {
-        sidebarOverlay.classList.remove('hidden');
-        setTimeout(() => {
-            sidebarOverlay.classList.add('opacity-100');
-        }, 10);
-    }
+    if (sidebarOverlay) sidebarOverlay.classList.remove('hidden');
     if (sidebar) sidebar.classList.remove('-translate-x-full');
 }
 
 function closeSidebar() {
     const sidebarOverlay = document.getElementById('sidebarOverlay');
     const sidebar = document.getElementById('sidebar');
-    if (sidebarOverlay) {
-        sidebarOverlay.classList.remove('opacity-100');
-        sidebar.classList.add('-translate-x-full');
-        setTimeout(() => {
-            sidebarOverlay.classList.add('hidden');
-        }, 300);
-    } else {
-        if (sidebar) sidebar.classList.add('-translate-x-full');
-    }
+    if (sidebarOverlay) sidebarOverlay.classList.add('hidden');
+    if (sidebar) sidebar.classList.add('-translate-x-full');
+}
 function toggleSubMenuMobile(event) {
     event.stopPropagation();
     document.getElementById('subMenuMobile')?.classList.toggle('hidden');

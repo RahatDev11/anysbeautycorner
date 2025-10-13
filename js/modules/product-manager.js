@@ -9,7 +9,7 @@ import { closeSidebar } from './ui-utilities.js';
 window.addEventListener('cartUpdated', () => {
     if (document.getElementById("productList")) {
         const filtered = currentCategory === 'all' ? products : products.filter(p => p.category === currentCategory);
-        displayProductsAsCards(filtered);
+        displayProductsAsCards(filtered, "productList");
     }
 });
 
@@ -31,9 +31,9 @@ function showLoadingSpinner() {
     }
 }
 
-function displayProductsAsCards(productsToDisplay) {
-    console.log('displayProductsAsCards: productsToDisplay', productsToDisplay);
-    const productList = document.getElementById("productList");
+function displayProductsAsCards(productsToDisplay, containerElementId = "productList") {
+    console.log('displayProductsAsCards called with products:', productsToDisplay, 'for container:', containerElementId);
+    const productList = document.getElementById(containerElementId);
     if (!productList) return;
 
     let productsHTML = productsToDisplay.map(product => {
@@ -100,7 +100,7 @@ function filterProducts(category) {
     currentCategory = category;
     console.log(`product-manager.js: Filtering products by category: ${category}`);
     const filtered = category === 'all' ? products : products.filter(p => p.category === category);
-    displayProductsAsCards(filtered);
+    displayProductsAsCards(filtered, "productList");
     closeSidebar();
     const desktopSubMenuBar = document.getElementById('desktopSubMenuBar');
     if (desktopSubMenuBar) desktopSubMenuBar.classList.add('hidden');
