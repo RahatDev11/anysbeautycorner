@@ -2,7 +2,7 @@
 // SECTION: ORDER TRACK PAGE LOGIC
 // =================================================================
 
-import { database, ref, get, auth } from '../modules/firebase-config.js';
+import { database, ref, get, auth, onAuthStateChanged } from '../modules/firebase-config.js';
 import { showToast, hideSocialMediaIcons } from '../modules/ui-utilities.js';
 
 // Helper function for status display
@@ -115,6 +115,14 @@ async function initializeOrderTrackPage() {
         return Promise.resolve();
     }
 
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            await loadAndDisplayUserOrders();
+        } else {
+            orderListDiv.innerHTML = '<p class="text-center text-red-500 italic p-4">অর্ডার দেখতে লগইন করুন।</p>';
+        }
+    });
+
     async function loadAndDisplayUserOrders() {
         orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-4">অর্ডার লোড হচ্ছে...</p>';
         orderListDiv.style.display = 'block';
@@ -167,7 +175,6 @@ async function initializeOrderTrackPage() {
         }
     }
 
-    await loadAndDisplayUserOrders();
     return Promise.resolve();
 }
 

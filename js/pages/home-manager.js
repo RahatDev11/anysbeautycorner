@@ -36,6 +36,7 @@ async function displayEvents() {
 }
 
 async function initHomePage(products) {
+    console.log('initHomePage: products', products);
     showLoadingSpinner(); // This is for productList spinner, not global
     const urlParams = new URLSearchParams(window.location.search);
     const filterCategory = urlParams.get('filter');
