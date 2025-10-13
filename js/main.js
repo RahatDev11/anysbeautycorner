@@ -20,7 +20,7 @@ import { showToast, openSidebar, closeSidebar, toggleSubMenuMobile, handleSubMen
 import { sendTelegramNotification, sendNotificationForOrder } from '../js/modules/notification-manager.js';
 
 // Import Auth Manager
-import { loginWithGmail, confirmLogout, logout, isAdmin, updateLoginButton } from '../js/modules/auth-manager.js';
+import { loginWithGmail, confirmLogout, logout, isAdmin, updateLoginButton, toggleLogoutMenu } from '../js/modules/auth-manager.js';
 
 // Import Cart Manager
 import { loadCart, addToCart, updateQuantity, removeFromCart, checkout, buyNow, setProducts as setCartManagerProducts } from '../js/modules/cart-manager.js';
@@ -130,7 +130,7 @@ Object.assign(window, {
     openSidebar, closeSidebar, toggleSubMenuMobile, handleSubMenuItemClick,
     toggleSubMenuDesktop, openCartSidebar, closeCartSidebar, focusMobileSearch,
     // Auth
-    loginWithGmail, confirmLogout, logout,
+    loginWithGmail, confirmLogout, logout, toggleLogoutMenu,
     // Cart & Checkout
     filterProducts, searchProductsMobile, searchProductsDesktop, checkout,
     buyNow, addToCart, updateQuantity, removeFromCart,
@@ -255,6 +255,16 @@ document.addEventListener("click", (event) => {
     if (event.target.id === 'sidebarOverlay') closeSidebar();
     if (!event.target.closest('#cartSidebar') && !event.target.closest('#cartButton')) closeCartSidebar();
     if (!event.target.closest('#desktopSubMenuBar') && !event.target.closest('button[onclick="toggleSubMenuDesktop()"]')) document.getElementById('desktopSubMenuBar')?.classList.add('hidden');
+
+    const menus = document.querySelectorAll('.logout-menu');
+    menus.forEach(menu => {
+        if (!menu.classList.contains('hidden')) {
+            const container = menu.closest('.logout-container');
+            if (!container.contains(event.target)) {
+                menu.classList.add('hidden');
+            }
+        }
+    });
     
     const mobileSearchBar = document.getElementById('mobileSearchBar');
     const mobileSearchIcon = document.getElementById('mobileSearchIcon');
