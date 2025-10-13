@@ -6,10 +6,12 @@ import { database, ref, get } from '../modules/firebase-config.js';
 import { showToast, hideSocialMediaIcons } from '../modules/ui-utilities.js';
 import { cart, saveCart } from '../modules/cart-manager.js';
 import { openCartSidebar } from '../modules/ui-utilities.js';
+import { displayProductsAsCards } from '../modules/product-manager.js';
 
 let currentProduct = null; // To hold the product details for the current page
 
 async function initializeProductDetailPage() {
+    console.log('initializeProductDetailPage called.');
     const productContent = document.getElementById('productContent');
     const loadingSpinner = document.getElementById('loadingSpinner');
     if (!productContent) return Promise.resolve(); // Resolve immediately if element not found
@@ -27,24 +29,96 @@ async function initializeProductDetailPage() {
         const productRef = ref(database, 'products/' + productId);
         const snapshot = await get(productRef);
 
-        if (snapshot.exists()) {
-            currentProduct = { id: productId, ...snapshot.val() }; // Set the current product
-            displayProductDetails(currentProduct);
-            if (loadingSpinner) loadingSpinner.style.display = 'none';
-            productContent.classList.remove('hidden');
-        } else {
-            showToast('প্রোডাক্ট পাওয়া যায়নি!', 'error');
-            if (loadingSpinner) loadingSpinner.innerHTML = '<p class="text-red-500">দুঃখিত, এই প্রোডাক্টটি পাওয়া যায়নি।</p>';
-        }
-    } catch (error) {
-        showToast('প্রোডাক্ট লোড করতে সমস্যা হয়েছে!', 'error');
-        if (loadingSpinner) loadingSpinner.innerHTML = `<p class="text-red-500">ত্রুটি: ${error.message}</p>`;
-    }
-    return Promise.resolve(); // Ensure a promise is always returned and resolved
-}
-
-function displayProductDetails(product) {
-    document.title = product.name || "প্রোডাক্ট বিস্তারিত";
+                    if (snapshot.exists()) {
+                        currentProduct = { id: productId, ...snapshot.val() }; // Set the current product
+                        console.log('Current product category:', currentProduct.category);
+                        displayProductDetails(currentProduct);
+                        if (loadingSpinner) loadingSpinner.style.display = 'none';
+                        productContent.classList.remove('hidden');
+                        console.log('Calling loadRelatedProducts...');
+                        loadRelatedProducts(currentProduct.category, currentProduct.id);
+                    } else {
+                        showToast('প্রোডাক্ট পাওয়া যায়নি!', 'error');
+                        if (loadingSpinner) loadingSpinner.innerHTML = '<p class="text-red-500">দুঃখিত, এই প্রোডাক্টটি পাওয়া যায়নি।</p>';
+                    }
+                } catch (error) {
+                    showToast('প্রোডাক্ট লোড করতে সমস্যা হয়েছে!', 'error');
+                    if (loadingSpinner) loadingSpinner.innerHTML = `<p class="text-red-500">ত্রুটি: ${error.message}</p>`;
+                }
+                    return Promise.resolve(); // Ensure a promise is always returned and resolved
+                }
+                
+                // Listen for cart updates to re-render related products
+                window.addEventListener('cartUpdated', async () => {
+                    const relatedProductsContainer = document.getElementById('relatedProductsContainer');
+                    if (relatedProductsContainer && currentProduct) {
+                        // Re-fetch and display related products to update cart controls
+                        await loadRelatedProducts(currentProduct.category, currentProduct.id);
+                    }
+                });
+                
+                async function loadRelatedProducts(category, currentProductId) {                const relatedProductsSection = document.getElementById('relatedProductsSection');
+                const relatedProductsContainer = document.getElementById('relatedProductsContainer');
+                if (!relatedProductsSection || !relatedProductsContainer) return;
+        
+                console.log('loadRelatedProducts: category =', category, ', currentProductId =', currentProductId);
+        
+                try {
+                    const productsRef = ref(database, 'products');
+                    const snapshot = await get(productsRef);
+        
+                    if (snapshot.exists()) {
+                        const allProducts = Object.keys(snapshot.val()).map(key => ({ id: key, ...snapshot.val()[key] }));
+                        console.log('loadRelatedProducts: All products fetched:', allProducts);
+        
+                        const relatedProducts = allProducts.filter(p => 
+                            p.category && category && // Ensure both categories exist
+                            p.category.toLowerCase().trim() === category.toLowerCase().trim() && 
+                            p.id !== currentProductId
+                        );
+                        console.log('loadRelatedProducts: Filtered related products:', relatedProducts);
+        
+                                                        if (relatedProducts.length > 0) {
+        
+                                                            displayProductsAsCards(relatedProducts, "relatedProductsContainer");
+        
+                                                            relatedProductsSection.classList.remove('hidden');
+        
+                                                        } else {
+        
+                                                            console.log('loadRelatedProducts: No related products found for category:', category);
+        
+                                                            relatedProductsContainer.innerHTML = '<p class="text-center text-gray-500 italic">এই ক্যাটাগরিতে অন্য কোনো প্রোডাক্ট খুঁজে পাওয়া যায়নি।</p>';
+        
+                                                            relatedProductsSection.classList.remove('hidden'); // Keep section visible to show the message
+        
+                                                        }
+        
+                                                    } else {
+        
+                                                        console.log('loadRelatedProducts: No products found in database.');
+        
+                                                        relatedProductsContainer.innerHTML = '<p class="text-center text-gray-500 italic">কোনো প্রোডাক্ট খুঁজে পাওয়া যায়নি।</p>';
+        
+                                                        relatedProductsSection.classList.remove('hidden');
+        
+                                                    }
+        
+                                                } catch (error) {
+        
+                                                    console.error("loadRelatedProducts: Error loading related products:", error);
+        
+                                                    relatedProductsContainer.innerHTML = '<p class="text-center text-red-500 italic">রিলেটেড প্রোডাক্ট লোড করতে সমস্যা হয়েছে।</p>';
+        
+                                                    relatedProductsSection.classList.remove('hidden');
+        
+                                                }
+        
+                                            }
+        
+                                        
+        
+                                            function displayProductDetails(product) {    document.title = product.name || "প্রোডাক্ট বিস্তারিত";
     document.getElementById('productTitle').textContent = product.name;
     document.getElementById('productPrice').textContent = `দাম: ${product.price} টাকা`;
     document.getElementById('productDescription').textContent = product.description;

@@ -76,30 +76,43 @@ function showOrderDetailsModal(order, orderId) {
 async function loadUserOrders() {
     const currentUser = auth.currentUser;
     if (!currentUser) {
-        return []; // ইউজার লগইন না থাকলে
+        return []; // User not logged in
     }
 
     const orders = [];
     
     try {
-        // প্রতিটি অর্ডার আলাদাভাবে চেক করুন
         const ordersRef = ref(database, 'orders');
-        const ordersSnapshot = await get(ordersRef);
         
-        if (ordersSnapshot.exists()) {
-            const ordersData = ordersSnapshot.val();
-            
-            Object.keys(ordersData).forEach(orderId => {
-                const order = ordersData[orderId];
-                // শুধুমাত্র ইউজারের নিজের অর্ডার দেখাবে
-                if (order.userId === currentUser.uid || order.guestId === currentUser.uid) {
+        // Query for orders where userId matches currentUser.uid
+        const userOrdersQuery = query(ordersRef, orderByChild('userId'), equalTo(currentUser.uid));
+        const userOrdersSnapshot = await get(userOrdersQuery);
+
+        if (userOrdersSnapshot.exists()) {
+            userOrdersSnapshot.forEach(childSnapshot => {
+                orders.push({
+                    id: childSnapshot.key,
+                    ...childSnapshot.val()
+                });
+            });
+        }
+
+        // Also query for orders where guestId matches currentUser.uid (if applicable)
+        const guestOrdersQuery = query(ordersRef, orderByChild('guestId'), equalTo(currentUser.uid));
+        const guestOrdersSnapshot = await get(guestOrdersQuery);
+
+        if (guestOrdersSnapshot.exists()) {
+            guestOrdersSnapshot.forEach(childSnapshot => {
+                // Avoid duplicates if an order has both userId and guestId as the same UID
+                if (!orders.some(order => order.id === childSnapshot.key)) {
                     orders.push({
-                        id: orderId,
-                        ...order
+                        id: childSnapshot.key,
+                        ...childSnapshot.val()
                     });
                 }
             });
         }
+
     } catch (error) {
         console.error("Error loading user orders:", error);
         throw error;
