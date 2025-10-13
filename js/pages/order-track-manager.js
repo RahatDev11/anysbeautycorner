@@ -2,7 +2,7 @@
 // SECTION: ORDER TRACK PAGE LOGIC
 // =================================================================
 
-import { database, ref, get, auth, onAuthStateChanged } from '../modules/firebase-config.js';
+import { database, ref, get, auth, onAuthStateChanged, query, orderByChild, equalTo } from '../modules/firebase-config.js';
 import { showToast, hideSocialMediaIcons } from '../modules/ui-utilities.js';
 
 // Helper function for status display
@@ -123,6 +123,8 @@ async function loadUserOrders() {
 
 async function initializeOrderTrackPage() {
     const orderListDiv = document.getElementById('orderList');
+    const loginPrompt = document.getElementById('loginPrompt');
+    const orderListContainer = document.getElementById('orderListContainer');
 
     if (!orderListDiv) {
         return Promise.resolve();
@@ -130,11 +132,26 @@ async function initializeOrderTrackPage() {
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
+            // User is logged in
+            if (loginPrompt) loginPrompt.style.display = 'none';
+            if (orderListContainer) orderListContainer.style.display = 'block';
             await loadAndDisplayUserOrders();
         } else {
+            // User is not logged in
+            if (loginPrompt) loginPrompt.style.display = 'block';
+            if (orderListContainer) orderListContainer.style.display = 'none';
             orderListDiv.innerHTML = '<p class="text-center text-red-500 italic p-4">অর্ডার দেখতে লগইন করুন।</p>';
         }
     });
+
+    // Add login button functionality
+    const loginButton = document.getElementById('loginButton');
+    if (loginButton) {
+        loginButton.addEventListener('click', () => {
+            // Redirect to login page or trigger login modal
+            window.location.href = 'login.html';
+        });
+    }
 
     async function loadAndDisplayUserOrders() {
         orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-4">অর্ডার লোড হচ্ছে...</p>';
@@ -151,14 +168,15 @@ async function initializeOrderTrackPage() {
                 
                 userOrders.forEach(order => {
                     const orderId = order.id;
+                    const statusColor = getStatusColor(order.status);
                     ordersHtml += `
-                        <div class="bg-white p-4 rounded-lg shadow-md mb-4 cursor-pointer" data-order-id="${orderId}">
+                        <div class="bg-white p-4 rounded-lg shadow-md mb-4 cursor-pointer hover:shadow-lg transition-shadow" data-order-id="${orderId}">
                             <div class="flex justify-between items-center">
                                 <p class="font-semibold">অর্ডার আইডি: ${orderId}</p>
                                 <p class="text-sm text-gray-600">${new Date(order.orderDate).toLocaleDateString('bn-BD')}</p>
                             </div>
                             <p class="text-gray-700">মোট মূল্য: ${order.totalAmount} টাকা</p>
-                            <p class="text-gray-700">স্ট্যাটাস: ${getStatusText(order.status)}</p>
+                            <p class="text-gray-700">স্ট্যাটাস: <span class="${statusColor.text} ${statusColor.bg} px-2 py-1 rounded-full text-xs">${getStatusText(order.status)}</span></p>
                         </div>
                     `;
                 });
