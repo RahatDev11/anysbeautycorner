@@ -34,6 +34,8 @@ import { initializeProductDetailPage, changeDetailQuantity, addToCartWithQuantit
 import { initializeOrderTrackPage } from '../js/pages/order-track-manager.js';
 
 import { initializeOrderFormPage, placeOrder } from '../js/pages/order-form-manager.js';
+import { initializeNotificationsPage, updateNotificationCountInHeader } from '../js/pages/notifications-manager.js';
+import { toggleFooterMenu } from '../js/pages/footer-manager.js';
 
 // Global Variables (declared once and assigned)
 let products = [];
@@ -60,6 +62,7 @@ async function loadHeaderAndSetup() {
             // Wait for initial auth state to be determined and login button updated
             onAuthStateChanged(auth, user => {
                 updateLoginButton(user);
+                updateNotificationCountInHeader();
             });
             
 
@@ -141,7 +144,9 @@ Object.assign(window, {
     initializeOrderTrackPage,
     // Order List 
     // Order Form
-    initializeOrderFormPage, placeOrder
+    initializeOrderFormPage, placeOrder,
+    // Footer
+    toggleFooterMenu
 });
 
 function main() {
@@ -179,7 +184,6 @@ function main() {
     Promise.all(pageLoadPromises).then(async () => {
         console.log('main.js: All initial page load promises resolved.');
 
-
         // After all initial data (header, footer, products) are loaded, then initialize page-specific logic
         console.log('main.js: Starting page-specific initialization.');
         const currentPage = window.location.pathname;
@@ -195,6 +199,9 @@ function main() {
         if (currentPage.includes('order-form.html')) {
             console.log('main.js: Initializing Order Form Page');
             initializeOrderFormPage();
+        }
+        if (currentPage.includes('notifications.html')) {
+            initializeNotificationsPage();
         }
         console.log('main.js: Page-specific initialization complete.');
 
@@ -213,24 +220,13 @@ function main() {
             console.log('main.js: Admin status checked.');
         }
 
-        // Ensure loading system completes
-        const tryCompleteLoading = (attempts = 0) => {
-            if (window.globalLoadingSystem && window.globalLoadingSystem.isInitialized) {
-                console.log('main.js: Calling forceComplete()');
+        // Ensure loading system completes only after all resources are loaded
+        window.addEventListener('load', () => {
+            if (window.globalLoadingSystem) {
+                console.log('main.js: window.onload fired, forcing loading complete.');
                 window.globalLoadingSystem.forceComplete();
-            } else if (attempts < 10) { // Retry up to 10 times (10 * 200ms = 2 seconds)
-                console.log(`main.js: globalLoadingSystem not ready, retrying forceComplete() (attempt ${attempts + 1})`);
-                setTimeout(() => tryCompleteLoading(attempts + 1), 200);
-            } else {
-                console.error('main.js: Failed to complete loading system after multiple retries.');
-                // Fallback: ensure website content is visible even if loading system fails
-                const websiteContent = document.getElementById('website-content');
-                if (websiteContent) {
-                    websiteContent.style.display = 'block';
-                }
             }
-        };
-        setTimeout(tryCompleteLoading, 3000); // Initial call after 3 seconds
+        });
 
     }).catch(error => {
         console.error('Error in main application:', error);
@@ -284,6 +280,13 @@ window.addEventListener('scroll', () => {
     if (mobileSearchBar && !mobileSearchBar.classList.contains('hidden')) {
         mobileSearchBar.classList.add('hidden');
     }
+
+    const menus = document.querySelectorAll('.logout-menu');
+    menus.forEach(menu => {
+        if (!menu.classList.contains('hidden')) {
+            menu.classList.add('hidden');
+        }
+    });
 });
 
 // Error handling for the loading system
