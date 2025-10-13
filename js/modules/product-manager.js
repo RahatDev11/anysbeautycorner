@@ -32,6 +32,7 @@ function showLoadingSpinner() {
 }
 
 function displayProductsAsCards(productsToDisplay) {
+    console.log('displayProductsAsCards: productsToDisplay', productsToDisplay);
     const productList = document.getElementById("productList");
     if (!productList) return;
 
@@ -46,7 +47,7 @@ function displayProductsAsCards(productsToDisplay) {
         return `
             <div class="bg-white rounded-xl shadow overflow-hidden flex flex-col">
                 <img src="${imageUrl}" alt="${product.name}" class="w-full h-36 object-cover cursor-pointer" onclick="window.showProductDetail('${product.id}')">
-                <div class="p-3 text-white flex flex-col flex-grow" style="background-color: #F4A7B9;">
+                <div class="p-3 flex flex-col flex-grow" style="background-color: #F4A7B9;">
                     <div class="flex-grow"><h3 class="font-semibold text-lg mb-1 cursor-pointer" onclick="window.showProductDetail('${product.id}')">${product.name}</h3></div>
                     <div>
                         <p class="text-xl font-bold mt-3">${product.price} টাকা</p>

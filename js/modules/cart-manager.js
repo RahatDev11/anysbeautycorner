@@ -57,7 +57,12 @@ function updateCartSidebarUI() {
     } else {
         cartItemsEl.innerHTML = '<p class="text-center text-gray-500">আপনার কার্ট খালি।</p>';
     }
-    cartCountEl.textContent = totalItems;
+    if (totalItems > 0) {
+        cartCountEl.textContent = totalItems;
+        cartCountEl.classList.remove('hidden');
+    } else {
+        cartCountEl.classList.add('hidden');
+    }
     if(totalPriceEl) totalPriceEl.textContent = `মোট মূল্য: ${totalPrice.toFixed(2)} টাকা`;
 }
 
