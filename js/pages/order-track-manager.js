@@ -1,5 +1,5 @@
 // =================================================================
-// SECTION: ORDER TRACK PAGE LOGIC - MOBILE FIXED VERSION
+// SECTION: ORDER TRACK PAGE LOGIC - USER SPECIFIC ORDERS
 // =================================================================
 
 import { database, ref, get, auth, onAuthStateChanged, query, orderByChild, equalTo } from '../modules/firebase-config.js';
@@ -27,25 +27,44 @@ function getStatusColor(status) {
     return colors[status] || colors.cancelled;
 }
 
-// সরলীকৃত ভার্সন - সব অর্ডার লোড করবে
-async function loadAllOrders() {
+// শুধুমাত্র লগইন করা ইউজারের অর্ডার লোড করবে
+async function loadUserSpecificOrders() {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        console.log("❌ No user logged in");
+        return [];
+    }
+
+    console.log("👤 Loading orders for user:", currentUser.email);
+    
     try {
-        console.log("🔄 Loading orders from Firebase...");
         const ordersRef = ref(database, 'orders');
         const snapshot = await get(ordersRef);
         
-        const orders = [];
+        const allOrders = [];
         if (snapshot.exists()) {
             snapshot.forEach(childSnapshot => {
-                orders.push({
+                const orderData = childSnapshot.val();
+                allOrders.push({
                     id: childSnapshot.key,
-                    ...childSnapshot.val()
+                    ...orderData
                 });
             });
         }
         
-        console.log("✅ Orders loaded:", orders.length);
-        return orders;
+        // শুধুমাত্র বর্তমান ইউজারের অর্ডার ফিল্টার করুন
+        const userOrders = allOrders.filter(order => {
+            const userEmail = currentUser.email.toLowerCase();
+            const orderEmail = (order.customerEmail || '').toLowerCase();
+            
+            // ইমেইল মিললে শো করবে
+            return orderEmail === userEmail;
+        });
+        
+        console.log("✅ User orders found:", userOrders.length);
+        console.log("📧 Current user email:", currentUser.email);
+        
+        return userOrders;
     } catch (error) {
         console.error("❌ Error loading orders:", error);
         return [];
@@ -74,7 +93,7 @@ async function initializeOrderTrackPage() {
 
     // ইউজারের লগিন স্টেট চেক করুন
     onAuthStateChanged(auth, async (user) => {
-        console.log("👤 Auth state changed:", user ? "Logged in" : "Not logged in");
+        console.log("👤 Auth state changed:", user ? user.email : "Not logged in");
         
         if (user) {
             // লগইন করা আছে
@@ -92,7 +111,7 @@ async function initializeOrderTrackPage() {
         orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-4">অর্ডার লোড হচ্ছে...</p>';
 
         try {
-            const orders = await loadAllOrders();
+            const orders = await loadUserSpecificOrders();
             
             if (orders.length > 0) {
                 // সর্ট করবে নতুন থেকে পুরানো
@@ -127,7 +146,12 @@ async function initializeOrderTrackPage() {
                     });
                 });
             } else {
-                orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-4">কোনো অর্ডার পাওয়া যায়নি।</p>';
+                orderListDiv.innerHTML = `
+                    <div class="text-center p-8">
+                        <p class="text-gray-500 italic mb-4">আপনার কোনো অর্ডার পাওয়া যায়নি।</p>
+                        <p class="text-sm text-gray-400">আপনার Gmail: ${auth.currentUser?.email || 'N/A'}</p>
+                    </div>
+                `;
             }
         } catch (error) {
             console.error("❌ Error:", error);
@@ -151,6 +175,7 @@ function showOrderDetailsModal(order, orderId) {
             <p><strong>তারিখ:</strong> ${new Date(order.orderDate).toLocaleString('bn-BD')}</p>
             <p><strong>নাম:</strong> ${order.customerName || 'N/A'}</p>
             <p><strong>ফোন:</strong> ${order.phoneNumber || 'N/A'}</p>
+            <p><strong>ইমেইল:</strong> ${order.customerEmail || 'N/A'}</p>
             <p><strong>ঠিকানা:</strong> ${order.address || 'N/A'}</p>
             <p><strong>স্ট্যাটাস:</strong> ${getStatusText(order.status)}</p>
         </div>
