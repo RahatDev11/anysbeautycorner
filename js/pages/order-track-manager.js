@@ -2,7 +2,7 @@
 // SECTION: ORDER TRACK PAGE LOGIC
 // =================================================================
 
-import { database, ref, get, auth, onAuthStateChanged } from '../modules/firebase-config.js';
+import { database, ref, get, auth, onAuthStateChanged, query, orderByChild, equalTo } from '../modules/firebase-config.js';
 import { showToast, hideSocialMediaIcons } from '../modules/ui-utilities.js';
 
 // Helper function for status display
@@ -97,21 +97,7 @@ async function loadUserOrders() {
             });
         }
 
-        // Also query for orders where guestId matches currentUser.uid (if applicable)
-        const guestOrdersQuery = query(ordersRef, orderByChild('guestId'), equalTo(currentUser.uid));
-        const guestOrdersSnapshot = await get(guestOrdersQuery);
 
-        if (guestOrdersSnapshot.exists()) {
-            guestOrdersSnapshot.forEach(childSnapshot => {
-                // Avoid duplicates if an order has both userId and guestId as the same UID
-                if (!orders.some(order => order.id === childSnapshot.key)) {
-                    orders.push({
-                        id: childSnapshot.key,
-                        ...childSnapshot.val()
-                    });
-                }
-            });
-        }
 
     } catch (error) {
         console.error("Error loading user orders:", error);
@@ -121,74 +107,142 @@ async function loadUserOrders() {
     return orders;
 }
 
+async function loadGuestOrders(orderIds) {
+    const orderListDiv = document.getElementById('orderList');
+    if (!orderIds || orderIds.length === 0) {
+        document.getElementById('guestTracking').style.display = 'block';
+        orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-4">আপনার কোনো অর্ডার পাওয়া যায়নি।</p>';
+        return;
+    }
+
+    orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-4">আপনার অর্ডারগুলো লোড হচ্ছে...</p>';
+    const orders = [];
+    try {
+        for (const orderId of orderIds) {
+            const orderRef = ref(database, `orders/${orderId}`);
+            const snapshot = await get(orderRef);
+            if (snapshot.exists()) {
+                orders.push({ id: snapshot.key, ...snapshot.val() });
+            }
+        }
+
+        if (orders.length > 0) {
+            orders.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+            displayOrders(orders, orderListDiv);
+        } else {
+            orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-4">আপনার কোনো অর্ডার পাওয়া যায়নি।</p>';
+            document.getElementById('guestTracking').style.display = 'block';
+        }
+    } catch (error) {
+        console.error("Error loading guest orders:", error);
+        orderListDiv.innerHTML = '<p class="text-center text-red-500 italic p-4">অর্ডার লোড করতে সমস্যা হয়েছে।</p>';
+    }
+}
+
+function displayOrders(orders, container) {
+    let ordersHtml = '<h2 class="text-2xl font-bold text-center mb-6 text-lipstick">আপনার অর্ডারসমূহ</h2>';
+    orders.forEach(order => {
+        const orderId = order.id;
+        ordersHtml += `
+            <div class="bg-white p-4 rounded-lg shadow-md mb-4 cursor-pointer" data-order-id="${orderId}">
+                <div class="flex justify-between items-center">
+                    <p class="font-semibold">অর্ডার আইডি: ${orderId}</p>
+                    <p class="text-sm text-gray-600">${new Date(order.orderDate).toLocaleDateString('bn-BD')}</p>
+                </div>
+                <p class="text-gray-700">মোট মূল্য: ${order.totalAmount} টাকা</p>
+                <p class="text-gray-700">স্ট্যাটাস: ${getStatusText(order.status)}</p>
+            </div>
+        `;
+    });
+    container.innerHTML = ordersHtml;
+
+    document.querySelectorAll('#orderList > div[data-order-id]').forEach(item => {
+        item.addEventListener('click', (event) => {
+            const orderId = event.currentTarget.dataset.orderId;
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                showOrderDetailsModal(order, orderId);
+            }
+        });
+    });
+}
+
 async function initializeOrderTrackPage() {
     const orderListDiv = document.getElementById('orderList');
+    const guestTrackingDiv = document.getElementById('guestTracking');
+    const loginPromptDiv = document.getElementById('loginPrompt');
+    const trackOrderBtn = document.getElementById('trackOrderBtn');
+    const orderIdInput = document.getElementById('orderIdInput');
+    const loginButton = document.getElementById('loginButton');
 
-    if (!orderListDiv) {
-        return Promise.resolve();
+    if (loginButton) {
+        loginButton.addEventListener('click', () => window.loginWithGmail());
     }
+
+    if (!orderListDiv) return Promise.resolve();
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
+            guestTrackingDiv.style.display = 'none';
+            loginPromptDiv.style.display = 'none';
+            orderListDiv.style.display = 'block';
             await loadAndDisplayUserOrders();
         } else {
-            orderListDiv.innerHTML = '<p class="text-center text-red-500 italic p-4">অর্ডার দেখতে লগইন করুন।</p>';
+            loginPromptDiv.style.display = 'block';
+            const guestOrderIds = JSON.parse(localStorage.getItem('myOrders') || '[]');
+            if (guestOrderIds.length > 0) {
+                guestTrackingDiv.style.display = 'none';
+                orderListDiv.style.display = 'block';
+                await loadGuestOrders(guestOrderIds);
+            } else {
+                guestTrackingDiv.style.display = 'block';
+                orderListDiv.style.display = 'none';
+            }
+        }
+    });
+
+    trackOrderBtn.addEventListener('click', () => {
+        const orderId = orderIdInput.value.trim();
+        if (orderId) {
+            trackOrderById(orderId);
         }
     });
 
     async function loadAndDisplayUserOrders() {
         orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-4">অর্ডার লোড হচ্ছে...</p>';
-        orderListDiv.style.display = 'block';
-
         try {
             const userOrders = await loadUserOrders();
-
             if (userOrders.length > 0) {
-                // Sort orders by orderDate in descending order (newest first)
                 userOrders.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
-                
-                let ordersHtml = '<h2 class="text-2xl font-bold text-center mb-6 text-lipstick">আপনার অর্ডারসমূহ</h2>';
-                
-                userOrders.forEach(order => {
-                    const orderId = order.id;
-                    ordersHtml += `
-                        <div class="bg-white p-4 rounded-lg shadow-md mb-4 cursor-pointer" data-order-id="${orderId}">
-                            <div class="flex justify-between items-center">
-                                <p class="font-semibold">অর্ডার আইডি: ${orderId}</p>
-                                <p class="text-sm text-gray-600">${new Date(order.orderDate).toLocaleDateString('bn-BD')}</p>
-                            </div>
-                            <p class="text-gray-700">মোট মূল্য: ${order.totalAmount} টাকা</p>
-                            <p class="text-gray-700">স্ট্যাটাস: ${getStatusText(order.status)}</p>
-                        </div>
-                    `;
-                });
-                
-                orderListDiv.innerHTML = ordersHtml;
-
-                // Attach click listeners
-                document.querySelectorAll('#orderList > div[data-order-id]').forEach(item => {
-                    item.addEventListener('click', (event) => {
-                        const orderId = event.currentTarget.dataset.orderId;
-                        const order = userOrders.find(o => o.id === orderId);
-                        if (order) {
-                            showOrderDetailsModal(order, orderId);
-                        }
-                    });
-                });
+                displayOrders(userOrders, orderListDiv);
             } else {
                 orderListDiv.innerHTML = '<p class="text-center text-gray-500 italic p-4">আপনার কোনো অর্ডার খুঁজে পাওয়া যায়নি।</p>';
             }
         } catch (error) {
             console.error("Error loading orders:", error);
-            if (error.code === 'PERMISSION_DENIED') {
-                orderListDiv.innerHTML = '<p class="text-center text-red-500 italic p-4">অর্ডার দেখতে অনুমতি প্রয়োজন। দয়া করে লগইন করুন।</p>';
-            } else {
-                orderListDiv.innerHTML = '<p class="text-center text-red-500 italic p-4">অর্ডার লোড করতে সমস্যা হয়েছে।</p>';
-            }
+            orderListDiv.innerHTML = '<p class="text-center text-red-500 italic p-4">অর্ডার লোড করতে সমস্যা হয়েছে।</p>';
         }
     }
+}
 
-    return Promise.resolve();
+async function trackOrderById(orderId) {
+    if (!orderId) {
+        showToast('অনুগ্রহ করে একটি অর্ডার আইডি দিন।');
+        return;
+    }
+    try {
+        const orderRef = ref(database, `orders/${orderId}`);
+        const snapshot = await get(orderRef);
+        if (snapshot.exists()) {
+            const order = snapshot.val();
+            showOrderDetailsModal({ ...order, id: orderId }, orderId);
+        } else {
+            showToast('দুঃখিত, এই আইডি দিয়ে কোনো অর্ডার পাওয়া যায়নি।');
+        }
+    } catch (error) {
+        console.error("Error tracking order by ID:", error);
+        showToast('অর্ডার ট্র্যাক করতে সমস্যা হয়েছে।');
+    }
 }
 
 export {
