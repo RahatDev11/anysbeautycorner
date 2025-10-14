@@ -121,11 +121,43 @@ async function initializeProductDetailPage() {
                                             function displayProductDetails(product) {    document.title = product.name || "প্রোডাক্ট বিস্তারিত";
     document.getElementById('productTitle').textContent = product.name;
     document.getElementById('productPrice').textContent = `দাম: ${product.price} টাকা`;
-    document.getElementById('productDescription').textContent = product.description;
+    const productDescriptionElement = document.getElementById('productDescription');
+    const toggleDescriptionBtn = document.getElementById('toggleDescriptionBtn');
+    const TRUNCATE_LENGTH = 200; // Adjust this value as needed
+
+    if (product.description) {
+        if (product.description.length > TRUNCATE_LENGTH) {
+            const truncatedDescription = product.description.substring(0, TRUNCATE_LENGTH) + '...';
+            productDescriptionElement.textContent = truncatedDescription;
+            toggleDescriptionBtn.textContent = 'আরো পড়ুন'; // Read More
+            toggleDescriptionBtn.classList.remove('hidden'); // Make button visible
+            productDescriptionElement.dataset.fullDescription = product.description; // Store full description
+            productDescriptionElement.classList.add('truncated'); // Mark as truncated
+        } else {
+            productDescriptionElement.textContent = product.description;
+            toggleDescriptionBtn.classList.add('hidden'); // Hide button if not needed
+        }
+
+        toggleDescriptionBtn.onclick = () => {
+            if (productDescriptionElement.classList.contains('truncated')) {
+                productDescriptionElement.textContent = productDescriptionElement.dataset.fullDescription;
+                toggleDescriptionBtn.textContent = 'সংক্ষিপ্ত করুন'; // Show Less
+                productDescriptionElement.classList.remove('truncated');
+            } else {
+                const truncatedDescription = productDescriptionElement.dataset.fullDescription.substring(0, TRUNCATE_LENGTH) + '...';
+                productDescriptionElement.textContent = truncatedDescription;
+                toggleDescriptionBtn.textContent = 'আরো পড়ুন'; // Read More
+                productDescriptionElement.classList.add('truncated');
+            }
+        };
+    } else {
+        productDescriptionElement.textContent = ''; // Clear description if null/undefined
+        toggleDescriptionBtn.classList.add('hidden'); // Hide button if no description
+    }
 
     const detailsExtraContainer = document.getElementById('productDetailsExtra');
     const stockStatus = product.stockStatus === 'in_stock'
-        ? '<span class="text-green-600 font-semibold">স্টকে আছে</span>'
+        ? '<span class="text-lipstick font-semibold">স্টকে আছে</span>'
         : '<span class="text-red-600 font-semibold">স্টকে নেই</span>';
     
     let extraHTML = `<p class="text-gray-700 mb-4 font-medium"><strong>স্টক:</strong> ${stockStatus}</p>`;
@@ -139,7 +171,7 @@ async function initializeProductDetailPage() {
     const whatsappMessage = `প্রোডাক্ট: ${product.name}\nদাম: ${product.price} টাকা\nআমি এই প্রোডাক্টটি কিনতে আগ্রহী।`;
     const whatsappLink = `https://wa.me/8801931866636?text=${encodeURIComponent(whatsappMessage)}`;
     
-    let buttonsHTML = `<button id="buyNowDetailBtn" onclick="window.buyNowWithQuantity()" class="w-full sm:w-auto bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 font-semibold flex items-center justify-center"><i class="fas fa-credit-card mr-2"></i>এখনই কিনুন</button><button id="addToCartDetailBtn" onclick="window.addToCartWithQuantity()" class="w-full sm:w-auto bg-teal-500 text-white px-6 py-3 rounded-lg hover:bg-teal-600 font-semibold flex items-center justify-center"><i class="fas fa-cart-plus mr-2"></i>কার্টে যোগ করুন</button><a href="${whatsappLink}" target="_blank" class="w-full sm:w-auto bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 font-semibold inline-flex items-center justify-center"><i class="fab fa-whatsapp mr-2"></i>WhatsApp এ অর্ডার</a>`;
+    let buttonsHTML = `<button id="buyNowDetailBtn" onclick="window.buyNowWithQuantity()" class="w-full sm:w-auto bg-brushstroke text-black px-6 py-3 rounded-lg hover:opacity-90 font-semibold flex items-center justify-center"><i class="fas fa-credit-card mr-2"></i>এখনই কিনুন</button><button id="addToCartDetailBtn" onclick="window.addToCartWithQuantity()" class="w-full sm:w-auto bg-brushstroke text-black px-6 py-3 rounded-lg hover:opacity-90 font-semibold flex items-center justify-center"><i class="fas fa-cart-plus mr-2"></i>কার্টে যোগ করুন</button><a href="${whatsappLink}" target="_blank" class="w-full sm:w-auto bg-brushstroke text-black px-6 py-3 rounded-lg hover:opacity-90 font-semibold inline-flex items-center justify-center"><i class="fab fa-whatsapp mr-2"></i>WhatsApp এ অর্ডার</a>`;
     actionButtonsContainer.innerHTML = buttonsHTML;
     
     if (product.stockStatus !== 'in_stock') {

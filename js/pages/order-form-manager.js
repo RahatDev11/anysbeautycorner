@@ -18,6 +18,10 @@ async function initializeOrderFormPage() {
         }
 
         try {
+            // Explicitly hide outside Dhaka options on initial load
+            document.getElementById('paymentNotice')?.classList.add('hidden');
+            document.getElementById('deliveryPaymentGroup')?.classList.add('hidden');
+
             // Show form and hide loader
             document.getElementById('loadingIndicator')?.classList.add('hidden');
             checkoutForm.classList.remove('hidden');
@@ -99,30 +103,21 @@ function calculateAndDisplayPrices(items) {
     const subTotalDisplay = document.getElementById('subTotalDisplay');
     const deliveryFeeDisplay = document.getElementById('deliveryFeeDisplay');
     const totalAmountDisplay = document.getElementById('totalAmountDisplay');
-    const advancePaymentRow = document.getElementById('advancePaymentRow');
-    const advancePaymentDisplay = document.getElementById('advancePaymentDisplay');
     
     if (!subTotalDisplay || !deliveryFeeDisplay || !totalAmountDisplay) return;
 
     let subTotal = items.reduce((sum, item) => sum + (parseFloat(item.price) || 0) * (item.quantity || 1), 0);
     const deliveryLocation = document.querySelector('input[name="deliveryLocation"]:checked')?.value || 'insideDhaka';
+    console.log(`DEBUG: Calculating prices for location: ${deliveryLocation}`);
     
-    // Updated delivery fees
-    const deliveryFee = deliveryLocation === 'outsideDhaka' ? 160 : 70;
-    const advancePayment = deliveryLocation === 'outsideDhaka' ? 130 : 0;
+    const deliveryFee = deliveryLocation === 'outsideDhaka' ? 170 : 70;
+    const advancePayment = deliveryLocation === 'outsideDhaka' ? 170 : 0;
     const totalAmount = subTotal + deliveryFee;
+    const payableAmount = totalAmount - advancePayment;
 
     subTotalDisplay.textContent = `${subTotal.toFixed(2)} টাকা`;
     deliveryFeeDisplay.textContent = `${deliveryFee.toFixed(2)} টাকা`;
     totalAmountDisplay.textContent = `${totalAmount.toFixed(2)} টাকা`;
-
-    // Show/hide advance payment row
-    if (deliveryLocation === 'outsideDhaka') {
-        advancePaymentRow.classList.remove('hidden');
-        advancePaymentDisplay.textContent = `${advancePayment.toFixed(2)} টাকা`;
-    } else {
-        advancePaymentRow.classList.add('hidden');
-    }
 
     return { subTotal, deliveryFee, advancePayment, totalAmount };
 }
@@ -213,19 +208,17 @@ async function fetchUserProfile(uid) {
 
 function handleDeliveryLocationChange() {
     const location = document.querySelector('input[name="deliveryLocation"]:checked').value;
-    const outsideGroup = document.getElementById('outsideDhakaLocationGroup');
+    console.log(`DEBUG: Delivery location changed. Selected: ${location}`);
     const notice = document.getElementById('paymentNotice');
     const deliveryPaymentGroup = document.getElementById('deliveryPaymentGroup');
 
     const isOutsideDhaka = location === 'outsideDhaka';
 
     // Toggle visibility
-    outsideGroup.classList.toggle('hidden', !isOutsideDhaka);
     notice.classList.toggle('hidden', !isOutsideDhaka);
     deliveryPaymentGroup.classList.toggle('hidden', !isOutsideDhaka);
 
     // Set required fields
-    document.getElementById('outsideDhakaLocation').required = isOutsideDhaka;
     document.getElementById('deliveryPaymentMethod').required = isOutsideDhaka;
 
     // Reset payment fields when location changes
@@ -291,12 +284,10 @@ async function placeOrder(event) {
 
         // Outside Dhaka validation
         if (deliveryLocation === 'outsideDhaka') {
-            const outsideLocation = document.getElementById('outsideDhakaLocation').value.trim();
             const paymentMethod = document.getElementById('deliveryPaymentMethod').value;
             const paymentNumber = document.getElementById('paymentNumber').value.trim();
             const transactionId = document.getElementById('transactionId').value.trim();
 
-            if (!outsideLocation) throw new Error("জেলা ও থানা প্রদান করুন।");
             if (!paymentMethod) throw new Error("পেমেন্ট মাধ্যম সিলেক্ট করুন।");
             if (!paymentNumber) throw new Error("পেমেন্ট নাম্বার প্রদান করুন।");
             if (!transactionId) throw new Error("ট্রানজেকশন আইডি প্রদান করুন।");
@@ -304,7 +295,7 @@ async function placeOrder(event) {
 
         // Price calculation with updated delivery fees
         const deliveryFee = deliveryLocation === 'insideDhaka' ? 70 : 160;
-        const advancePayment = deliveryLocation === 'outsideDhaka' ? 130 : 0;
+        const advancePayment = deliveryLocation === 'outsideDhaka' ? 160 : 0;
         const subTotal = itemsToOrder.reduce((sum, item) => sum + (parseFloat(item.price) || 0) * (item.quantity || 1), 0);
         const totalAmount = subTotal + deliveryFee;
 
@@ -347,7 +338,6 @@ async function placeOrder(event) {
                 customerEmail: window.currentUserEmail || 'N/A',
                 userEmail: window.currentUserEmail || 'N/A', // Backward compatibility
                 deliveryNote: deliveryNote || 'N/A',
-                outsideDhakaLocation: deliveryLocation === 'outsideDhaka' ? document.getElementById('outsideDhakaLocation').value : 'N/A',
                 paymentMethod: deliveryLocation === 'outsideDhaka' ? document.getElementById('deliveryPaymentMethod').value : 'N/A',
                 paymentNumber: deliveryLocation === 'outsideDhaka' ? document.getElementById('paymentNumber').value : 'N/A',
                 transactionId: deliveryLocation === 'outsideDhaka' ? document.getElementById('transactionId').value : 'N/A',

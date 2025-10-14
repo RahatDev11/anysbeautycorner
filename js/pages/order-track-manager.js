@@ -65,7 +65,17 @@ function showOrderDetailsModal(order, orderId) {
         </${tag}>`;
     });
 
-    detailsHTML += `<hr class="my-3"><div class="text-right space-y-1"><p><strong>ডেলিভারি ফি:</strong> ${order.deliveryFee || 0} টাকা</p><p class="text-lg font-bold"><strong>মোট মূল্য:</strong> ${order.totalAmount || 0} টাকা</p></div>`;
+    detailsHTML += `<hr class="my-3"><div class="text-right space-y-1">`;
+    detailsHTML += `<p><strong>ডেলিভারি ফি:</strong> ${order.deliveryFee || 0} টাকা</p>`;
+    detailsHTML += `<hr class="my-3"><div class="text-right space-y-1">`;
+    detailsHTML += `<p><strong>ডেলিভারি ফি:</strong> ${order.deliveryFee || 0} টাকা</p>`;
+    detailsHTML += `<p class="text-lg font-bold"><strong>মোট মূল্য:</strong> ${order.totalAmount || 0} টাকা</p>`;
+    if (order.advancePayment && parseFloat(order.advancePayment) > 0) {
+        detailsHTML += `<p><strong>অগ্রিম পেমেন্ট:</strong> ${order.advancePayment} টাকা</p>`;
+        const payableAmount = (parseFloat(order.totalAmount) || 0) - (parseFloat(order.advancePayment) || 0);
+        detailsHTML += `<p class="font-bold text-blue-600"><strong>ক্যাশ অন ডেলিভারিতে পে করতে হবে:</strong> ${payableAmount.toFixed(2)} টাকা</p>`;
+    }
+    detailsHTML += `</div>`;
 
     modalContent.innerHTML = detailsHTML;
     modal.classList.add('flex');
