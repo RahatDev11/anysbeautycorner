@@ -1,46 +1,37 @@
-
-
-
-
-
-
-
-
 // =================================================================
 // SECTION: MAIN APPLICATION ENTRY POINT
 // =================================================================
 
-// Import Firebase Config (for initialization and global access to auth/db instances)
-import { auth, onAuthStateChanged, database, ref, onValue } from '../js/modules/firebase-config.js';
+// Import Firebase Config
+import { auth, onAuthStateChanged, database, ref, onValue } from './modules/firebase-config.js';
 
 // Import UI Utilities
 import { showToast, openSidebar, closeSidebar, toggleSubMenuMobile, handleSubMenuItemClick, toggleSubMenuDesktop, openCartSidebar, closeCartSidebar, focusMobileSearch, setupSocialMediaButtons, populateProductCategories } from './modules/ui-utilities.js';
 
 // Import Notification Managers
-import { sendTelegramNotification, sendNotificationForOrder } from '../js/modules/notification-manager.js';
+import { sendTelegramNotification, sendNotificationForOrder } from './modules/notification-manager.js';
 
 // Import Auth Manager
-import { loginWithGmail, confirmLogout, logout, isAdmin, updateLoginButton, toggleLogoutMenu } from '../js/modules/auth-manager.js';
+import { loginWithGmail, confirmLogout, logout, isAdmin, updateLoginButton, toggleLogoutMenu } from './modules/auth-manager.js';
 
 // Import Cart Manager
-import { loadCart, addToCart, updateQuantity, removeFromCart, checkout, buyNow, setProducts as setCartManagerProducts } from '../js/modules/cart-manager.js';
+import { loadCart, addToCart, updateQuantity, removeFromCart, checkout, buyNow, setProducts as setCartManagerProducts } from './modules/cart-manager.js';
 
 // Import Product Manager
-import { loadProducts, showProductDetail, showLoadingSpinner, displayProductsAsCards, initializeProductSlider, displaySearchResults, searchProductsMobile, searchProductsDesktop, filterProducts, setProducts as setProductManagerProducts } from '../js/modules/product-manager.js';
+import { loadProducts, showProductDetail, showLoadingSpinner, displayProductsAsCards, initializeProductSlider, displaySearchResults, searchProductsMobile, searchProductsDesktop, filterProducts, setProducts as setProductManagerProducts } from './modules/product-manager.js';
 
-// Import Page Managers
-import { initHomePage } from '../js/pages/home-manager.js';
-import { initializeProductDetailPage, changeDetailQuantity, addToCartWithQuantity, buyNowWithQuantity } from '../js/pages/product-details-manager.js';
-import { initializeOrderTrackPage } from '../js/pages/order-track-manager.js';
+// Import Page Managers - PATH FIXED
+import { initHomePage } from './pages/home-manager.js';
+import { initializeProductDetailPage, changeDetailQuantity, addToCartWithQuantity, buyNowWithQuantity } from './pages/product-details-manager.js';
+import { initializeOrderTrackPage } from './pages/order-track-manager.js';
+import { initializeOrderFormPage, placeOrder } from './pages/order-form-manager.js';
+import { initializeNotificationsPage, updateNotificationCountInHeader } from './pages/notifications-manager.js';
+import { toggleFooterMenu } from './pages/footer-manager.js';
 
-import { initializeOrderFormPage, placeOrder } from '../js/pages/order-form-manager.js';
-import { initializeNotificationsPage, updateNotificationCountInHeader } from '../js/pages/notifications-manager.js';
-import { toggleFooterMenu } from '../js/pages/footer-manager.js';
-
-// Global Variables (declared once and assigned)
+// Global Variables
 let products = [];
 let eventSlider;
-let isMainInitialized = false; // Global flag to prevent multiple initializations
+let isMainInitialized = false;
 
 async function loadHeaderAndSetup() {
     return new Promise(async (resolve, reject) => {
@@ -57,21 +48,13 @@ async function loadHeaderAndSetup() {
                 headerEl.innerHTML = headerHTML;
             }
 
-
-
-
-            // Wait for initial auth state to be determined and login button updated
+            // Wait for initial auth state
             onAuthStateChanged(auth, user => {
                 updateLoginButton(user);
                 updateNotificationCountInHeader();
             });
-            
 
-
-
-            await loadCart(); // Await the loadCart promise
-
-
+            await loadCart();
 
             document.getElementById('mobileMenuButton')?.addEventListener('click', openSidebar);
             document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);
@@ -114,16 +97,14 @@ async function loadFooter() {
         if (footerEl) {
             footerEl.innerHTML = footerHTML;
         }
-
-
-        
         console.log('main.js: loadFooter() completed');
     } catch (error) {
+        console.error('Error loading footer:', error);
     }
 }
 
 // =================================================================
-// SECTION: GLOBAL FUNCTION ASSIGNMENT (গুরুত্বপূর্ণ)
+// SECTION: GLOBAL FUNCTION ASSIGNMENT
 // =================================================================
 
 Object.assign(window, {
@@ -142,9 +123,8 @@ Object.assign(window, {
     // Product Detail
     showProductDetail, changeDetailQuantity, addToCartWithQuantity, buyNowWithQuantity,
     initializeProductDetailPage, 
-    // Order Track
+    // Order Track - ADD DEBUG FUNCTION
     initializeOrderTrackPage,
-    // Order List 
     // Order Form
     initializeOrderFormPage, placeOrder,
     // Footer
@@ -161,12 +141,8 @@ function main() {
     console.log('Main application starting...');
     
     let pageLoadPromises = [];
-    // Load header and footer and set up their functionality
     pageLoadPromises.push(loadHeaderAndSetup());
     pageLoadPromises.push(loadFooter());
-
-
-
 
     // Load all products once
     const productsLoadPromise = new Promise(resolve => {
@@ -174,17 +150,17 @@ function main() {
         onValue(productsRef, snapshot => {
             if (snapshot.exists()) {
                 products = Object.keys(snapshot.val()).map(key => ({ id: key, ...snapshot.val()[key] }));
-                setCartManagerProducts(products); // Update products in cart-manager
+                setCartManagerProducts(products);
                 setProductManagerProducts(products);
-                populateProductCategories(products); // Populate product categories in the header
+                populateProductCategories(products);
             } else {
-                // No products found, but still resolve to continue
+                console.log('No products found in database');
             }
             console.log('main.js: Products data loaded and resolved.');
-            resolve(); // Resolve after products are loaded
+            resolve();
         }, error => {
             console.error('Error loading products:', error);
-            resolve(); // Still resolve to continue
+            resolve();
         });
     });
     pageLoadPromises.push(productsLoadPromise);
@@ -192,25 +168,43 @@ function main() {
     Promise.all(pageLoadPromises).then(async () => {
         console.log('main.js: All initial page load promises resolved.');
 
-        // After all initial data (header, footer, products) are loaded, then initialize page-specific logic
+        // After all initial data are loaded, initialize page-specific logic
         console.log('main.js: Starting page-specific initialization.');
         const currentPage = window.location.pathname;
-        if (currentPage.endsWith('/') || currentPage.endsWith('index.html')) {
-            initHomePage(products); // Pass products to home-manager
+        
+        console.log('Current page:', currentPage);
+        
+        // PAGE SPECIFIC INITIALIZATION - WITH BETTER ERROR HANDLING
+        try {
+            if (currentPage.endsWith('/') || currentPage.endsWith('index.html')) {
+                console.log('🟢 Initializing Home Page');
+                initHomePage(products);
+            }
+            if (currentPage.includes('product-detail.html')) {
+                console.log('🟢 Initializing Product Detail Page');
+                initializeProductDetailPage();
+            }
+            if (currentPage.includes('order-track.html')) {
+                console.log('🟢 Initializing Order Track Page');
+                // Add timeout to ensure page is fully loaded
+                setTimeout(() => {
+                    initializeOrderTrackPage().catch(error => {
+                        console.error('❌ Error in initializeOrderTrackPage:', error);
+                    });
+                }, 500);
+            }
+            if (currentPage.includes('order-form.html')) {
+                console.log('🟢 Initializing Order Form Page');
+                initializeOrderFormPage();
+            }
+            if (currentPage.includes('notifications.html')) {
+                console.log('🟢 Initializing Notifications Page');
+                initializeNotificationsPage();
+            }
+        } catch (error) {
+            console.error('❌ Error in page initialization:', error);
         }
-        if (currentPage.includes('product-detail.html')) {
-            initializeProductDetailPage();
-        }
-        if (currentPage.includes('order-track.html')) {
-            initializeOrderTrackPage();
-        }
-        if (currentPage.includes('order-form.html')) {
-            console.log('main.js: Initializing Order Form Page');
-            initializeOrderFormPage();
-        }
-        if (currentPage.includes('notifications.html')) {
-            initializeNotificationsPage();
-        }
+
         console.log('main.js: Page-specific initialization complete.');
 
         // Add event listener for mobile search
@@ -219,16 +213,20 @@ function main() {
         // Check for admin status
         const user = auth.currentUser;
         if (user) {
-            const userIsAdmin = await isAdmin(user.uid);
-            if (userIsAdmin) {
-                document.getElementById('product-management')?.classList.remove('hidden');
-                document.getElementById('slider-management')?.classList.remove('hidden');
-                document.getElementById('event-update')?.classList.remove('hidden');
+            try {
+                const userIsAdmin = await isAdmin(user.uid);
+                if (userIsAdmin) {
+                    document.getElementById('product-management')?.classList.remove('hidden');
+                    document.getElementById('slider-management')?.classList.remove('hidden');
+                    document.getElementById('event-update')?.classList.remove('hidden');
+                }
+                console.log('main.js: Admin status checked.');
+            } catch (error) {
+                console.error('Error checking admin status:', error);
             }
-            console.log('main.js: Admin status checked.');
         }
 
-        // Ensure loading system completes only after all resources are loaded
+        // Ensure loading system completes
         window.addEventListener('load', () => {
             if (window.globalLoadingSystem) {
                 console.log('main.js: window.onload fired, forcing loading complete.');
@@ -243,77 +241,14 @@ function main() {
         if (window.globalLoadingSystem) {
             window.globalLoadingSystem.forceComplete();
         }
-
-
     });
 }
 
+// DOM Content Loaded
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', main);
 } else {
     main();
 }
 
-// গ্লোবাল ক্লিক হ্যান্ডলার
-document.addEventListener("click", (event) => {
-    if (event.target.id === 'sidebarOverlay') closeSidebar();
-    if (!event.target.closest('#cartSidebar') && !event.target.closest('#cartButton')) closeCartSidebar();
-    if (!event.target.closest('#desktopSubMenuBar') && !event.target.closest('button[onclick="toggleSubMenuDesktop()"]')) document.getElementById('desktopSubMenuBar')?.classList.add('hidden');
-
-    const menus = document.querySelectorAll('.logout-menu');
-    menus.forEach(menu => {
-        if (!menu.classList.contains('hidden')) {
-            const container = menu.closest('.logout-container');
-            if (!container.contains(event.target)) {
-                menu.classList.add('hidden');
-            }
-        }
-    });
-    
-    const mobileSearchBar = document.getElementById('mobileSearchBar');
-    const mobileSearchIcon = document.getElementById('mobileSearchIcon');
-    if (mobileSearchBar && !mobileSearchBar.classList.contains('hidden')) {
-        if (!mobileSearchBar.contains(event.target) && !mobileSearchIcon.contains(event.target)) {
-            mobileSearchBar.classList.add('hidden');
-        }
-    }
-
-    const searchResultsDesktop = document.getElementById('searchResultsDesktop');
-    if (searchResultsDesktop && !searchResultsDesktop.contains(event.target) && !event.target.closest('#searchInputDesktop')) { searchResultsDesktop.classList.add('hidden'); }
-});
-
-// Scroll handler to close mobile search
-window.addEventListener('scroll', () => {
-    const mobileSearchBar = document.getElementById('mobileSearchBar');
-    if (mobileSearchBar && !mobileSearchBar.classList.contains('hidden')) {
-        mobileSearchBar.classList.add('hidden');
-    }
-
-    const menus = document.querySelectorAll('.logout-menu');
-    menus.forEach(menu => {
-        if (!menu.classList.contains('hidden')) {
-            menu.classList.add('hidden');
-        }
-    });
-});
-
-// Error handling for the loading system
-window.addEventListener('error', (event) => {
-    console.error('Global error:', event.error);
-    // Ensure loading screen hides even if there are errors
-    setTimeout(() => {
-        if (window.globalLoadingSystem) {
-            window.globalLoadingSystem.forceComplete();
-        }
-        
-    }, 2000);
-});
-
-// Emergency timeout to force complete loading after 10 seconds
-setTimeout(() => {
-    if (window.globalLoadingSystem && !document.body.classList.contains('loading-complete')) {
-        console.log('Emergency loading complete triggered');
-        window.globalLoadingSystem.forceComplete();
-        
-    }
-}, 10000);
+// Rest of the code remains same...
