@@ -1,39 +1,55 @@
+
+
+
+
+
+
+
+
 // =================================================================
 // SECTION: MAIN APPLICATION ENTRY POINT
 // =================================================================
 
-// Import Firebase Config
-import { auth, onAuthStateChanged, database, ref, onValue } from './modules/firebase-config.js';
+// Import Firebase Config (for initialization and global access to auth/db instances)
+import { auth, onAuthStateChanged, database, ref, onValue } from '../js/modules/firebase-config.js';
 
 // Import UI Utilities
 import { showToast, openSidebar, closeSidebar, toggleSubMenuMobile, handleSubMenuItemClick, toggleSubMenuDesktop, openCartSidebar, closeCartSidebar, focusMobileSearch, setupSocialMediaButtons, populateProductCategories } from './modules/ui-utilities.js';
 
+// Import Notification Managers
+import { sendTelegramNotification, sendNotificationForOrder } from '../js/modules/notification-manager.js';
+
 // Import Auth Manager
-import { loginWithGmail, confirmLogout, logout, isAdmin, updateLoginButton, toggleLogoutMenu } from './modules/auth-manager.js';
+import { loginWithGmail, confirmLogout, logout, isAdmin, updateLoginButton, toggleLogoutMenu } from '../js/modules/auth-manager.js';
 
 // Import Cart Manager
-import { loadCart, addToCart, updateQuantity, removeFromCart, checkout, buyNow, setProducts as setCartManagerProducts } from './modules/cart-manager.js';
+import { loadCart, addToCart, updateQuantity, removeFromCart, checkout, buyNow, setProducts as setCartManagerProducts } from '../js/modules/cart-manager.js';
 
 // Import Product Manager
-import { loadProducts, showProductDetail, showLoadingSpinner, displayProductsAsCards, initializeProductSlider, displaySearchResults, searchProductsMobile, searchProductsDesktop, filterProducts, setProducts as setProductManagerProducts } from './modules/product-manager.js';
+import { loadProducts, showProductDetail, showLoadingSpinner, displayProductsAsCards, initializeProductSlider, displaySearchResults, searchProductsMobile, searchProductsDesktop, filterProducts, setProducts as setProductManagerProducts } from '../js/modules/product-manager.js';
 
-// Import Page Managers - CORRECT PATHS
-import { initHomePage } from './pages/home-manager.js';
-import { initializeProductDetailPage } from './pages/product-details-manager.js';
-import { initializeOrderTrackPage } from './pages/order-track-manager.js';
-import { initializeOrderFormPage } from './pages/order-form-manager.js';
+// Import Page Managers
+import { initHomePage } from '../js/pages/home-manager.js';
+import { initializeProductDetailPage, changeDetailQuantity, addToCartWithQuantity, buyNowWithQuantity } from '../js/pages/product-details-manager.js';
+import { initializeOrderTrackPage } from '../js/pages/order-track-manager.js';
 
-// Global Variables
+import { initializeOrderFormPage, placeOrder } from '../js/pages/order-form-manager.js';
+import { initializeNotificationsPage, updateNotificationCountInHeader } from '../js/pages/notifications-manager.js';
+import { toggleFooterMenu } from '../js/pages/footer-manager.js';
+
+// Global Variables (declared once and assigned)
 let products = [];
-let isMainInitialized = false;
+let eventSlider;
+let isMainInitialized = false; // Global flag to prevent multiple initializations
 
 async function loadHeaderAndSetup() {
     return new Promise(async (resolve, reject) => {
         try {
-            console.log('🔄 Loading header...');
+            console.log('Attempting to fetch header.html');
             const response = await fetch('header.html');
             if (!response.ok) {
-                throw new Error('Failed to load header.html');
+                reject('Failed to load header.html');
+                return;
             }
             const headerHTML = await response.text();
             const headerEl = document.getElementById('header');
@@ -41,7 +57,22 @@ async function loadHeaderAndSetup() {
                 headerEl.innerHTML = headerHTML;
             }
 
-            // Setup header event listeners
+
+
+
+            // Wait for initial auth state to be determined and login button updated
+            onAuthStateChanged(auth, user => {
+                updateLoginButton(user);
+                updateNotificationCountInHeader();
+            });
+            
+
+
+
+            await loadCart(); // Await the loadCart promise
+
+
+
             document.getElementById('mobileMenuButton')?.addEventListener('click', openSidebar);
             document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);
             document.getElementById('closeSidebarButton')?.addEventListener('click', closeSidebar);
@@ -56,12 +87,16 @@ async function loadHeaderAndSetup() {
             document.getElementById('cartButton')?.addEventListener('click', openCartSidebar);
             document.getElementById('cartOverlay')?.addEventListener('click', closeCartSidebar);
             
+            const checkoutBtn = document.querySelector('#cartSidebar button[onclick="checkout()"]');
+            if(checkoutBtn) {
+                checkoutBtn.addEventListener('click', checkout);
+            }
+
             setupSocialMediaButtons();
-            console.log('✅ Header loaded successfully');
+            console.log('main.js: loadHeaderAndSetup() completed');
             resolve();
 
         } catch (error) {
-            console.error('❌ Error loading header:', error);
             reject(error);
         }
     });
@@ -69,30 +104,33 @@ async function loadHeaderAndSetup() {
 
 async function loadFooter() {
     try {
-        console.log('🔄 Loading footer...');
+        console.log('Attempting to fetch footer.html');
         const response = await fetch('footer.html');
         if (!response.ok) {
-            throw new Error('Failed to load footer.html');
+            return;
         }
         const footerHTML = await response.text();
         const footerEl = document.getElementById('footer');
         if (footerEl) {
             footerEl.innerHTML = footerHTML;
         }
-        console.log('✅ Footer loaded successfully');
+
+
+        
+        console.log('main.js: loadFooter() completed');
     } catch (error) {
-        console.error('❌ Error loading footer:', error);
     }
 }
 
 // =================================================================
-// SECTION: GLOBAL FUNCTION ASSIGNMENT
+// SECTION: GLOBAL FUNCTION ASSIGNMENT (গুরুত্বপূর্ণ)
 // =================================================================
 
-// Assign global functions
 Object.assign(window, {
     // Global Utilities
     showToast,
+    sendTelegramNotification, 
+    sendNotificationForOrder, 
     // Header UI
     openSidebar, closeSidebar, toggleSubMenuMobile, handleSubMenuItemClick,
     toggleSubMenuDesktop, openCartSidebar, closeCartSidebar, focusMobileSearch,
@@ -102,148 +140,180 @@ Object.assign(window, {
     filterProducts, searchProductsMobile, searchProductsDesktop, checkout,
     buyNow, addToCart, updateQuantity, removeFromCart,
     // Product Detail
-    showProductDetail,
+    showProductDetail, changeDetailQuantity, addToCartWithQuantity, buyNowWithQuantity,
+    initializeProductDetailPage, 
     // Order Track
     initializeOrderTrackPage,
+    // Order List 
     // Order Form
-    initializeOrderFormPage
+    initializeOrderFormPage, placeOrder,
+    // Footer
+    toggleFooterMenu
 });
 
 function main() {
     if (isMainInitialized) {
-        console.log('⚠️ main() already initialized. Skipping.');
+        console.log('main() already initialized. Skipping.');
         return;
     }
     isMainInitialized = true;
 
-    console.log('🚀 Main application starting...');
+    console.log('Main application starting...');
     
-    // Show website content immediately
-    const websiteContent = document.getElementById('website-content');
-    if (websiteContent) {
-        websiteContent.style.display = 'block';
-    }
-
     let pageLoadPromises = [];
+    // Load header and footer and set up their functionality
     pageLoadPromises.push(loadHeaderAndSetup());
     pageLoadPromises.push(loadFooter());
 
-    // Load all products
+
+
+
+    // Load all products once
     const productsLoadPromise = new Promise(resolve => {
         const productsRef = ref(database, "products/");
         onValue(productsRef, snapshot => {
             if (snapshot.exists()) {
                 products = Object.keys(snapshot.val()).map(key => ({ id: key, ...snapshot.val()[key] }));
-                setCartManagerProducts(products);
+                setCartManagerProducts(products); // Update products in cart-manager
                 setProductManagerProducts(products);
-                populateProductCategories(products);
-                console.log('✅ Products loaded:', products.length);
+                populateProductCategories(products); // Populate product categories in the header
             } else {
-                console.log('ℹ️ No products found in database');
+                // No products found, but still resolve to continue
             }
-            resolve();
+            console.log('main.js: Products data loaded and resolved.');
+            resolve(); // Resolve after products are loaded
         }, error => {
-            console.error('❌ Error loading products:', error);
-            resolve();
+            console.error('Error loading products:', error);
+            resolve(); // Still resolve to continue
         });
     });
     pageLoadPromises.push(productsLoadPromise);
 
     Promise.all(pageLoadPromises).then(async () => {
-        console.log('✅ All initial page load promises resolved');
+        console.log('main.js: All initial page load promises resolved.');
 
-        // Load cart after products are loaded
-        await loadCart();
-
-        // Initialize page-specific logic
-        console.log('🔄 Starting page-specific initialization');
+        // After all initial data (header, footer, products) are loaded, then initialize page-specific logic
+        console.log('main.js: Starting page-specific initialization.');
         const currentPage = window.location.pathname;
-        
-        console.log('📄 Current page:', currentPage);
-        
-        // Page specific initialization
         if (currentPage.endsWith('/') || currentPage.endsWith('index.html')) {
-            console.log('🏠 Initializing Home Page');
-            initHomePage(products);
+            initHomePage(products); // Pass products to home-manager
         }
-        else if (currentPage.includes('product-detail.html')) {
-            console.log('📦 Initializing Product Detail Page');
+        if (currentPage.includes('product-detail.html')) {
             initializeProductDetailPage();
         }
-        else if (currentPage.includes('order-track.html')) {
-            console.log('📋 Initializing Order Track Page');
-            // Small delay to ensure DOM is ready
-            setTimeout(() => {
-                initializeOrderTrackPage().catch(error => {
-                    console.error('❌ Error in Order Track Page:', error);
-                });
-            }, 100);
+        if (currentPage.includes('order-track.html')) {
+            initializeOrderTrackPage();
         }
-        else if (currentPage.includes('order-form.html')) {
-            console.log('🛒 Initializing Order Form Page');
+        if (currentPage.includes('order-form.html')) {
+            console.log('main.js: Initializing Order Form Page');
             initializeOrderFormPage();
         }
+        if (currentPage.includes('notifications.html')) {
+            initializeNotificationsPage();
+        }
+        console.log('main.js: Page-specific initialization complete.');
 
-        console.log('✅ Page-specific initialization complete');
+        // Add event listener for mobile search
+        document.getElementById('searchInput')?.addEventListener('input', searchProductsMobile);
 
         // Check for admin status
         const user = auth.currentUser;
         if (user) {
-            try {
-                const userIsAdmin = await isAdmin(user.uid);
-                if (userIsAdmin) {
-                    document.getElementById('product-management')?.classList.remove('hidden');
-                    document.getElementById('slider-management')?.classList.remove('hidden');
-                    document.getElementById('event-update')?.classList.remove('hidden');
-                }
-            } catch (error) {
-                console.error('Error checking admin status:', error);
+            const userIsAdmin = await isAdmin(user.uid);
+            if (userIsAdmin) {
+                document.getElementById('product-management')?.classList.remove('hidden');
+                document.getElementById('slider-management')?.classList.remove('hidden');
+                document.getElementById('event-update')?.classList.remove('hidden');
             }
+            console.log('main.js: Admin status checked.');
         }
 
-        // Complete loading
-        if (window.globalLoadingSystem) {
-            console.log('✅ Forcing loading complete');
-            window.globalLoadingSystem.forceComplete();
-        }
+        // Ensure loading system completes only after all resources are loaded
+        window.addEventListener('load', () => {
+            if (window.globalLoadingSystem) {
+                console.log('main.js: window.onload fired, forcing loading complete.');
+                window.globalLoadingSystem.forceComplete();
+            }
+        });
 
     }).catch(error => {
-        console.error('❌ Error in main application:', error);
+        console.error('Error in main application:', error);
         
         // Force complete loading even if there's an error
         if (window.globalLoadingSystem) {
             window.globalLoadingSystem.forceComplete();
         }
-        
-        // Show website content even on error
-        const websiteContent = document.getElementById('website-content');
-        if (websiteContent) {
-            websiteContent.style.display = 'block';
-        }
+
+
     });
 }
 
-// Start the application
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', main);
 } else {
     main();
 }
 
-// Global click handlers
+// গ্লোবাল ক্লিক হ্যান্ডলার
 document.addEventListener("click", (event) => {
     if (event.target.id === 'sidebarOverlay') closeSidebar();
     if (!event.target.closest('#cartSidebar') && !event.target.closest('#cartButton')) closeCartSidebar();
+    if (!event.target.closest('#desktopSubMenuBar') && !event.target.closest('button[onclick="toggleSubMenuDesktop()"]')) document.getElementById('desktopSubMenuBar')?.classList.add('hidden');
+
+    const menus = document.querySelectorAll('.logout-menu');
+    menus.forEach(menu => {
+        if (!menu.classList.contains('hidden')) {
+            const container = menu.closest('.logout-container');
+            if (!container.contains(event.target)) {
+                menu.classList.add('hidden');
+            }
+        }
+    });
+    
+    const mobileSearchBar = document.getElementById('mobileSearchBar');
+    const mobileSearchIcon = document.getElementById('mobileSearchIcon');
+    if (mobileSearchBar && !mobileSearchBar.classList.contains('hidden')) {
+        if (!mobileSearchBar.contains(event.target) && !mobileSearchIcon.contains(event.target)) {
+            mobileSearchBar.classList.add('hidden');
+        }
+    }
+
+    const searchResultsDesktop = document.getElementById('searchResultsDesktop');
+    if (searchResultsDesktop && !searchResultsDesktop.contains(event.target) && !event.target.closest('#searchInputDesktop')) { searchResultsDesktop.classList.add('hidden'); }
 });
 
-// Emergency timeout to force complete loading after 5 seconds
+// Scroll handler to close mobile search
+window.addEventListener('scroll', () => {
+    const mobileSearchBar = document.getElementById('mobileSearchBar');
+    if (mobileSearchBar && !mobileSearchBar.classList.contains('hidden')) {
+        mobileSearchBar.classList.add('hidden');
+    }
+
+    const menus = document.querySelectorAll('.logout-menu');
+    menus.forEach(menu => {
+        if (!menu.classList.contains('hidden')) {
+            menu.classList.add('hidden');
+        }
+    });
+});
+
+// Error handling for the loading system
+window.addEventListener('error', (event) => {
+    console.error('Global error:', event.error);
+    // Ensure loading screen hides even if there are errors
+    setTimeout(() => {
+        if (window.globalLoadingSystem) {
+            window.globalLoadingSystem.forceComplete();
+        }
+        
+    }, 2000);
+});
+
+// Emergency timeout to force complete loading after 10 seconds
 setTimeout(() => {
-    if (window.globalLoadingSystem) {
-        console.log('⚠️ Emergency loading complete triggered');
+    if (window.globalLoadingSystem && !document.body.classList.contains('loading-complete')) {
+        console.log('Emergency loading complete triggered');
         window.globalLoadingSystem.forceComplete();
+        
     }
-    const websiteContent = document.getElementById('website-content');
-    if (websiteContent) {
-        websiteContent.style.display = 'block';
-    }
-}, 5000);
+}, 10000);
