@@ -39,19 +39,19 @@ function displayProductsAsCards(productsToDisplay, containerElementId = "product
     let productsHTML = productsToDisplay.map(product => {
         const cartItem = cart.find(item => item.id === product.id);
         const cartControlsHTML = cartItem
-            ? `<div class="w-full bg-white rounded-lg font-semibold flex items-center h-10 justify-around"><button onclick="window.updateQuantity('${product.id}', -1)" class="px-3 text-xl font-bold text-lipstick-dark">-</button><span class="text-lg text-lipstick-dark">${cartItem.quantity}</span><button onclick="window.updateQuantity('${product.id}', 1)" class="px-3 text-xl font-bold text-lipstick-dark">+</button></div>`
-            : `<button onclick="window.addToCart('${product.id}')" class="w-full bg-white rounded-lg font-semibold flex items-center h-10 justify-center text-sm text-lipstick-dark hover:bg-gray-100">Add To Cart</button>`;
+            ? `<div class="w-full bg-brushstroke text-black rounded-lg font-semibold flex items-center h-10 justify-around"><button onclick="window.updateQuantity('${product.id}', -1)" class="px-3 text-xl font-bold">-</button><span class="text-lg">${cartItem.quantity}</span><button onclick="window.updateQuantity('${product.id}', 1)" class="px-3 text-xl font-bold">+</button></div>`
+            : `<button onclick="window.addToCart('${product.id}')" class="w-full bg-brushstroke text-black rounded-lg font-semibold flex items-center h-10 justify-center text-sm hover:opacity-90">Add To Cart</button>`;
 
         const imageUrl = product.image ? product.image.split(",")[0].trim() : "https://via.placeholder.com/150";
 
         return `
             <div class="bg-white rounded-xl shadow overflow-hidden flex flex-col">
                 <img src="${imageUrl}" alt="${product.name}" class="w-full h-36 object-cover cursor-pointer" onclick="window.showProductDetail('${product.id}')">
-                <div class="p-3 flex flex-col flex-grow" style="background-color: #F4A7B9;">
+                <div class="p-3 flex flex-col flex-grow bg-white">
                     <div class="flex-grow"><h3 class="font-semibold text-lg mb-1 cursor-pointer" onclick="window.showProductDetail('${product.id}')">${product.name}</h3></div>
                     <div>
-                        <p class="text-xl font-bold mt-3">${product.price} টাকা</p>
-                        <div class="mt-4 space-y-2">${cartControlsHTML}<button onclick="window.buyNow('${product.id}')" class="w-full border border-white text-white py-2 rounded-lg font-semibold text-sm hover:bg-white hover:text-lipstick-dark transition-colors">Buy Now</button></div>
+                        <p class="text-xl font-bold mt-3 text-black">${product.price} টাকা</p>
+                        <div class="mt-4 space-y-2">${cartControlsHTML}<button onclick="window.buyNow('${product.id}')" class="w-full bg-brushstroke text-black py-2 rounded-lg font-semibold text-sm hover:opacity-90 transition-colors">Buy Now</button></div>
                     </div>
                 </div>
             </div>`;
