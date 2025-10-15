@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>অর্ডার ট্র্যাক - Any's Beauty Corner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="loading-system.js"></script>
+    <style>
+        .step-item .step-connector { z-index: -1; }
+        .modal { display: none; }
+        .modal.flex { display: flex; }
+    </style>
+    <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
+</head>
+<body class="bg-gray-50">
+
+    <div id="website-content" style="display: none;">
+
+    <!-- হেডার -->
+    <div id="header"></div>
+
+    <!-- মেইন কন্টেন্ট -->
+    <div class="container mx-auto pt-20 pb-8 px-4 min-h-screen">
+
+        <div id="trackingArea" class="p-6 bg-white rounded-lg shadow-md">
+            <div id="guestTracking" style="display: none;">
+                <h2 class="text-2xl font-bold text-center mb-4 text-lipstick">আপনার অর্ডার ট্র্যাক করুন</h2>
+                <p class="text-center text-gray-600 mb-6">আপনার অর্ডার আইডি দিয়ে অর্ডারের বর্তমান অবস্থা জানুন।</p>
+                <div class="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
+                    <input type="text" id="orderIdInput" placeholder="আপনার অর্ডার আইডি লিখুন" class="flex-grow p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-lipstick">
+                    <button id="trackOrderBtn" class="bg-lipstick text-white px-6 py-3 rounded-lg font-semibold hover:bg-opacity-90 transition-colors">
+                        ট্র্যাক করুন
+                    </button>
+                </div>
+                <p class="text-center text-sm text-gray-500 mt-4">অথবা, আপনার সকল অর্ডার দেখতে</p>
+            </div>
+            <div id="loginPrompt" class="text-center">
+                <button id="loginButton" class="bg-lipstick text-white px-8 py-3 rounded-lg font-semibold hover:bg-opacity-90 transition-colors mt-2">
+                    <i class="fab fa-google mr-2"></i> Google দিয়ে লগইন করুন
+                </button>
+            </div>
+        </div>
+
+        <div id="orderListContainer">
+            <div id="orderList" class="bg-white rounded-lg shadow-md"></div>
+        </div>
+    </div>
+
+    <!-- মডাল -->
+    <div id="orderModal" class="modal fixed inset-0 bg-black bg-opacity-50 z-[2000] items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 max-h-[90vh] overflow-y-auto relative p-6">
+            <span id="modalClose" class="absolute top-2 right-4 text-3xl text-gray-500 cursor-pointer">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <!-- ফুটার -->
+    <div id="footer"></div>
+
+    <!-- Firebase এবং স্ক্রিপ্ট -->
+
+
+    </div>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
