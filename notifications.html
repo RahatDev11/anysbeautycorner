@@ -21,29 +21,41 @@
     <main class="container mx-auto pt-24 pb-8 px-4 min-h-screen">
         <h1 class="text-3xl font-bold text-gray-800 mb-6">নোটিফিকেশন ইনবক্স</h1>
 
-
-
-        <div id="loginPrompt" class="hidden text-center p-8 bg-white rounded-lg shadow-md max-w-md mx-auto">
-            <i class="fas fa-lock text-5xl text-gray-300 mb-4"></i>
-            <p class="text-lg text-gray-700 mb-6">আপনার নোটিফিকেশনগুলো দেখতে অনুগ্রহ করে লগইন করুন।</p>
-            <button id="loginButton" class="bg-lipstick text-white px-8 py-3 rounded-lg font-semibold hover:bg-opacity-90 transition-colors">
-                <i class="fab fa-google mr-2"></i> Google দিয়ে লগইন করুন
-            </button>
+        <!-- লগইন করা ইউজারের জন্য -->
+        <div id="loggedInSection" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <p class="text-gray-600">আপনার নোটিফিকেশনগুলো</p>
+                <button id="mark-all-read" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                    সব পড়া হয়েছে মার্ক করুন
+                </button>
+            </div>
+            <div id="notification-list" class="space-y-4"></div>
+            <div id="no-notifications-message" class="hidden text-center p-8 bg-white rounded-lg shadow-md">
+                <i class="fas fa-bell-slash text-4xl text-gray-300 mb-4"></i>
+                <p class="text-lg text-gray-700">আপনার কোন নতুন নোটিফিকেশন নেই</p>
+            </div>
         </div>
 
-<div id="notification-list"></div>
-    <button id="mark-all-read" class="hidden">Mark all as read</button>
-    <div id="login-prompt" class="hidden">
-        <p>Please <a href="order-track.html?redirect=notifications.html">login</a> to see your notifications.</p>
-    </div>
-    <div id="no-notifications-message" class="hidden">
-        <p>You have no new notifications.</p>
-    </div>
+        <!-- লগইন না করা ইউজারের জন্য -->
+        <div id="guestSection" class="hidden text-center p-8 bg-white rounded-lg shadow-md max-w-md mx-auto">
+            <i class="fas fa-bell text-5xl text-gray-300 mb-4"></i>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">রিয়েল-টাইম নোটিফিকেশন</h3>
+            <p class="text-gray-600 mb-4">অর্ডার স্ট্যাটাস, অফার এবং আপডেট সম্পর্কে অবগত থাকুন</p>
+            <div class="space-y-3">
+                <button id="enableNotifications" class="bg-lipstick text-white px-6 py-3 rounded-lg font-semibold hover:bg-opacity-90 transition-colors w-full">
+                    <i class="fas fa-bell mr-2"></i> নোটিফিকেশন অন করুন
+                </button>
+                <p class="text-sm text-gray-500">বা</p>
+                <button onclick="loginWithGmail()" class="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors w-full">
+                    <i class="fab fa-google mr-2"></i> Google দিয়ে লগইন করুন
+                </button>
+            </div>
+        </div>
+
     </main>
 
     <!-- ফুটার -->
     <div id="footer"></div>
-
 
     </div>
     <script type="module" src="js/main.js"></script>
