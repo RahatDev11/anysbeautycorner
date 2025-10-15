@@ -1,3 +1,11 @@
+
+
+
+
+
+
+
+
 // =================================================================
 // SECTION: MAIN APPLICATION ENTRY POINT
 // =================================================================
@@ -49,13 +57,21 @@ async function loadHeaderAndSetup() {
                 headerEl.innerHTML = headerHTML;
             }
 
+
+
+
             // Wait for initial auth state to be determined and login button updated
             onAuthStateChanged(auth, user => {
                 updateLoginButton(user);
                 updateNotificationCountInHeader();
             });
             
+
+
+
             await loadCart(); // Await the loadCart promise
+
+
 
             document.getElementById('mobileMenuButton')?.addEventListener('click', openSidebar);
             document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);
@@ -98,10 +114,11 @@ async function loadFooter() {
         if (footerEl) {
             footerEl.innerHTML = footerHTML;
         }
+
+
         
         console.log('main.js: loadFooter() completed');
     } catch (error) {
-        console.error('Error loading footer:', error);
     }
 }
 
@@ -127,43 +144,12 @@ Object.assign(window, {
     initializeProductDetailPage, 
     // Order Track
     initializeOrderTrackPage,
+    // Order List 
     // Order Form
     initializeOrderFormPage, placeOrder,
     // Footer
     toggleFooterMenu
 });
-
-async function initializePageSpecificLogic() {
-    console.log('main.js: Starting page-specific initialization.');
-    const currentPage = window.location.pathname;
-    
-    try {
-        if (currentPage.endsWith('/') || currentPage.endsWith('index.html')) {
-            console.log('main.js: Initializing Home Page');
-            initHomePage(products);
-        }
-        else if (currentPage.includes('product-detail.html')) {
-            console.log('main.js: Initializing Product Detail Page');
-            initializeProductDetailPage();
-        }
-        else if (currentPage.includes('order-track.html')) {
-            console.log('main.js: Initializing Order Track Page');
-            await initializeOrderTrackPage(); // await যোগ করা হয়েছে
-        }
-        else if (currentPage.includes('order-form.html')) {
-            console.log('main.js: Initializing Order Form Page');
-            initializeOrderFormPage();
-        }
-        else if (currentPage.includes('notifications.html')) {
-            console.log('main.js: Initializing Notifications Page');
-            initializeNotificationsPage();
-        }
-        
-        console.log('main.js: Page-specific initialization complete.');
-    } catch (error) {
-        console.error('Error in page-specific initialization:', error);
-    }
-}
 
 function main() {
     if (isMainInitialized) {
@@ -178,6 +164,9 @@ function main() {
     // Load header and footer and set up their functionality
     pageLoadPromises.push(loadHeaderAndSetup());
     pageLoadPromises.push(loadFooter());
+
+
+
 
     // Load all products once
     const productsLoadPromise = new Promise(resolve => {
@@ -204,7 +193,25 @@ function main() {
         console.log('main.js: All initial page load promises resolved.');
 
         // After all initial data (header, footer, products) are loaded, then initialize page-specific logic
-        await initializePageSpecificLogic();
+        console.log('main.js: Starting page-specific initialization.');
+        const currentPage = window.location.pathname;
+        if (currentPage.endsWith('/') || currentPage.endsWith('index.html')) {
+            initHomePage(products); // Pass products to home-manager
+        }
+        if (currentPage.includes('product-detail.html')) {
+            initializeProductDetailPage();
+        }
+        if (currentPage.includes('order-track.html')) {
+            initializeOrderTrackPage();
+        }
+        if (currentPage.includes('order-form.html')) {
+            console.log('main.js: Initializing Order Form Page');
+            initializeOrderFormPage();
+        }
+        if (currentPage.includes('notifications.html')) {
+            initializeNotificationsPage();
+        }
+        console.log('main.js: Page-specific initialization complete.');
 
         // Add event listener for mobile search
         document.getElementById('searchInput')?.addEventListener('input', searchProductsMobile);
@@ -212,17 +219,13 @@ function main() {
         // Check for admin status
         const user = auth.currentUser;
         if (user) {
-            try {
-                const userIsAdmin = await isAdmin(user.uid);
-                if (userIsAdmin) {
-                    document.getElementById('product-management')?.classList.remove('hidden');
-                    document.getElementById('slider-management')?.classList.remove('hidden');
-                    document.getElementById('event-update')?.classList.remove('hidden');
-                }
-                console.log('main.js: Admin status checked.');
-            } catch (error) {
-                console.error('Error checking admin status:', error);
+            const userIsAdmin = await isAdmin(user.uid);
+            if (userIsAdmin) {
+                document.getElementById('product-management')?.classList.remove('hidden');
+                document.getElementById('slider-management')?.classList.remove('hidden');
+                document.getElementById('event-update')?.classList.remove('hidden');
             }
+            console.log('main.js: Admin status checked.');
         }
 
         // Ensure loading system completes only after all resources are loaded
@@ -240,6 +243,8 @@ function main() {
         if (window.globalLoadingSystem) {
             window.globalLoadingSystem.forceComplete();
         }
+
+
     });
 }
 
