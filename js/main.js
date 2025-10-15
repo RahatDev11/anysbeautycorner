@@ -148,7 +148,7 @@ async function initializePageSpecificLogic() {
         }
         else if (currentPage.includes('order-track.html')) {
             console.log('main.js: Initializing Order Track Page');
-            await initializeOrderTrackPage(); // await যোগ করুন
+            await initializeOrderTrackPage(); // await যোগ করা হয়েছে
         }
         else if (currentPage.includes('order-form.html')) {
             console.log('main.js: Initializing Order Form Page');
