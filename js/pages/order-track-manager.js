@@ -1,20 +1,15 @@
 // =================================================================
-// SECTION: ORDER TRACK PAGE LOGIC (সম্পূর্ণ আপডেটেড)
+// SECTION: ORDER TRACK PAGE LOGIC (ফিক্সড ভার্সন)
 // =================================================================
 
-import { database, ref, get, auth, onAuthStateChanged, query, orderByChild, equalTo } from '../modules/firebase-config.js';
+import { database, ref, get, auth, onAuthStateChanged } from '../modules/firebase-config.js';
 import { showToast, hideSocialMediaIcons } from '../modules/ui-utilities.js';
 
 // Helper function for status display
 function getStatusText(status) {
     const statuses = {
-        processing: 'প্রসেসিং', 
-        confirmed: 'কনফার্মড', 
-        packaging: 'প্যাকেজিং',
-        shipped: 'ডেলিভারি হয়েছে', 
-        delivered: 'সম্পন্ন হয়েছে', 
-        failed: 'ব্যর্থ', 
-        cancelled: 'ক্যানসেলড'
+        processing: 'প্রসেসিং', confirmed: 'কনফার্মড', packaging: 'প্যাকেজিং',
+        shipped: 'ডেলিভারি হয়েছে', delivered: 'সম্পন্ন হয়েছে', failed: 'ব্যর্থ', cancelled: 'ক্যানসেলড'
     };
     return statuses[status] || 'অজানা';
 }
@@ -88,8 +83,6 @@ async function loadUserOrders() {
     
     try {
         const ordersRef = ref(database, 'orders');
-        
-        // Get all orders and filter by userId
         const snapshot = await get(ordersRef);
         
         if (snapshot.exists()) {
@@ -97,8 +90,14 @@ async function loadUserOrders() {
             
             Object.keys(allOrders).forEach(orderId => {
                 const order = allOrders[orderId];
-                // Check if this order belongs to current user
-                if (order.userId === currentUser.uid) {
+                
+                // MULTIPLE WAYS TO IDENTIFY USER'S ORDERS
+                // 1. Check by userId (new system)
+                // 2. Check by userEmail (old system) 
+                // 3. Check by customerEmail (backup)
+                if (order.userId === currentUser.uid || 
+                    order.userEmail === currentUser.email ||
+                    order.customerEmail === currentUser.email) {
                     orders.push({
                         id: orderId,
                         ...order
@@ -118,19 +117,15 @@ async function loadUserOrders() {
 function setupLoginButton() {
     const loginButton = document.getElementById('loginButton');
     if (loginButton) {
-        // Remove any existing event listeners by replacing the element
+        // Remove any existing event listeners
         const newLoginButton = loginButton.cloneNode(true);
         loginButton.parentNode.replaceChild(newLoginButton, loginButton);
         
-        // Add new event listener to the new button
+        // Add new event listener
         newLoginButton.addEventListener('click', () => {
             console.log('Login button clicked in order track page');
-            // Use the global login function
             if (window.loginWithGmail) {
                 window.loginWithGmail();
-            } else {
-                console.error('loginWithGmail function not found');
-                showToast('লগইন সিস্টেমে সমস্যা হয়েছে', 'error');
             }
         });
     }
@@ -141,28 +136,20 @@ async function loadAndDisplayUserOrders() {
     const loginPrompt = document.getElementById('loginPrompt');
     const orderListContainer = document.getElementById('orderListContainer');
 
-    if (!orderListDiv) {
-        console.error('Order list div not found');
-        return;
-    }
+    if (!orderListDiv) return;
 
     const user = auth.currentUser;
-    console.log('Current user in order track:', user);
 
     if (!user) {
         // User not logged in - show login prompt
-        console.log('User not logged in, showing login prompt');
         if (loginPrompt) loginPrompt.style.display = 'block';
         if (orderListContainer) orderListContainer.style.display = 'none';
         orderListDiv.innerHTML = '';
-        
-        // Setup login button
         setupLoginButton();
         return;
     }
 
     // User is logged in - show orders
-    console.log('User logged in, loading orders');
     if (loginPrompt) loginPrompt.style.display = 'none';
     if (orderListContainer) orderListContainer.style.display = 'block';
     
@@ -170,7 +157,6 @@ async function loadAndDisplayUserOrders() {
 
     try {
         const userOrders = await loadUserOrders();
-        console.log('Loaded orders:', userOrders);
 
         if (userOrders.length > 0) {
             // Sort orders by orderDate in descending order (newest first)
@@ -199,7 +185,7 @@ async function loadAndDisplayUserOrders() {
             
             orderListDiv.innerHTML = ordersHtml;
 
-            // Attach click listeners for order details
+            // Attach click listeners
             document.querySelectorAll('#orderList > div[data-order-id]').forEach(item => {
                 item.addEventListener('click', (event) => {
                     const orderId = event.currentTarget.dataset.orderId;
