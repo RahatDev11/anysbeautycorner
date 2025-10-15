@@ -1,0 +1,155 @@
+
+
+<!-- হেডার -->
+<header class="bg-brushstroke text-black py-2 px-2 md:px-4 flex justify-between items-center fixed top-0 left-0 w-screen z-50">
+    <!-- লোগো -->
+    <a class="flex items-center text-white" href="index.html">
+        <div class="flex items-center">
+            <img alt="Any's Beauty Corner লোগো" class="h-10 w-10 rounded-full mr-2 border-2 border-lipstick flex-shrink-0" height="40" src="img.jpg" width="40" onerror="this.src='https://via.placeholder.com/40'; this.alt='লোগো লোড হয়নি';">
+            <span class="text-base md:text-lg font-bold whitespace-nowrap text-black">Any's Beauty Corner</span>
+        </div>
+    </a>
+
+    <div class="flex items-center space-x-2 md:space-x-2">
+        <!-- ডেস্কটপ সার্চ বার -->
+        <div class="hidden md:block p-2 md:flex-grow relative">
+            <div class="relative">
+                <input class="w-full p-2 pl-10 border-0 rounded-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-lipstick bg-white/50 backdrop-blur-sm placeholder:text-gray-500/80" id="searchInputDesktop" oninput="searchProductsDesktop()" placeholder="প্রোডাক্ট সার্চ করুন..." type="text" />
+<i class="fas fa-search text-2xl absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-800"></i>
+            </div>
+            <!-- সার্চ রেজাল্ট -->
+            <div class="mt-2 max-h-60 overflow-y-auto absolute bg-white/90 backdrop-blur-sm w-full shadow-lg rounded-lg z-50" id="searchResultsDesktop"></div>
+        </div>
+
+        <!-- মোবাইল সার্চ আইকন -->
+        <div id="mobileSearchIcon" class="md:hidden cursor-pointer" onclick="focusMobileSearch()">
+            <i class="fas fa-search text-2xl text-gray-800"></i>
+        </div>
+
+        <!-- Notification icon -->
+        <a href="notifications.html" class="text-gray-800 w-10 h-10 rounded-full flex items-center justify-center relative">
+                    <i class="fas fa-bell text-2xl"></i>
+                    <span id="notificationCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                </a>
+        <!-- শপিং ব্যাগ আইকন -->
+        <button id="cartButton" class="text-gray-800 w-10 h-10 rounded-full flex items-center justify-center relative" onclick="openCartSidebar()">
+            <i class="fas fa-shopping-bag text-2xl"></i>
+            <span id="cartCount" class="absolute -top-1 -right-1 text-gray-800 text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">0</span>
+        </button>
+
+        <!-- কার্ট সাইডবার -->
+        <div id="cartSidebar" class="fixed top-0 right-0 h-full w-80 bg-white shadow-lg transform translate-x-full transition-transform duration-300 ease-in-out z-50">
+            <div class="p-4 h-full flex flex-col">
+                <!-- কার্ট বন্ধ করার বাটন -->
+                <button onclick="closeCartSidebar()" class="text-gray-600 hover:text-gray-900">
+                    <i class="fas fa-times"></i>
+                </button>
+                <!-- কার্ট হেডিং -->
+                <h2 class="text-xl text-black font-bold mb-4">কার্ট</h2>
+                <!-- কার্ট আইটেমগুলি -->
+                <div id="cartItems" class="space-y-4 flex-1 overflow-y-auto"></div>
+                <!-- চেকআউট বাটন -->
+                <div class="cart-footer mt-4">
+                    <p id="totalPrice" class="text-lg font-bold">মোট মূল্য: 0 টাকা</p>
+                    <button onclick="checkout()" class="bg-red-500 text-white px-4 py-2 rounded w-full mt-2 hover:bg-red-600">চেকআউট</button>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- টোস্ট নোটিফিকেশন -->
+        <div id="toast" class="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg hidden z-50"></div>
+
+        <!-- মোবাইল মেনু বাটন -->
+        <button id="mobileMenuButton" class="text-gray-800 w-10 h-10 rounded md:hidden flex items-center justify-center"><i class="fas fa-bars text-2xl"></i></button>
+
+        <!-- মোবাইল সাইডবার ওভারলে -->
+        <div class="fixed inset-0 z-40 hidden" id="sidebarOverlay">
+            <div class="fixed top-0 left-0 h-full w-4/5 bg-white shadow-lg transform -translate-x-full transition-transform duration-300 ease-in-out" id="sidebar">
+                <div class="p-4 h-full flex flex-col">
+                    <button id="closeSidebarButton" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <ul class="mt-4 flex-1 overflow-y-auto">
+                        <li id="mobileLoginButton" class="py-3 border-b border-gray-200">
+                                <button class="flex items-center w-full text-gray-800" onclick="window.loginWithGmail()">
+                                <i class="fas fa-user-circle mr-2"></i>
+                                <span>লগইন</span>
+                            </button>
+                        </li>
+                        <li class="py-3 border-b border-gray-200">
+                            <a class="block text-gray-800" href="index.html#home" onclick="handleMenuItemClick()">হোম</a>
+                        </li>
+
+                        <li class="py-3 border-b border-gray-200">
+                            <button class="flex items-center justify-between w-full text-left text-gray-800" onclick="toggleSubMenuMobile(event)">
+                                <span>পণ্য সমূহ</span>
+                                <i class="fas fa-chevron-down ml-2 transition-transform duration-300" id="arrowIcon"></i>
+                            </button>
+                            <div class="hidden bg-white/5 backdrop-blur-sm rounded-lg mt-1 ml-4" id="subMenuMobile">
+                                <a class="block px-4 py-2 text-gray-800 border-b border-gray-200" href="#all" onclick="handleSubMenuItemClick('all')">সকল প্রোডাক্ট</a>
+                                <a class="block px-4 py-2 text-gray-800 border-b border-gray-200" href="#health" onclick="handleSubMenuItemClick('health')">স্বাস্থ্য</a>
+                                <a class="block px-4 py-2 text-gray-800 border-b border-gray-200" href="#cosmetics" onclick="handleSubMenuItemClick('cosmetics')">মেকআপ</a>
+                                <a class="block px-4 py-2 text-gray-800 border-b border-gray-200" href="#skincare" onclick="handleSubMenuItemClick('skincare')">স্কিনকেয়ার</a>
+                                <a class="block px-4 py-2 text-gray-800 border-b border-gray-200" href="#haircare" onclick="handleSubMenuItemClick('haircare')">হেয়ারকেয়ার</a>
+                                <a class="block px-4 py-2 text-gray-800" href="#mehandi" onclick="handleSubMenuItemClick('mehandi')">মেহেদী</a>
+                            </div>
+                        </li>
+                        <li class="py-3 border-b border-gray-200">
+                            <a id="mobileOrderTrackButton" class="block text-gray-800" href="order-track.html" onclick="handleOrderTrackClick(event)">অর্ডার ট্র্যাক</a>
+                        </li>
+                        
+                    </ul>
+                </div>
+            </div>
+            <div class="fixed top-0 right-0 h-full w-1/5" id="blankArea" onclick="closeSidebar()"></div>
+        </div>
+
+        <!-- ডেস্কটপ মেনু -->
+        <nav class="hidden md:flex space-x-6 items-center text-white">
+            <div id="desktopLoginButton">
+                <button class="flex items-center hover:text-gray-600" onclick="window.loginWithGmail()">
+                    <i class="fas fa-user-circle mr-2"></i>
+                    <span>লগইন</span>
+                </button>
+            </div>
+            <a class="text-black hover:text-gray-600" href="index.html#home">হোম</a>
+
+            <div class="relative">
+                <button class="text-black hover:text-gray-600" onclick="toggleSubMenuDesktop()">
+                    পণ্য সমূহ
+                    <i class="fas fa-chevron-down ml-2 transition-transform duration-300" id="desktopArrowIcon"></i>
+                </button>
+            </div>
+            <a id="desktopOrderTrackButton" class="text-black hover:text-gray-600" href="order-track.html" onclick="handleOrderTrackClick(event)">অর্ডার ট্র্যাক</a>
+            
+        </nav>
+    </div>
+
+    <!-- ডেস্কটপ টপ বার (সাবমেনু) -->
+    <div class="hidden absolute top-full left-0 w-full bg-white shadow-lg z-60" id="desktopSubMenuBar">
+        <div class="container mx-auto p-4">
+            <div class="grid grid-cols-4 gap-4">
+                <a class="block p-2 text-gray-800 hover:bg-gray-100 border-b border-gray-200" href="#all" onclick="filterProducts('all')">সকল প্রোডাক্ট</a>
+                <a class="block p-2 text-gray-800 hover:bg-gray-100 border-b border-gray-200" href="#health" onclick="filterProducts('health')">স্বাস্থ্য</a>
+                <a class="block p-2 text-gray-800 hover:bg-gray-100 border-b border-gray-200" href="#cosmetics" onclick="filterProducts('cosmetics')">মেকআপ</a>
+                <a class="block p-2 text-gray-800 hover:bg-gray-100 border-b border-gray-200" href="#skincare" onclick="filterProducts('skincare')">স্কিনকেয়ার</a>
+                <a class="block p-2 text-gray-800 hover:bg-gray-100 border-b border-gray-200" href="#haircare" onclick="filterProducts('haircare')">হেয়ারকেয়ার</a>
+                <a class="block p-2 text-gray-800 hover:bg-gray-100" href="#mehandi" onclick="filterProducts('mehandi')">মেহেদী</a>
+            </div>
+        </div>
+    </div>
+
+ 
+</header>
+
+<!-- মোবাইল সার্চ বার -->
+<div id="mobileSearchBar" class="fixed top-[56px] left-0 w-full bg-white shadow-lg p-2 hidden z-40">
+    <div class="relative">
+        <input class="w-full p-2 pl-10 border-0 rounded-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-lipstick bg-white/50 backdrop-blur-sm placeholder:text-gray-500/80" id="searchInput" oninput="searchProductsMobile()" placeholder="প্রোডাক্ট সার্চ করুন..." type="text" />
+        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400/80"></i>
+    </div>
+    <!-- সার্চ রেজাল্ট -->
+    <div class="mt-2 max-h-60 overflow-y-auto bg-white/90 backdrop-blur-sm w-full shadow-lg rounded-lg z-50" id="searchResultsMobile"></div>
+</div>
