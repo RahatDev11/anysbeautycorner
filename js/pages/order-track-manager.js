@@ -1,5 +1,5 @@
 // =================================================================
-// SECTION: ORDER TRACK PAGE LOGIC (ফিক্সড ভার্সন)
+// SECTION: ORDER TRACK PAGE LOGIC (লগইন এবং গেস্ট উভয়ের জন্য)
 // =================================================================
 
 import { database, ref, get, auth, onAuthStateChanged } from '../modules/firebase-config.js';
@@ -73,12 +73,19 @@ function showOrderDetailsModal(order, orderId) {
     modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('flex'); };
 }
 
-async function loadUserOrders() {
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
+// localStorage থেকে অর্ডার আইডি গুলো লোড করা
+function getMyOrderIdsFromLocalStorage() {
+    try {
+        return JSON.parse(localStorage.getItem('myOrders') || '[]');
+    } catch (error) {
+        console.error('Error loading order IDs from localStorage:', error);
         return [];
     }
+}
 
+async function loadUserOrders() {
+    const currentUser = auth.currentUser;
+    const myOrderIds = getMyOrderIdsFromLocalStorage();
     const orders = [];
     
     try {
@@ -91,13 +98,21 @@ async function loadUserOrders() {
             Object.keys(allOrders).forEach(orderId => {
                 const order = allOrders[orderId];
                 
-                // MULTIPLE WAYS TO IDENTIFY USER'S ORDERS
-                // 1. Check by userId (new system)
-                // 2. Check by userEmail (old system) 
-                // 3. Check by customerEmail (backup)
-                if (order.userId === currentUser.uid || 
-                    order.userEmail === currentUser.email ||
-                    order.customerEmail === currentUser.email) {
+                // ১. লগইন করা ইউজারের অর্ডার চেক করা
+                if (currentUser) {
+                    if (order.userId === currentUser.uid || 
+                        order.userEmail === currentUser.email ||
+                        order.customerEmail === currentUser.email) {
+                        orders.push({
+                            id: orderId,
+                            ...order
+                        });
+                        return;
+                    }
+                }
+                
+                // ২. গেস্ট ইউজারের অর্ডার চেক করা (localStorage থেকে orderId দিয়ে)
+                if (myOrderIds.includes(orderId)) {
                     orders.push({
                         id: orderId,
                         ...order
@@ -139,9 +154,11 @@ async function loadAndDisplayUserOrders() {
     if (!orderListDiv) return;
 
     const user = auth.currentUser;
+    const myOrderIds = getMyOrderIdsFromLocalStorage();
 
-    if (!user) {
-        // User not logged in - show login prompt
+    // যদি ইউজার লগইন না করা থাকে এবং localStorage-এও কোন অর্ডার আইডি না থাকে
+    if (!user && myOrderIds.length === 0) {
+        // User not logged in and no orders in localStorage - show login prompt
         if (loginPrompt) loginPrompt.style.display = 'block';
         if (orderListContainer) orderListContainer.style.display = 'none';
         orderListDiv.innerHTML = '';
@@ -149,7 +166,7 @@ async function loadAndDisplayUserOrders() {
         return;
     }
 
-    // User is logged in - show orders
+    // User is logged in OR has orders in localStorage - show orders
     if (loginPrompt) loginPrompt.style.display = 'none';
     if (orderListContainer) orderListContainer.style.display = 'block';
     
