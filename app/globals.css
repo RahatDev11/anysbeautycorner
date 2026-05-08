@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@theme {
+  --color-lipstick: #F4A7B9;
+  --color-lipstick-dark: #D92C66;
+  --color-background: #FFF5F7;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: #374151;
+  }
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
