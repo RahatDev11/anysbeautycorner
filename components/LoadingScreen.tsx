@@ -4,19 +4,23 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 
-export default function LoadingScreen() {
+export default function LoadingScreen({ isLoading }: { isLoading?: boolean }) {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(false);
-    }, 2500); // Show for 2.5 seconds
-    return () => clearTimeout(timer);
-  }, []);
+    if (isLoading === undefined) {
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+      }, 2500); // Show for 2.5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
+
+  const show = isLoading !== undefined ? isLoading : isVisible;
 
   return (
     <AnimatePresence>
-      {isVisible && (
+      {show && (
         <motion.div
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -76,10 +80,10 @@ export default function LoadingScreen() {
             {/* Progress indicator */}
             <div className="absolute bottom-[-100px] w-48 h-1 bg-gray-50 rounded-full overflow-hidden">
                <motion.div 
-                 initial={{ width: "0%" }}
-                 animate={{ width: "100%" }}
-                 transition={{ duration: 2, ease: "easeInOut" }}
-                 className="h-full bg-lipstick"
+                 initial={{ x: "-100%" }}
+                 animate={{ x: "200%" }}
+                 transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                 className="h-full bg-lipstick w-1/2 rounded-full"
                />
             </div>
           </div>

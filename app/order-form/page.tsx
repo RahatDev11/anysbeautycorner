@@ -7,6 +7,7 @@ import { database } from '@/lib/firebase';
 import { ref, set, runTransaction } from 'firebase/database';
 import { getAuth } from 'firebase/auth';
 import { toBengaliNumber } from '@/lib/utils';
+import LoadingScreen from '@/components/LoadingScreen';
 
 function OrderFormContent() {
   const { cart, clearCart } = useStore();
@@ -143,6 +144,7 @@ function OrderFormContent() {
 
   return (
     <div className="container mx-auto p-4 max-w-5xl">
+      <LoadingScreen isLoading={loading} />
       <h1 className="text-3xl font-bold text-center text-lipstick-dark mb-8">চেকআউট</h1>
       
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -173,14 +175,14 @@ function OrderFormContent() {
                 <input type="radio" name="deliveryLocation" value="insideDhaka" checked={!isOutsideDhaka} onChange={handleInputChange} className="w-5 h-5 text-lipstick accent-lipstick mr-3" />
                 <div>
                   <span className="block font-semibold text-gray-800">ঢাকার ভেতরে</span>
-                  <span className="text-sm text-gray-500">৭০ ৳ ডেলিভারি চার্জ</span>
+                  <span className="text-sm text-gray-500">70 ৳ ডেলিভারি চার্জ</span>
                 </div>
               </label>
               <label className={`flex-1 flex items-center p-4 border rounded-xl cursor-pointer transition ${isOutsideDhaka ? 'border-lipstick bg-lipstick/5' : 'border-gray-200 hover:bg-gray-50'}`}>
                 <input type="radio" name="deliveryLocation" value="outsideDhaka" checked={isOutsideDhaka} onChange={handleInputChange} className="w-5 h-5 text-lipstick accent-lipstick mr-3" />
                 <div>
                   <span className="block font-semibold text-gray-800">ঢাকার বাইরে</span>
-                  <span className="text-sm text-gray-500">১৬০ ৳ ডেলিভারি চার্জ (অগ্রিম)</span>
+                  <span className="text-sm text-gray-500">160 ৳ ডেলিভারি চার্জ (অগ্রিম)</span>
                 </div>
               </label>
             </div>
@@ -189,7 +191,7 @@ function OrderFormContent() {
           {isOutsideDhaka && (
             <div className="bg-orange-50 border border-orange-200 p-5 rounded-xl mb-6 space-y-4">
               <div className="text-orange-800 text-sm font-medium">
-                <strong>নোট:</strong> ঢাকার বাইরের অর্ডারের জন্য ডেলিভারি চার্জ <strong>১৬০ টাকা</strong> অগ্রিম প্রদান করতে হবে। <br/>
+                <strong>নোট:</strong> ঢাকার বাইরের অর্ডারের জন্য ডেলিভারি চার্জ <strong>160 টাকা</strong> অগ্রিম প্রদান করতে হবে। <br/>
                 অনুগ্রহ করে নিচের যেকোনো একটি পেমেন্ট মেথড ব্যবহার করুন। <br/>
                 বিকাশ/নগদ: <strong>01931866636</strong> (Send Money / Personal)
               </div>
@@ -281,7 +283,7 @@ function OrderFormContent() {
 
 export default function OrderForm() {
   return (
-    <Suspense fallback={<div className="flex justify-center items-center h-[50vh]"><div className="w-8 h-8 border-4 border-lipstick border-t-transparent rounded-full animate-spin"></div></div>}>
+    <Suspense fallback={<LoadingScreen isLoading={true} />}>
       <OrderFormContent />
     </Suspense>
   );

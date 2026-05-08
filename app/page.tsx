@@ -17,6 +17,8 @@ import { ChevronRight, ArrowRight, Sparkles, ShoppingBag, CreditCard } from 'luc
 import { useStore } from '@/lib/store';
 import { toBengaliNumber } from '@/lib/utils';
 
+import LoadingScreen from '@/components/LoadingScreen';
+
 function HomeContent() {
   const { cart, setIsCartOpen } = useStore();
   const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -74,6 +76,8 @@ function HomeContent() {
 
   return (
     <div className="container mx-auto p-4 md:p-8 pb-32">
+      <LoadingScreen isLoading={loading} />
+      
       {/* Search Result Indicator */}
       <AnimatePresence>
         {searchQuery && (
@@ -281,7 +285,7 @@ function HomeContent() {
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="flex justify-center items-center h-[70vh]"><div className="w-12 h-12 border-4 border-lipstick border-t-transparent rounded-full animate-spin"></div></div>}>
+    <Suspense fallback={<LoadingScreen isLoading={true} />}>
       <HomeContent />
     </Suspense>
   );

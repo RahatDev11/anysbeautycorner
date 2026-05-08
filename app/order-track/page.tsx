@@ -7,6 +7,7 @@ import { useStore } from '@/lib/store';
 import { X, Check } from 'lucide-react';
 import { signInWithPopup } from 'firebase/auth';
 import { useSearchParams } from 'next/navigation';
+import LoadingScreen from '@/components/LoadingScreen';
 
 function OrderTrackContent() {
   const { user, setUser } = useStore();
@@ -99,6 +100,7 @@ function OrderTrackContent() {
 
   return (
     <div className="container mx-auto p-4 max-w-6xl pb-24">
+      <LoadingScreen isLoading={loading} />
       <h1 className="text-3xl font-bold text-center mb-8 text-lipstick">আপনার অর্ডারসমূহ</h1>
       
       {!user && orders.length === 0 && !loading && (
@@ -111,9 +113,7 @@ function OrderTrackContent() {
       )}
 
       {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="w-8 h-8 border-4 border-lipstick border-t-transparent rounded-full animate-spin"></div>
-        </div>
+        <div className="flex justify-center py-20"></div>
       ) : orders.length > 0 ? (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="hidden md:grid grid-cols-4 gap-4 p-5 bg-gray-50/50 border-b border-gray-100 font-semibold text-gray-600">
@@ -241,7 +241,7 @@ function OrderTrackContent() {
 
 export default function OrderTrack() {
   return (
-    <Suspense fallback={<div className="flex justify-center items-center h-[50vh]"><div className="w-8 h-8 border-4 border-lipstick border-t-transparent rounded-full animate-spin"></div></div>}>
+    <Suspense fallback={<LoadingScreen isLoading={true} />}>
       <OrderTrackContent />
     </Suspense>
   );

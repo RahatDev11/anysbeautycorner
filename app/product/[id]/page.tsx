@@ -10,6 +10,7 @@ import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import { toBengaliNumber } from '@/lib/utils';
+import LoadingScreen from '@/components/LoadingScreen';
 
 export default function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -61,7 +62,19 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
 
   const images = product?.image ? product.image.split(',').map((img: string) => img.trim()).filter(Boolean) : [];
 
-  const handleAddToCart = () => {
+  const [isClickable, setIsClickable] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsClickable(true);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isClickable) return;
     addToCart({
       id: product.id,
       name: product.name,
@@ -74,7 +87,10 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
     setIsCartOpen(true);
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isClickable) return;
     const tempCart = [{
       id: product.id,
       name: product.name,
@@ -99,44 +115,38 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-[70vh]">
-        <div className="w-12 h-12 border-4 border-lipstick border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  if (error || !product) {
-    return (
-      <div className="container mx-auto p-4 text-center mt-20">
-        <div className="max-w-md mx-auto bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-          <div className="text-6xl mb-4">🔍</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">{error || 'পণ্য পাওয়া যায়নি'}</h2>
-          <button 
-            onClick={() => router.push('/')} 
-            className="w-full bg-lipstick text-white px-8 py-4 rounded-2xl font-bold shadow-lg shadow-lipstick/20 hover:bg-lipstick-dark transition-all transform active:scale-95"
-          >
-            হোম পেজে ফিরে যান
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const isOutOfStock = product.stockStatus === 'out_of_stock';
+  const isOutOfStock = product?.stockStatus === 'out_of_stock';
   const relatedProducts = products
-    .filter(p => p.id !== product.id && (product.category ? p.category === product.category : true))
+    .filter(p => p.id !== product?.id && (product?.category ? p.category === product.category : true))
     .slice(0, 4);
 
   return (
     <div className="container mx-auto p-4 max-w-7xl pb-32">
-      {/* Breadcrumb */}
-      <motion.nav 
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex text-xs md:text-sm text-gray-400 mb-8 px-1 overflow-x-auto no-scrollbar whitespace-nowrap"
-      >
+      <LoadingScreen isLoading={loading} />
+      
+      {loading ? (
+        <div className="min-h-screen"></div>
+      ) : error || !product ? (
+        <div className="text-center mt-20">
+          <div className="max-w-md mx-auto bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+            <div className="text-6xl mb-4">🔍</div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">{error || 'পণ্য পাওয়া যায়নি'}</h2>
+            <button 
+              onClick={() => router.push('/')} 
+              className="w-full bg-lipstick text-white px-8 py-4 rounded-2xl font-bold shadow-lg shadow-lipstick/20 hover:bg-lipstick-dark transition-all transform active:scale-95"
+            >
+              হোম পেজে ফিরে যান
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Breadcrumb */}
+          <motion.nav 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex text-xs md:text-sm text-gray-400 mb-8 px-1 overflow-x-auto no-scrollbar whitespace-nowrap"
+          >
         <Link href="/" className="hover:text-lipstick transition-colors">হোম</Link>
         <span className="mx-2 text-gray-300">/</span>
         <Link href={`/?filter=${product.category || ''}`} className="hover:text-lipstick transition-colors capitalize">{product.category || 'পণ্য'}</Link>
@@ -237,7 +247,7 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
             <div className="flex items-center gap-4 flex-wrap">
               <div className="flex items-center gap-1.5 bg-yellow-50/50 px-3 py-1.5 rounded-full border border-yellow-100/50">
                 <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                <span className="text-xs font-semibold text-yellow-800 tracking-tight">৫.০ (১৮ রিভিউ)</span>
+                <span className="text-xs font-semibold text-yellow-800 tracking-tight">5.0 (18 রিভিউ)</span>
               </div>
               <div className="h-1 w-1 rounded-full bg-gray-300"></div>
               {isOutOfStock ? (
@@ -317,7 +327,7 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
                   <ShieldCheck className="w-5 h-5 md:w-7 md:h-7 text-blue-600" />
                 </div>
                 <div>
-                  <h4 className="text-[9px] md:text-xs font-black text-gray-900 uppercase tracking-wider">১০০% আসল</h4>
+                  <h4 className="text-[9px] md:text-xs font-black text-gray-900 uppercase tracking-wider">100% আসল</h4>
                   <p className="text-[8px] md:text-[10px] text-gray-400">Authentic</p>
                 </div>
               </div>
@@ -358,7 +368,7 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
               onClick={() => setActiveTab(tab)}
               className={`pb-4 md:pb-5 px-1 md:px-2 text-xs md:text-lg font-serif font-medium uppercase tracking-widest transition-all relative whitespace-nowrap ${activeTab === tab ? 'text-lipstick-dark opacity-100' : 'text-gray-400 opacity-60 hover:opacity-100'}`}
             >
-              {tab === 'description' ? 'বিবরণ' : tab === 'delivery' ? 'ডেলিভারি' : 'রিভিউ (০)'}
+              {tab === 'description' ? 'বিবরণ' : tab === 'delivery' ? 'ডেলিভারি' : 'রিভিউ (0)'}
               {activeTab === tab && (
                 <motion.div 
                   layoutId="activeTabUnderline"
@@ -412,16 +422,16 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
                   <div className="space-y-3">
                     <h5 className="font-black text-gray-900 border-b border-gray-200 pb-2 flex justify-between">
                       <span>ঢাকার ভেতরে</span>
-                      <span className="text-lipstick">৭০ ৳</span>
+                      <span className="text-lipstick">70 ৳</span>
                     </h5>
-                    <p className="text-sm text-gray-500 font-medium">ডেলিভারি সময়: ২৪ - ৪৮ ঘণ্টা (হোম ডেলিভারি)</p>
+                    <p className="text-sm text-gray-500 font-medium">ডেলিভারি সময়: 24 - 48 ঘণ্টা (হোম ডেলিভারি)</p>
                   </div>
                   <div className="space-y-3">
                     <h5 className="font-black text-gray-900 border-b border-gray-200 pb-2 flex justify-between">
                       <span>ঢাকার বাইরে</span>
-                      <span className="text-lipstick">১৬০ ৳</span>
+                      <span className="text-lipstick">160 ৳</span>
                     </h5>
-                    <p className="text-sm text-gray-500 font-medium">ডেলিভারি সময়: ২ - ৪ দিন (কুরিয়ার সার্ভিস)</p>
+                    <p className="text-sm text-gray-500 font-medium">ডেলিভারি সময়: 2 - 4 দিন (কুরিয়ার সার্ভিস)</p>
                   </div>
                 </div>
               </div>
@@ -494,6 +504,8 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
             </button>
           </div>
         </motion.div>
+      )}
+      </>
       )}
     </div>
   );
