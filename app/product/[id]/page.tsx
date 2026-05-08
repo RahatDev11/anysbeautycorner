@@ -161,7 +161,20 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
                 transition={{ duration: 0.4, ease: "easeOut" }}
                 src={mainImage || 'https://via.placeholder.com/800'} 
                 alt={product.name} 
-                className="w-full h-full object-contain" 
+                className="w-full h-full object-contain cursor-grab active:cursor-grabbing"
+                drag={images.length > 1 ? "x" : false}
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.2}
+                onDragEnd={(e, { offset }) => {
+                  if (images.length <= 1) return;
+                  if (offset.x < -50) {
+                    const idx = images.indexOf(mainImage);
+                    setMainImage(images[(idx + 1) % images.length]);
+                  } else if (offset.x > 50) {
+                    const idx = images.indexOf(mainImage);
+                    setMainImage(images[(idx - 1 + images.length) % images.length]);
+                  }
+                }}
               />
             </AnimatePresence>
             
