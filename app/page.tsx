@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
+import { dbService } from '@/lib/services/dbService';
 import { database } from '@/lib/firebase';
 import { ref, onValue } from 'firebase/database';
 import ProductCard from '@/components/ProductCard';
@@ -12,9 +13,14 @@ import 'swiper/css/effect-fade';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronRight, ArrowRight, Sparkles } from 'lucide-react';
+import { ChevronRight, ArrowRight, Sparkles, ShoppingBag, CreditCard } from 'lucide-react';
+import { useStore } from '@/lib/store';
+import { toBengaliNumber } from '@/lib/utils';
 
 function HomeContent() {
+  const { cart, setIsCartOpen } = useStore();
+  const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const cartItems = cart.reduce((sum, item) => sum + item.quantity, 0);
   const [products, setProducts] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -236,6 +242,39 @@ function HomeContent() {
           </div>
         )}
       </section>
+
+      {/* Floating Cart Bar for Home Page */}
+      <AnimatePresence>
+        {cartItems > 0 && (
+          <motion.div 
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-6 left-4 right-4 z-40 lg:hidden"
+          >
+            <div className="bg-black/95 backdrop-blur-2xl rounded-[2.5rem] p-3 shadow-2xl flex items-center gap-3 border border-white/10">
+              <button 
+                onClick={() => setIsCartOpen(true)}
+                className="px-5 border-r border-white/10 text-left flex flex-col justify-center"
+              >
+                <div className="flex items-center gap-2 mb-0.5">
+                  <ShoppingBag className="w-3 h-3 text-lipstick animate-pulse" />
+                  <span className="text-[8px] font-bold text-white/40 uppercase tracking-[0.2em]">{toBengaliNumber(cartItems)} টি আইটেম</span>
+                </div>
+                <span className="text-white text-xl font-black italic leading-none">{toBengaliNumber(cartTotal.toLocaleString('en-US'))}৳</span>
+              </button>
+              
+              <Link 
+                href="/order-form"
+                className="flex-1 bg-lipstick text-white py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest flex items-center justify-center shadow-xl shadow-lipstick/30 active:scale-95 transition-all"
+              >
+                <CreditCard className="w-3.5 h-3.5 mr-2" />
+                অর্ডার সম্পন্ন করুন
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

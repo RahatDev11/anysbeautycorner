@@ -1,9 +1,11 @@
 import type {Metadata} from 'next';
 import './globals.css';
+
 import { Providers } from '@/components/Providers';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CartSidebar from '@/components/CartSidebar';
+import LoadingScreen from '@/components/LoadingScreen';
 import { Inter, Cormorant_Garamond } from 'next/font/google';
 
 const inter = Inter({
@@ -27,6 +29,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
     <html lang="en" className={`${inter.variable} ${cormorant.variable}`}>
       <body className="antialiased flex flex-col min-h-screen font-sans bg-[#fcfaf9]" suppressHydrationWarning>
         <Providers>
+          <LoadingScreen />
           <Header />
           <CartSidebar />
           <main className="flex-1 mt-16 md:mt-20">

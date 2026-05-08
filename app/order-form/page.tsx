@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { database } from '@/lib/firebase';
 import { ref, set, runTransaction } from 'firebase/database';
 import { getAuth } from 'firebase/auth';
+import { toBengaliNumber } from '@/lib/utils';
 
 function OrderFormContent() {
   const { cart, clearCart } = useStore();
@@ -240,8 +241,8 @@ function OrderFormContent() {
                 <div className="flex-1">
                   <h4 className="text-sm font-semibold text-gray-800 line-clamp-2 leading-snug">{item.name}</h4>
                   <div className="flex justify-between items-center mt-2">
-                    <span className="text-sm text-gray-500">{item.quantity} x {item.price} ৳</span>
-                    <span className="text-sm font-bold text-gray-800">{(item.quantity * item.price).toFixed(2)} ৳</span>
+                    <span className="text-sm text-gray-500">{toBengaliNumber(item.quantity)} x {toBengaliNumber(item.price)} ৳</span>
+                    <span className="text-sm font-bold text-gray-800">{toBengaliNumber((item.quantity * item.price).toFixed(2))} ৳</span>
                   </div>
                 </div>
               </div>
@@ -251,15 +252,15 @@ function OrderFormContent() {
           <div className="space-y-3 text-gray-600 mb-6 bg-gray-50 p-4 rounded-xl">
             <div className="flex justify-between">
               <span>সাবটোটাল</span>
-              <span className="font-semibold text-gray-800">{subTotal.toFixed(2)} ৳</span>
+              <span className="font-semibold text-gray-800">{toBengaliNumber(subTotal.toFixed(2))} ৳</span>
             </div>
             <div className="flex justify-between">
               <span>ডেলিভারি চার্জ</span>
-              <span className="font-semibold text-gray-800">{deliveryFee.toFixed(2)} ৳</span>
+              <span className="font-semibold text-gray-800">{toBengaliNumber(deliveryFee.toFixed(2))} ৳</span>
             </div>
             <div className="flex justify-between border-t border-gray-200 pt-3 mt-3 text-lg">
               <span className="font-bold text-gray-900">মোট মূল্য</span>
-              <span className="font-extrabold text-lipstick-dark">{totalAmount.toFixed(2)} ৳</span>
+              <span className="font-extrabold text-lipstick-dark">{toBengaliNumber(totalAmount.toFixed(2))} ৳</span>
             </div>
           </div>
 

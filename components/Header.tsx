@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useStore } from '@/lib/store';
 import { auth, googleProvider } from '@/lib/firebase';
 import { signInWithPopup, signOut } from 'firebase/auth';
+import Image from 'next/image';
 import { ShoppingBag, Search, Menu, X, UserCircle, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -67,7 +68,15 @@ export default function Header() {
             whileHover={{ scale: 1.01 }}
             className="flex items-center"
           >
-            <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg mr-2 bg-white text-lipstick flex justify-center items-center font-serif text-base sm:text-lg font-bold shadow-md transform rotate-3 group-hover:rotate-0 transition-transform">AB</div>
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl mr-3 bg-white overflow-hidden relative shadow-md transform rotate-3 group-hover:rotate-0 transition-transform">
+              <Image 
+                src="/logo.png" 
+                alt="Logo" 
+                fill 
+                className="object-contain p-1"
+                referrerPolicy="no-referrer"
+              />
+            </div>
             <span className="text-base sm:text-lg md:text-xl font-serif font-semibold whitespace-nowrap hidden xs:block tracking-tight italic">Any&apos;s Beauty Corner</span>
           </motion.div>
         </Link>
@@ -196,7 +205,15 @@ export default function Header() {
               {/* Drawer Header */}
               <div className="flex items-center justify-between p-6 bg-lipstick text-white shadow-md relative z-10">
                 <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 bg-white rounded-xl text-lipstick flex items-center justify-center font-black shadow-sm transform -rotate-3">AB</div>
+                  <div className="h-10 w-10 bg-white rounded-xl overflow-hidden relative shadow-sm transform -rotate-3">
+                    <Image 
+                      src="/logo.png" 
+                      alt="Logo" 
+                      fill 
+                      className="object-contain p-1"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
                   <div className="flex flex-col">
                     <span className="font-serif italic text-lg leading-none">Any&apos;s Beauty</span>
                     <span className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-70 mt-0.5">Explore Menu</span>
@@ -278,8 +295,16 @@ export default function Header() {
               </div>
 
               <div className="p-8 border-t border-gray-50 bg-gray-50/50 flex flex-col items-center">
-                <div className="flex items-center gap-2 mb-4 opacity-30 grayscale">
-                  <div className="h-6 w-6 rounded-md bg-lipstick flex items-center justify-center text-white text-[10px] font-bold">AB</div>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="h-8 w-8 rounded-xl bg-white overflow-hidden relative shadow-sm">
+                    <Image 
+                      src="/logo.png" 
+                      alt="Logo" 
+                      fill 
+                      className="object-contain p-1"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
                   <span className="font-serif italic text-xs">Any&apos;s Beauty Corner</span>
                 </div>
                 <p className="text-[9px] font-bold text-gray-300 uppercase tracking-[0.3em] text-center">Privacy Policy • Terms Service</p>

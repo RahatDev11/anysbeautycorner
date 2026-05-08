@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
+import { toBengaliNumber } from '@/lib/utils';
 
 export default function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -234,11 +235,11 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
             </div>
 
             <div className="flex items-baseline gap-3 md:gap-4 pt-2 md:pt-4 pb-2">
-              <span className="text-3xl md:text-5xl font-black text-lipstick-dark tracking-tighter">{product.price} ৳</span>
+              <span className="text-3xl md:text-5xl font-black text-lipstick-dark tracking-tighter">{toBengaliNumber(product.price)} ৳</span>
               {product.oldPrice && (
                 <div className="flex items-center gap-2 md:gap-3">
-                  <span className="text-lg md:text-xl text-gray-300 line-through font-medium">{product.oldPrice} ৳</span>
-                  <span className="text-[10px] md:text-sm font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-lg">{(Math.round((1 - parseInt(product.price) / parseInt(product.oldPrice)) * 100))}% ছাড়</span>
+                  <span className="text-lg md:text-xl text-gray-300 line-through font-medium">{toBengaliNumber(product.oldPrice)} ৳</span>
+                  <span className="text-[10px] md:text-sm font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-lg">{toBengaliNumber(Math.round((1 - parseInt(product.price) / parseInt(product.oldPrice)) * 100))}% ছাড়</span>
                 </div>
               )}
             </div>
@@ -262,7 +263,7 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
                     >
                       <Minus className="w-5 h-5" />
                     </button>
-                    <span className="w-16 text-center font-black text-2xl text-gray-900">{quantity}</span>
+                    <span className="w-16 text-center font-black text-2xl text-gray-900">{toBengaliNumber(quantity)}</span>
                     <button 
                       onClick={() => setQuantity(quantity + 1)}
                       className="w-12 h-12 flex items-center justify-center hover:bg-white rounded-2xl text-gray-400 hover:text-lipstick transition-all shadow-sm active:scale-100"
@@ -457,23 +458,26 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
           animate={{ y: 0 }}
           className="lg:hidden fixed bottom-6 left-4 right-4 z-40"
         >
-          <div className="bg-black/90 backdrop-blur-xl rounded-[2rem] p-3 shadow-2xl flex items-center gap-3">
-            <div className="px-4 border-r border-white/20">
-              <span className="text-white text-lg font-black">{product.price}৳</span>
+          <div className="bg-black/90 backdrop-blur-2xl rounded-[2.5rem] p-3 shadow-2xl flex items-center gap-3 border border-white/10">
+            <div className="px-5 border-r border-white/10">
+              <div className="flex flex-col">
+                <span className="text-[8px] font-bold text-white/40 uppercase tracking-widest mb-0.5">সর্বমোট</span>
+                <span className="text-white text-xl font-black italic">{toBengaliNumber((Number(product.price) * quantity).toLocaleString('en-US'))}৳</span>
+              </div>
             </div>
             <button 
               onClick={handleAddToCart}
-              className="flex-1 bg-white/10 hover:bg-white/20 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center transition-all"
+              className="flex-1 bg-white/5 hover:bg-white/10 text-white py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest flex items-center justify-center transition-all border border-white/5"
             >
-              <ShoppingCart className="w-4 h-4 mr-2" />
+              <ShoppingCart className="w-3.5 h-3.5 mr-2" />
               কার্ট
             </button>
             <button 
               onClick={handleBuyNow}
-              className="flex-[1.5] bg-lipstick text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center shadow-lg shadow-lipstick/30 active:scale-95 transition-all"
+              className="flex-[1.5] bg-lipstick text-white py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest flex items-center justify-center shadow-xl shadow-lipstick/20 active:scale-95 transition-all"
             >
-              <CreditCard className="w-4 h-4 mr-2" />
-              অর্ডার করুন
+              <CreditCard className="w-3.5 h-3.5 mr-2" />
+              কিনুন
             </button>
           </div>
         </motion.div>

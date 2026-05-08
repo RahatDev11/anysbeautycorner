@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Footer() {
   return (
@@ -6,7 +7,18 @@ export default function Footer() {
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 mb-12">
           <div className="md:col-span-5">
-            <h3 className="text-2xl font-serif italic mb-4">Any&apos;s Beauty Corner</h3>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 bg-white rounded-xl overflow-hidden relative shadow-sm">
+                <Image 
+                  src="/logo.png" 
+                  alt="Logo" 
+                  fill 
+                  className="object-contain p-1"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+              <h3 className="text-2xl font-serif italic">Any&apos;s Beauty Corner</h3>
+            </div>
             <p className="text-sm opacity-80 leading-relaxed max-w-sm mb-6">আপনার সৌন্দর্য চর্চার বিশ্বস্ত সঙ্গী। আমরা বিশ্বাস করি প্রতিটি মানুষের ত্বকের যত্ন নেওয়া প্রয়োজন সঠিক ও আসল প্রোডাক্ট দিয়ে।</p>
             <div className="flex gap-4">
               {['Facebook', 'Instagram', 'TikTok'].map(platform => (

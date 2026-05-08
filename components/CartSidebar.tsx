@@ -5,6 +5,7 @@ import { X, Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect } from 'react';
+import { toBengaliNumber } from '@/lib/utils';
 
 export default function CartSidebar() {
   const { cart, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity } = useStore();
@@ -50,7 +51,7 @@ export default function CartSidebar() {
               <div className="flex flex-col">
                 <h2 className="text-xl font-serif italic text-gray-900 flex items-center">
                   আপনার ব্যাগ
-                  <span className="ml-2 bg-lipstick text-white text-[10px] font-bold py-1 px-2.5 rounded-full">{itemCount}</span>
+                  <span className="ml-2 bg-lipstick text-white text-[10px] font-bold py-1 px-2.5 rounded-full">{toBengaliNumber(itemCount)}</span>
                 </h2>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Shopping Cart</p>
               </div>
@@ -106,7 +107,7 @@ export default function CartSidebar() {
                           </button>
                         </div>
                         <div className="flex items-center justify-between mt-auto">
-                          <p className="font-bold text-lipstick-dark text-sm">{item.price} ৳</p>
+                          <p className="font-bold text-lipstick-dark text-sm">{toBengaliNumber(item.price)} ৳</p>
                           <div className="flex items-center bg-gray-50 rounded-lg border border-gray-100 p-0.5">
                             <button 
                               onClick={() => updateQuantity(item.id, -1)}
@@ -114,7 +115,7 @@ export default function CartSidebar() {
                             >
                               <Minus className="w-3 h-3" />
                             </button>
-                            <span className="w-8 text-center text-xs font-bold text-gray-700">{item.quantity}</span>
+                            <span className="w-8 text-center text-xs font-bold text-gray-700">{toBengaliNumber(item.quantity)}</span>
                             <button 
                               onClick={() => updateQuantity(item.id, 1)}
                               className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-white rounded-md transition-all active:scale-90"
@@ -134,8 +135,10 @@ export default function CartSidebar() {
               <div className="p-6 border-t border-gray-100 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.03)]">
                 <div className="flex justify-between items-center mb-6">
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">সমুদয় মূল্য</span>
-                    <span className="text-2xl font-serif text-gray-900">{totalAmount.toLocaleString('en-US')} ৳</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">সবমোট মূল্য</span>
+                    <span className="text-3xl font-serif text-lipstick-dark font-medium leading-none">
+                      {toBengaliNumber(totalAmount.toLocaleString('en-US'))} <span className="text-xl italic ml-0.5">৳</span>
+                    </span>
                   </div>
                   <div className="text-right">
                      <p className="text-[10px] items-center text-emerald-500 font-bold flex gap-1 justify-end uppercase">
