@@ -10,16 +10,17 @@ import { Autoplay, Pagination, EffectFade } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronRight, ArrowRight, Sparkles, ShoppingBag, CreditCard } from 'lucide-react';
+import { ChevronRight, ArrowRight, Sparkles, ShoppingBag, CreditCard, ShoppingCart } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { toBengaliNumber } from '@/lib/utils';
 
 import LoadingScreen from '@/components/LoadingScreen';
 
 function HomeContent() {
+  const router = useRouter();
   const { cart, setIsCartOpen } = useStore();
   const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const cartItems = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -256,25 +257,31 @@ function HomeContent() {
             exit={{ y: 100, opacity: 0 }}
             className="fixed bottom-6 left-4 right-4 z-40 lg:hidden"
           >
-            <div className="bg-black/95 backdrop-blur-2xl rounded-[2.5rem] p-3 shadow-2xl flex items-center gap-3 border border-white/10">
-              <button 
-                onClick={() => setIsCartOpen(true)}
-                className="px-5 border-r border-white/10 text-left flex flex-col justify-center"
-              >
-                <div className="flex items-center gap-2 mb-0.5">
-                  <ShoppingBag className="w-3 h-3 text-lipstick animate-pulse" />
-                  <span className="text-[8px] font-bold text-white/40 uppercase tracking-[0.2em]">{toBengaliNumber(cartItems)} টি আইটেম</span>
+            <div className="bg-black/90 backdrop-blur-2xl rounded-[2.5rem] p-3 shadow-2xl flex items-center gap-3 border border-white/10">
+              <div className="px-5 border-r border-white/10">
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-bold text-white/40 uppercase tracking-widest mb-0.5">সর্বমোট</span>
+                  <span className="text-white text-xl font-black italic">{toBengaliNumber(cartTotal.toLocaleString('en-US'))}৳</span>
                 </div>
-                <span className="text-white text-xl font-black italic leading-none">{toBengaliNumber(cartTotal.toLocaleString('en-US'))}৳</span>
+              </div>
+              
+              <button 
+                type="button"
+                onClick={() => setIsCartOpen(true)}
+                className="flex-1 bg-white/5 hover:bg-white/10 text-white py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest flex items-center justify-center transition-all border border-white/5"
+              >
+                <ShoppingCart className="w-3.5 h-3.5 mr-2" />
+                কার্ট
               </button>
               
-              <Link 
-                href="/order-form"
-                className="flex-1 bg-lipstick text-white py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest flex items-center justify-center shadow-xl shadow-lipstick/30 active:scale-95 transition-all"
+              <button 
+                type="button"
+                onClick={() => router.push('/order-form')}
+                className="flex-[1.5] bg-lipstick text-white py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest flex items-center justify-center shadow-xl shadow-lipstick/20 active:scale-95 transition-all"
               >
                 <CreditCard className="w-3.5 h-3.5 mr-2" />
-                অর্ডার সম্পন্ন করুন
-              </Link>
+                কিনুন
+              </button>
             </div>
           </motion.div>
         )}

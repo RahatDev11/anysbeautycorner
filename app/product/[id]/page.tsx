@@ -298,16 +298,20 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
 
                 <div className="flex flex-col sm:flex-row gap-5">
                   <button 
+                    type="button"
                     onClick={handleAddToCart}
-                    className="flex-1 group relative bg-white text-lipstick-dark border-2 border-lipstick-dark py-5 px-8 rounded-3xl font-black flex items-center justify-center overflow-hidden transition-all hover:bg-lipstick hover:text-white"
+                    disabled={!isClickable}
+                    className="flex-1 group relative bg-white text-lipstick-dark border-2 border-lipstick-dark py-5 px-8 rounded-3xl font-black flex items-center justify-center overflow-hidden transition-all hover:bg-lipstick hover:text-white disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     <ShoppingCart className="w-6 h-6 mr-3 relative z-10" />
                     <span className="relative z-10">কার্টে যোগ করুন</span>
                     <div className="absolute inset-0 bg-white group-hover:bg-lipstick transition-all scale-x-0 group-hover:scale-x-100 origin-left"></div>
                   </button>
                   <button 
+                    type="button"
                     onClick={handleBuyNow}
-                    className="flex-[1.2] bg-lipstick-dark text-white py-5 px-8 rounded-3xl font-black flex items-center justify-center hover:bg-lipstick transition-all shadow-2xl shadow-lipstick-dark/30 transform active:scale-[0.98]"
+                    disabled={!isClickable}
+                    className="flex-[1.2] bg-lipstick-dark text-white py-5 px-8 rounded-3xl font-black flex items-center justify-center hover:bg-lipstick transition-all shadow-2xl shadow-lipstick-dark/30 transform active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     <CreditCard className="w-6 h-6 mr-3" />
                     অর্ডার করুন
@@ -489,15 +493,19 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
               </div>
             </div>
             <button 
+              type="button"
               onClick={handleAddToCart}
-              className="flex-1 bg-white/5 hover:bg-white/10 text-white py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest flex items-center justify-center transition-all border border-white/5"
+              disabled={!isClickable}
+              className="flex-1 bg-white/5 hover:bg-white/10 text-white py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest flex items-center justify-center transition-all border border-white/5 disabled:opacity-50"
             >
               <ShoppingCart className="w-3.5 h-3.5 mr-2" />
               কার্ট
             </button>
             <button 
+              type="button"
               onClick={handleBuyNow}
-              className="flex-[1.5] bg-lipstick text-white py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest flex items-center justify-center shadow-xl shadow-lipstick/20 active:scale-95 transition-all"
+              disabled={!isClickable}
+              className="flex-[1.5] bg-lipstick text-white py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest flex items-center justify-center shadow-xl shadow-lipstick/20 active:scale-95 transition-all disabled:opacity-50"
             >
               <CreditCard className="w-3.5 h-3.5 mr-2" />
               কিনুন
