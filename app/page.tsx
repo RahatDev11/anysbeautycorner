@@ -75,15 +75,15 @@ function HomeContent() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-lipstick/5 p-6 rounded-[2rem] border border-lipstick/10"
+            className="mb-8 md:mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-lipstick/5 p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-lipstick/10"
           >
             <div>
-              <p className="text-xs font-black text-lipstick/60 uppercase tracking-widest mb-1">সার্চ রেজাল্ট</p>
-              <h2 className="text-2xl md:text-3xl font-black text-gray-900 leading-none">
+              <p className="text-[10px] font-bold text-lipstick/60 uppercase tracking-widest mb-1">সার্চ রেজাল্ট</p>
+              <h2 className="text-xl md:text-3xl font-black text-gray-900 leading-none">
                 &quot;{searchQuery}&quot;
               </h2>
             </div>
-            <Link href="/" className="bg-lipstick text-white px-6 py-3 rounded-2xl font-black text-sm shadow-lg shadow-lipstick/20 hover:scale-105 transition-transform w-max">
+            <Link href="/" className="bg-lipstick text-white px-5 py-2.5 md:px-6 md:py-3 rounded-xl md:rounded-2xl font-bold text-xs md:text-sm shadow-lg shadow-lipstick/10 hover:scale-105 transition-transform w-max">
               সব প্রোডাক্ট দেখুন
             </Link>
           </motion.div>
@@ -92,39 +92,39 @@ function HomeContent() {
 
       {/* Hero Slider */}
       {!filterCat && !searchQuery && sliderProducts.length > 0 && (
-        <section className="mb-16 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-lipstick/10 border border-gray-100">
+        <section className="mb-10 rounded-[1.5rem] overflow-hidden shadow-xl shadow-lipstick/5 border border-gray-100 h-[280px] md:h-[350px] relative">
           <Swiper
             modules={[Autoplay, Pagination, EffectFade]}
             effect="fade"
             loop={sliderProducts.length > 1}
             autoplay={{ delay: 5000, disableOnInteraction: false }}
             pagination={{ clickable: true }}
-            className="w-full h-[450px] md:h-[600px]"
+            className="w-full h-full"
           >
             {sliderProducts.map((product) => {
               const image = product.image ? product.image.split(',')[0].trim() : 'https://via.placeholder.com/1200x800';
               return (
                 <SwiperSlide key={product.id}>
                   <div className="relative w-full h-full group">
-                    <img src={image} alt={product.name} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-[10s] ease-linear" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent md:bg-gradient-to-r md:from-black/70 md:to-transparent flex flex-col justify-center p-8 md:p-24">
+                    <img src={image} alt={product.name} className="w-full h-full object-cover sm:object-contain md:object-cover transform group-hover:scale-105 transition-transform duration-[10s] ease-linear" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/10 to-transparent flex flex-col justify-center p-6 md:p-14">
                       <motion.div
-                        initial={{ opacity: 0, x: -50 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.8 }}
+                        initial={{ opacity: 0, y: 15 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, ease: "easeOut" }}
                       >
-                         <span className="inline-block bg-lipstick text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-6 shadow-xl">New Arrival</span>
-                        <h3 className="text-white text-4xl md:text-7xl font-black mb-4 leading-[1.1] tracking-tighter max-w-2xl">{product.name}</h3>
-                        <div className="flex items-center gap-6 mb-10">
-                          <span className="text-white/90 text-2xl md:text-4xl font-black">{product.price} ৳</span>
-                          {product.oldPrice && <span className="text-white/40 text-lg md:text-2xl line-through font-bold">{product.oldPrice} ৳</span>}
+                         <span className="inline-block bg-white/20 backdrop-blur-md text-white px-2.5 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-[0.2em] mb-3 border border-white/30">Luxe Choice</span>
+                        <h3 className="text-white text-2xl md:text-4xl font-serif italic font-medium mb-3 leading-[1] tracking-tight max-w-lg">{product.name}</h3>
+                        <div className="flex items-center gap-3 mb-6">
+                          <span className="text-white text-lg md:text-2xl font-serif">{product.price} ৳</span>
+                          {product.oldPrice && <span className="text-white/40 text-sm md:text-lg line-through font-light italic">{product.oldPrice} ৳</span>}
                         </div>
                         <Link 
                           href={`/product/${product.id}`}
-                          className="group bg-white text-lipstick-dark hover:bg-lipstick hover:text-white py-4 px-10 rounded-[1.5rem] font-black text-lg transition-all shadow-2xl flex items-center w-max"
+                          className="group bg-white text-lipstick-dark hover:bg-lipstick hover:text-white py-2.5 px-8 rounded-full font-bold text-[9px] uppercase tracking-widest transition-all shadow-xl flex items-center w-max"
                         >
-                          এখনই কিনুন
-                          <ArrowRight className="ml-3 w-5 h-5 group-hover:translate-x-2 transition-transform" />
+                          Explore Now
+                          <ArrowRight className="ml-2 w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                         </Link>
                       </motion.div>
                     </div>
@@ -138,37 +138,38 @@ function HomeContent() {
 
       {/* Events Slider Upgrade */}
       {!filterCat && !searchQuery && events.length > 0 && (
-        <section className="mb-20">
-          <div className="flex flex-col items-center mb-10">
-            <span className="text-lipstick-dark font-black tracking-[0.3em] uppercase text-[10px] mb-2">Special Updates</span>
-            <h2 className="text-3xl md:text-5xl font-black text-gray-900">ইভেন্ট ও অফার</h2>
+        <section className="mb-16">
+          <div className="flex flex-col items-center mb-6">
+            <span className="text-lipstick-dark font-bold tracking-[0.3em] uppercase text-[8px] mb-1 opacity-50">Special Updates</span>
+            <h2 className="text-xl md:text-3xl font-serif italic text-gray-900 tracking-tight">ইভেন্ট ও অফার</h2>
           </div>
           <Swiper
             modules={[Autoplay, Pagination]}
             loop={events.length > 1}
             autoplay={{ delay: 6000 }}
             pagination={{ clickable: true }}
-            spaceBetween={30}
-            className="rounded-[2.5rem] h-[220px] md:h-[280px]"
+            spaceBetween={15}
+            className="rounded-[1.5rem] h-[140px] md:h-[180px]"
           >
             {events.map((event) => (
               <SwiperSlide key={event.id}>
                 {event.imageUrl ? (
                   <div 
-                    className="w-full h-full bg-cover bg-center rounded-[2.5rem] shadow-xl relative overflow-hidden group" 
+                    className="w-full h-full bg-cover bg-center rounded-[2rem] shadow-lg relative overflow-hidden group" 
                     style={{ backgroundImage: `url(${event.imageUrl})` }}
                   >
-                    <div className="absolute inset-0 bg-lipstick/40 mix-blend-multiply group-hover:opacity-0 transition-opacity"></div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8 md:p-12">
-                      <h3 className="text-3xl md:text-5xl font-black text-white mb-2 tracking-tighter">{event.title}</h3>
-                      <p className="text-white/80 text-sm md:text-lg font-bold max-w-xl">{event.description}</p>
+                    <div className="absolute inset-0 bg-black/15 group-hover:bg-black/30 transition-colors"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent flex flex-col justify-end p-6 md:p-10">
+                      <h3 className="text-2xl md:text-4xl font-serif italic text-white mb-2 tracking-tight">{event.title}</h3>
+                      <p className="text-white/90 text-xs md:text-base font-light max-w-lg line-clamp-2">{event.description}</p>
                     </div>
                   </div>
                 ) : (
-                  <div className="w-full h-full bg-lipstick/5 flex flex-col justify-center items-center text-center p-8 rounded-[2.5rem] shadow-sm border border-lipstick/10 relative">
-                    <Sparkles className="absolute top-8 right-8 text-lipstick/20 w-16 h-16" />
-                    <h3 className="text-3xl md:text-5xl font-black text-lipstick-dark mb-4 tracking-tighter">{event.title}</h3>
-                    <p className="text-gray-500 font-bold max-w-2xl text-sm md:text-xl leading-relaxed">{event.description}</p>
+                  <div className="w-full h-full bg-white flex flex-col justify-center items-center text-center p-6 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden">
+                    <Sparkles className="absolute -top-4 -right-4 text-lipstick/5 w-32 h-32 rotate-12" />
+                    <span className="text-lipstick-dark/40 font-serif italic text-xs mb-2">Featured Highlight</span>
+                    <h3 className="text-2xl md:text-4xl font-serif italic text-gray-900 mb-3 tracking-tight">{event.title}</h3>
+                    <p className="text-gray-500 font-medium max-w-xl text-xs md:text-lg leading-relaxed">{event.description}</p>
                   </div>
                 )}
               </SwiperSlide>
@@ -179,30 +180,30 @@ function HomeContent() {
 
       {/* Main Content Info */}
       <section>
-        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-          <div className="text-center md:text-left">
-            <span className="text-lipstick-dark font-black tracking-[0.3em] uppercase text-[10px] mb-2 block">Our Collection</span>
-            <h2 className="text-4xl md:text-6xl font-black text-gray-900 leading-[0.9] tracking-tighter">
-              {filterCat ? (filterCat === 'skincare' ? 'স্কিনকেয়ার' : filterCat === 'cosmetics' ? 'মেকআপ' : filterCat === 'haircare' ? 'হেয়ারকেয়ার' : filterCat) : 'সকল প্রোডাক্ট'}
+        <div className="flex flex-col md:flex-row justify-between items-baseline mb-8 md:mb-12 gap-3">
+          <div className="text-left">
+            <span className="text-lipstick-dark font-bold tracking-[0.4em] uppercase text-[8px] md:text-[9px] mb-1 md:mb-2 block opacity-60 ml-px md:ml-1">Curation</span>
+            <h2 className="text-2xl md:text-5xl font-serif font-medium text-gray-900 leading-[1] tracking-tight italic">
+              {filterCat ? (filterCat === 'skincare' ? 'স্কিনকেয়ার' : filterCat === 'cosmetics' ? 'মেকআপ' : filterCat === 'haircare' ? 'হেয়ারকেয়ার' : filterCat) : 'সকল কালেকশন'}
             </h2>
           </div>
           {filterCat && (
-            <Link href="/" className="group flex items-center bg-gray-100 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest text-gray-500 hover:bg-lipstick hover:text-white transition-all">
+            <Link href="/" className="group text-lipstick-dark font-bold flex items-center hover:text-lipstick transition-colors text-xs md:text-sm uppercase tracking-widest">
               সব দেখুন
-              <ChevronRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <ChevronRight className="ml-1 w-3.5 h-3.5 md:ml-2 md:w-4 md:h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           )}
         </div>
         
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-8">
             {[...Array(10)].map((_, i) => (
-              <div key={i} className="animate-pulse bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
-                <div className="aspect-[4/5] bg-gray-100 w-full mb-4"></div>
-                <div className="p-6 space-y-3">
-                  <div className="h-4 bg-gray-100 rounded-full w-3/4"></div>
-                  <div className="h-4 bg-gray-100 rounded-full w-1/2"></div>
-                  <div className="h-12 bg-gray-100 rounded-2xl w-full mt-6"></div>
+              <div key={i} className="animate-pulse bg-white rounded-[1rem] md:rounded-[1.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                <div className="aspect-square bg-gray-100 w-full mb-2 md:mb-3"></div>
+                <div className="p-3 md:p-4 space-y-2">
+                  <div className="h-2.5 md:h-3 bg-gray-100 rounded-full w-3/4"></div>
+                  <div className="h-2.5 md:h-3 bg-gray-100 rounded-full w-1/2"></div>
+                  <div className="h-8 md:h-10 bg-gray-100 rounded-lg md:rounded-xl w-full mt-3 md:mt-4"></div>
                 </div>
               </div>
             ))}
@@ -211,7 +212,7 @@ function HomeContent() {
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8"
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-8"
           >
             {displayProducts.map((product, idx) => (
               <motion.div

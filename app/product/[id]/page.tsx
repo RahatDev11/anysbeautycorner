@@ -69,8 +69,8 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
       quantity,
     });
     setQuantity(1);
-    // Standard alert as toast fallback
-    alert(`${product.name} কার্টে যোগ করা হয়েছে`);
+    const { setIsCartOpen } = useStore.getState();
+    setIsCartOpen(true);
   };
 
   const handleBuyNow = () => {
@@ -143,14 +143,14 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
         <span className="text-gray-900 font-medium truncate">{product.name}</span>
       </motion.nav>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 lg:gap-16">
         {/* Left: Gallery */}
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="lg:col-span-7 space-y-6"
+          className="lg:col-span-7 space-y-4 md:space-y-6"
         >
-          <div className="relative group bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-xl shadow-gray-200/40 aspect-square flex items-center justify-center p-4">
+          <div className="relative group bg-white rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-xl shadow-gray-200/40 aspect-square flex items-center justify-center p-4">
             <AnimatePresence mode="wait">
               <motion.img 
                 key={mainImage}
@@ -211,42 +211,45 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
         >
           <div className="space-y-4">
             <div className="flex justify-between items-start gap-4">
-               <h1 className="text-3xl md:text-5xl font-black text-gray-900 leading-tight md:leading-[1.1]">{product.name}</h1>
+               <h1 className="text-3xl md:text-5xl lg:text-6xl font-serif font-medium text-gray-900 leading-tight md:leading-[1.1]">{product.name}</h1>
                <button 
                 onClick={handleShare} 
-                className="p-3 bg-gray-50 rounded-2xl hover:bg-gray-100 transition shadow-sm text-gray-500 hover:text-lipstick flex-shrink-0"
+                className="p-2.5 md:p-3 bg-white border border-gray-100 rounded-xl md:rounded-2xl hover:bg-gray-50 transition shadow-sm text-gray-500 hover:text-lipstick flex-shrink-0"
                >
-                 <Share2 className="w-6 h-6" />
+                 <Share2 className="w-5 h-5 md:w-6 md:h-6" />
                </button>
             </div>
             
             <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-1.5 bg-yellow-50 px-3 py-1.5 rounded-full border border-yellow-100">
+              <div className="flex items-center gap-1.5 bg-yellow-50/50 px-3 py-1.5 rounded-full border border-yellow-100/50">
                 <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                <span className="text-xs font-bold text-yellow-700">৫.০ (১৮ রিভিউ)</span>
+                <span className="text-xs font-semibold text-yellow-800 tracking-tight">৫.০ (১৮ রিভিউ)</span>
               </div>
-              <div className="h-1.5 w-1.5 rounded-full bg-gray-300"></div>
+              <div className="h-1 w-1 rounded-full bg-gray-300"></div>
               {isOutOfStock ? (
-                <span className="bg-red-50 text-red-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-red-100">স্টকে নেই</span>
+                <span className="bg-red-50/50 text-red-600 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border border-red-100/50">স্টকে নেই</span>
               ) : (
-                <span className="bg-emerald-50 text-emerald-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100">স্টকে আছে</span>
+                <span className="bg-emerald-50/50 text-emerald-600 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border border-emerald-100/50">স্টকে আছে</span>
               )}
             </div>
 
-            <div className="flex items-end gap-5 py-6">
-              <div className="flex flex-col">
-                <span className="text-sm font-bold text-gray-400 mb-1">মূল্য:</span>
-                <span className="text-5xl font-black text-lipstick-dark leading-none">{product.price} ৳</span>
-              </div>
+            <div className="flex items-baseline gap-3 md:gap-4 pt-2 md:pt-4 pb-2">
+              <span className="text-3xl md:text-5xl font-black text-lipstick-dark tracking-tighter">{product.price} ৳</span>
               {product.oldPrice && (
-                <div className="flex flex-col mb-1">
-                  <span className="text-lg text-gray-300 line-through font-bold">{product.oldPrice} ৳</span>
-                  <span className="text-xs font-black text-emerald-500">{(Math.round((1 - parseInt(product.price) / parseInt(product.oldPrice)) * 100))}% ছাড়</span>
+                <div className="flex items-center gap-2 md:gap-3">
+                  <span className="text-lg md:text-xl text-gray-300 line-through font-medium">{product.oldPrice} ৳</span>
+                  <span className="text-[10px] md:text-sm font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-lg">{(Math.round((1 - parseInt(product.price) / parseInt(product.oldPrice)) * 100))}% ছাড়</span>
                 </div>
               )}
             </div>
 
-            <div className="h-px bg-gray-100 w-full my-4"></div>
+            <div className="py-2">
+              <p className="text-gray-500 leading-relaxed text-sm md:text-base line-clamp-3">
+                {product.description || 'বিলাসবহুল ও কার্যকর ফিনিশিংয়ের জন্য এই প্রোডাক্টটি বিশেষভাবে তৈরি করা হয়েছে।'}
+              </p>
+            </div>
+
+            <div className="h-px bg-gray-100 w-full my-6"></div>
 
             {!isOutOfStock ? (
               <div className="space-y-8 pt-4">
@@ -294,32 +297,32 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
             )}
 
             {/* Trust Points */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-12 py-8 border-y border-gray-100">
-              <div className="flex flex-col items-center text-center space-y-3">
-                <div className="p-4 bg-blue-50 rounded-3xl">
-                  <ShieldCheck className="w-7 h-7 text-blue-600" />
+            <div className="grid grid-cols-3 gap-3 md:gap-4 mt-8 md:mt-12 py-6 md:py-8 border-y border-gray-100">
+              <div className="flex flex-col items-center text-center space-y-2 md:space-y-3">
+                <div className="p-3 md:p-4 bg-blue-50 rounded-2xl md:rounded-3xl">
+                  <ShieldCheck className="w-5 h-5 md:w-7 md:h-7 text-blue-600" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-black text-gray-900 uppercase tracking-wider">১০০% আসল</h4>
-                  <p className="text-[10px] text-gray-400">Authentic Guaranteed</p>
+                  <h4 className="text-[9px] md:text-xs font-black text-gray-900 uppercase tracking-wider">১০০% আসল</h4>
+                  <p className="text-[8px] md:text-[10px] text-gray-400">Authentic</p>
                 </div>
               </div>
-              <div className="flex flex-col items-center text-center space-y-3">
-                <div className="p-4 bg-emerald-50 rounded-3xl">
-                  <Truck className="w-7 h-7 text-emerald-600" />
+              <div className="flex flex-col items-center text-center space-y-2 md:space-y-3">
+                <div className="p-3 md:p-4 bg-emerald-50 rounded-2xl md:rounded-3xl">
+                  <Truck className="w-5 h-5 md:w-7 md:h-7 text-emerald-600" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-black text-gray-900 uppercase tracking-wider">ফাস্ট ডেলিভারি</h4>
-                  <p className="text-[10px] text-gray-400">Doorstep Delivery</p>
+                  <h4 className="text-[9px] md:text-xs font-black text-gray-900 uppercase tracking-wider">ডেলিভারি</h4>
+                  <p className="text-[8px] md:text-[10px] text-gray-400">Fast</p>
                 </div>
               </div>
-              <div className="flex flex-col items-center text-center space-y-3">
-                <div className="p-4 bg-orange-50 rounded-3xl">
-                  <RefreshCcw className="w-7 h-7 text-orange-600" />
+              <div className="flex flex-col items-center text-center space-y-2 md:space-y-3">
+                <div className="p-3 md:p-4 bg-orange-50 rounded-2xl md:rounded-3xl">
+                  <RefreshCcw className="w-5 h-5 md:w-7 md:h-7 text-orange-600" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-black text-gray-900 uppercase tracking-wider">রিটার্ন পলিসি</h4>
-                  <p className="text-[10px] text-gray-400">Easy 3-Day Return</p>
+                  <h4 className="text-[9px] md:text-xs font-black text-gray-900 uppercase tracking-wider">রিটার্ন</h4>
+                  <p className="text-[8px] md:text-[10px] text-gray-400">Policy</p>
                 </div>
               </div>
             </div>
@@ -334,18 +337,18 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
         viewport={{ once: true }}
         className="mt-20"
       >
-        <div className="flex gap-12 border-b border-gray-100 mb-10 overflow-x-auto no-scrollbar scroll-smooth">
+          <div className="flex gap-6 md:gap-12 border-b border-gray-100 mb-8 md:mb-10 overflow-x-auto no-scrollbar scroll-smooth">
           {['description', 'delivery', 'reviews'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`pb-5 px-2 text-sm md:text-lg font-black uppercase tracking-widest transition-all relative ${activeTab === tab ? 'text-lipstick-dark' : 'text-gray-300 hover:text-gray-500'}`}
+              className={`pb-4 md:pb-5 px-1 md:px-2 text-xs md:text-lg font-serif font-medium uppercase tracking-widest transition-all relative whitespace-nowrap ${activeTab === tab ? 'text-lipstick-dark opacity-100' : 'text-gray-400 opacity-60 hover:opacity-100'}`}
             >
-              {tab === 'description' ? 'বিবরণ' : tab === 'delivery' ? 'ডেলিভারি তথ্য' : 'রিভিউ (০)'}
+              {tab === 'description' ? 'বিবরণ' : tab === 'delivery' ? 'ডেলিভারি' : 'রিভিউ (০)'}
               {activeTab === tab && (
                 <motion.div 
                   layoutId="activeTabUnderline"
-                  className="absolute bottom-0 left-0 w-full h-1.5 bg-lipstick-dark rounded-full"
+                  className="absolute bottom-0 left-0 w-full h-1 bg-lipstick-dark rounded-full"
                 />
               )}
             </button>
@@ -426,17 +429,17 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
       {/* Related Products */}
       {relatedProducts.length > 0 && (
         <div className="mt-32">
-          <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
-            <div className="text-center md:text-left">
-              <h2 className="text-3xl md:text-5xl font-black text-gray-900 mb-2">আপনার ভালো লাগতে পারে</h2>
-              <p className="text-gray-400 font-bold">Similar highlights you might adore</p>
+          <div className="flex flex-col md:flex-row justify-between items-baseline mb-8 md:mb-12 gap-3">
+            <div className="text-left">
+              <h2 className="text-2xl md:text-5xl lg:text-6xl font-serif font-medium text-gray-900 mb-2 tracking-tight">আপনার ভালো লাগতে পারে</h2>
+              <p className="text-gray-400 text-xs md:text-base font-medium">Elevate your collection with our curation</p>
             </div>
             <Link 
               href={`/?filter=${product.category || ''}`} 
-              className="group bg-lipstick-dark text-white px-8 py-4 rounded-3xl font-black hover:bg-lipstick transition-all shadow-xl shadow-lipstick/20 flex items-center"
+              className="group text-lipstick-dark font-bold flex items-center hover:text-lipstick transition-colors"
             >
               সব দেখুন
-              <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              <ChevronRight className="w-5 h-5 ml-1 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
@@ -452,7 +455,7 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
         <motion.div 
           initial={{ y: 100 }}
           animate={{ y: 0 }}
-          className="lg:hidden fixed bottom-6 left-4 right-4 z-[100]"
+          className="lg:hidden fixed bottom-6 left-4 right-4 z-40"
         >
           <div className="bg-black/90 backdrop-blur-xl rounded-[2rem] p-3 shadow-2xl flex items-center gap-3">
             <div className="px-4 border-r border-white/20">
