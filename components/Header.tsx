@@ -18,6 +18,7 @@ import {
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 export default function Header() {
   const {
@@ -39,6 +40,7 @@ export default function Header() {
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const { permission, requestPermission } = usePushNotifications(user?.uid);
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   // Scroll lock for mobile menu
@@ -283,6 +285,17 @@ export default function Header() {
                       </p>
                     </div>
                     <div className="max-h-80 overflow-y-auto pr-1 space-y-1">
+                      {user && permission !== 'granted' && (
+                        <div className="p-3 mb-2 bg-lipstick/5 rounded-xl border border-lipstick/10">
+                          <p className="text-xs text-gray-700 font-medium mb-2">সরাসরি মোবাইলে নোটিফিকেশন পেতে চান?</p>
+                          <button 
+                            onClick={() => requestPermission()}
+                            className="w-full py-1.5 bg-lipstick text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-lipstick-dark transition-colors"
+                          >
+                            অ্যালাউ করুন
+                          </button>
+                        </div>
+                      )}
                       {user ? (
                         notifications.length > 0 ? (
                           notifications.map((n) => (
