@@ -270,21 +270,36 @@ export default function Header() {
                   </span>
                 )}
               </button>
+            </div>
 
-              <AnimatePresence>
-                {isNotificationsOpen && (
+            <AnimatePresence>
+              {isNotificationsOpen && (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black/20 z-[90] lg:hidden backdrop-blur-sm"
+                    onClick={() => setIsNotificationsOpen(false)}
+                  />
                   <motion.div
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute right-0 mt-3 w-72 sm:w-80 bg-white rounded-[1.5rem] shadow-2xl py-3 z-[60] border border-gray-100 p-2"
+                    className="fixed lg:absolute top-20 lg:top-full mt-3 right-4 left-4 lg:left-auto lg:right-0 lg:w-80 bg-white rounded-[1.5rem] shadow-2xl py-3 z-[100] border border-gray-100 p-2"
                   >
                     <div className="px-4 py-3 border-b border-gray-100 mb-2 flex justify-between items-center">
                       <p className="text-xs font-black text-gray-400 uppercase tracking-widest">
                         নোটিফিকেশন
                       </p>
+                      <button 
+                        className="lg:hidden p-1.5 text-gray-400 hover:text-gray-700 bg-gray-50 rounded-full transition-colors active:scale-95"
+                        onClick={() => setIsNotificationsOpen(false)}
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
-                    <div className="max-h-80 overflow-y-auto pr-1 space-y-1">
+                    <div className="max-h-[60vh] lg:max-h-80 overflow-y-auto pr-1 space-y-1">
                       {user && permission !== 'granted' && (
                         <div className="p-3 mb-2 bg-lipstick/5 rounded-xl border border-lipstick/10">
                           <p className="text-xs text-gray-700 font-medium mb-2">সরাসরি মোবাইলে নোটিফিকেশন পেতে চান?</p>
@@ -341,9 +356,9 @@ export default function Header() {
                       )}
                     </div>
                   </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                </>
+              )}
+            </AnimatePresence>
 
             <button
               className="bg-white text-lipstick w-9 h-9 sm:w-11 sm:h-11 rounded-[14px] sm:rounded-2xl shadow-xl flex items-center justify-center relative hover:scale-105 transition-transform active:scale-95 group"
