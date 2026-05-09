@@ -40,7 +40,7 @@ export default function LoadingScreen({ isLoading }: { isLoading?: boolean }) {
             >
               <div className="w-[90%] h-[90%] rounded-full overflow-hidden border border-lipstick/10 bg-white flex flex-col items-center justify-center relative">
                  <Image 
-                   src="/logo.png" 
+                   src="/logo.jpg" 
                    alt="Any's Beauty Corner Logo" 
                    fill 
                    className="object-contain p-2"

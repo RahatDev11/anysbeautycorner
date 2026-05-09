@@ -188,7 +188,7 @@ export default function Header() {
           >
             <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:mr-3 mr-2 bg-white overflow-hidden relative shadow-md transform rotate-3 group-hover:rotate-0 transition-transform shrink-0">
               <Image
-                src="/logo.png"
+                src="/logo.jpg"
                 alt="Logo"
                 fill
                 className="object-contain p-1"
@@ -422,7 +422,7 @@ export default function Header() {
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 bg-white rounded-xl overflow-hidden relative shadow-sm transform -rotate-3">
                     <Image
-                      src="/logo.png"
+                      src="/logo.jpg"
                       alt="Logo"
                       fill
                       className="object-contain p-1"
@@ -540,7 +540,7 @@ export default function Header() {
                 <div className="flex items-center gap-2 mb-4">
                   <div className="h-8 w-8 rounded-xl bg-white overflow-hidden relative shadow-sm">
                     <Image
-                      src="/logo.png"
+                      src="/logo.jpg"
                       alt="Logo"
                       fill
                       className="object-contain p-1"

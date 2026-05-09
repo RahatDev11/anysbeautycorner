@@ -88,10 +88,10 @@ export default function ProductCard({ product }: { product: Product }) {
         </div>
       </Link>
 
-      <div className="p-4 md:p-5 flex flex-col flex-grow">
-        <div className="mb-1.5">
+      <div className="p-3 md:p-4 flex flex-col flex-grow">
+        <div className="mb-1">
           <Link href={`/product/${product.id}`} className="block">
-            <h3 className="font-serif font-semibold text-gray-900 text-base md:text-lg mb-1 line-clamp-2 leading-tight group-hover:text-lipstick transition-colors tracking-tight">{product.name}</h3>
+            <h3 className="font-serif font-semibold text-gray-900 text-sm md:text-base mb-1 line-clamp-2 leading-tight group-hover:text-lipstick transition-colors tracking-tight">{product.name}</h3>
           </Link>
           <div className="flex items-center gap-2">
             <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em]">{product.category || 'পণ্য'}</p>
@@ -99,12 +99,12 @@ export default function ProductCard({ product }: { product: Product }) {
           </div>
         </div>
 
-        <div className="mt-auto pt-3 space-y-3">
+        <div className="mt-auto pt-2 space-y-2">
           <div className="flex justify-between items-baseline">
             <div className="flex items-baseline gap-2">
-              <span className="text-lg font-bold text-lipstick-dark leading-none">{product.price} ৳</span>
+              <span className="text-base font-bold text-lipstick-dark leading-none">{product.price} ৳</span>
               {product.oldPrice && (
-                <span className="text-[11px] text-gray-300 line-through font-medium mb-0.5">{product.oldPrice} ৳</span>
+                <span className="text-[10px] text-gray-300 line-through font-medium mb-0.5">{product.oldPrice} ৳</span>
               )}
             </div>
           </div>
@@ -117,18 +117,18 @@ export default function ProductCard({ product }: { product: Product }) {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   key="quantity"
-                  className="w-full bg-lipstick/5 rounded-xl font-black flex items-center h-10 justify-between px-1 border border-lipstick/10"
+                  className="w-full bg-lipstick/5 rounded-xl font-black flex items-center h-9 justify-between px-1 border border-lipstick/10"
                 >
                   <button 
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); updateQuantity(product.id, -1); }} 
-                    className="w-8 h-8 flex items-center justify-center text-lipstick bg-white rounded-lg shadow-sm hover:scale-105 active:scale-95 transition-all"
+                    className="w-7 h-7 flex items-center justify-center text-lipstick bg-white rounded-lg shadow-sm hover:scale-105 active:scale-95 transition-all"
                   >
                     <Minus className="w-3.5 h-3.5" />
                   </button>
                   <span className="text-sm text-lipstick-dark">{cartItem.quantity}</span>
                   <button 
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); updateQuantity(product.id, 1); }} 
-                    className="w-8 h-8 flex items-center justify-center text-lipstick bg-white rounded-lg shadow-sm hover:scale-105 active:scale-95 transition-all"
+                    className="w-7 h-7 flex items-center justify-center text-lipstick bg-white rounded-lg shadow-sm hover:scale-105 active:scale-95 transition-all"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
@@ -141,10 +141,10 @@ export default function ProductCard({ product }: { product: Product }) {
                   key="add"
                   disabled={isOutOfStock}
                   onClick={handleAddToCart} 
-                  className={`w-full h-10 rounded-xl font-bold flex items-center justify-center transition-all shadow-sm ${isOutOfStock ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-lipstick-dark border border-lipstick/30 hover:bg-lipstick hover:text-white hover:border-lipstick'}`}
+                  className={`w-full h-9 rounded-xl font-bold flex items-center justify-center transition-all shadow-sm ${isOutOfStock ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-lipstick-dark border border-lipstick/30 hover:bg-lipstick hover:text-white hover:border-lipstick'}`}
                 >
-                  <ShoppingCart className="w-3.5 h-3.5 mr-2" />
-                  <span className="text-[10px] uppercase tracking-widest">কার্টে যোগ করুন</span>
+                  <ShoppingCart className="w-3 h-3 mr-1.5" />
+                  <span className="text-[9px] uppercase tracking-widest">কার্টে যোগ করুন</span>
                 </motion.button>
               )}
             </AnimatePresence>
@@ -152,7 +152,7 @@ export default function ProductCard({ product }: { product: Product }) {
             <button 
               disabled={isOutOfStock}
               onClick={handleBuyNow} 
-              className={`w-full h-10 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all shadow-md ${isOutOfStock ? 'bg-gray-50 text-gray-300 cursor-not-allowed' : 'bg-lipstick-dark text-white hover:bg-gray-900 active:scale-[0.98] shadow-lipstick-dark/10'}`}
+              className={`w-full h-9 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all shadow-md ${isOutOfStock ? 'bg-gray-50 text-gray-300 cursor-not-allowed' : 'bg-lipstick-dark text-white hover:bg-gray-900 active:scale-[0.98] shadow-lipstick-dark/10'}`}
             >
               কিনুন
             </button>
