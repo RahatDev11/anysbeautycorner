@@ -252,7 +252,7 @@ export default function Header() {
               <Search className="w-5 h-5" />
             </button>
 
-            <div className="relative">
+            <div className="relative hidden lg:block">
               <button
                 className="bg-white/10 text-white w-9 h-9 sm:w-11 sm:h-11 rounded-[14px] sm:rounded-2xl flex items-center justify-center relative hover:bg-white/20 transition-all p-2 active:scale-95 border border-white/5"
                 onClick={() => {
@@ -447,6 +447,53 @@ export default function Header() {
               </div>
 
               <div className="p-6 overflow-y-auto flex-grow space-y-8 bg-white">
+                {user && (
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        setIsNotificationsOpen(true);
+                        if (unreadCount > 0) markNotificationsAsRead();
+                      }}
+                      className="flex-1 flex items-center justify-center py-3 bg-gray-50 rounded-[1.25rem] border border-gray-100 hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="relative">
+                        <Bell className="w-5 h-5 text-gray-700" />
+                        {unreadCount > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white font-black text-[9px] rounded-full h-4 w-4 flex items-center justify-center ring-2 ring-white">
+                            {unreadCount}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+
+                    <Link
+                      href="/profile"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex-1 flex items-center justify-center py-3 bg-gray-50 rounded-[1.25rem] border border-gray-100 hover:bg-gray-100 transition-colors"
+                    >
+                      {user?.photoURL ? (
+                        <img src={user.photoURL} alt="User" className="w-6 h-6 rounded-full" referrerPolicy="no-referrer" />
+                      ) : (
+                        <UserCircle className="w-6 h-6 text-gray-700" />
+                      )}
+                    </Link>
+                  </div>
+                )}
+
+                {!user && (
+                  <div className="pt-2">
+                    <Link
+                      href="/profile"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="w-full py-3.5 flex items-center justify-center gap-2 border-2 border-gray-100 text-gray-700 rounded-[1.25rem] font-bold text-sm hover:bg-gray-50 transition-all active:scale-[0.98]"
+                    >
+                      <UserCircle className="w-5 h-5" />
+                      লগইন করুন
+                    </Link>
+                  </div>
+                )}
+
                 <div className="space-y-5">
                   <div className="flex items-center justify-between px-1">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
@@ -464,7 +511,6 @@ export default function Header() {
                       { label: "মেকআপ ও কসমেটিকস", href: "/?filter=cosmetics" },
                       { label: "হেয়ারকেয়ার টিপস", href: "/?filter=haircare" },
                       { label: "অর্ডার ট্র্যাক করুন", href: "/order-track" },
-                      { label: "আমার প্রোফাইল", href: "/profile" },
                     ].map((item, idx) => (
                       <li key={idx}>
                         <Link
@@ -477,83 +523,16 @@ export default function Header() {
                         </Link>
                       </li>
                     ))}
-                    <li>
-                      <button
-                        className="w-full flex items-center group p-4 border border-transparent rounded-[1.25rem] hover:bg-gray-50 transition-all font-bold text-gray-700 hover:text-lipstick text-sm text-left"
-                        onClick={() => {
-                          setIsMobileMenuOpen(false);
-                          setIsNotificationsOpen(true);
-                          if (unreadCount > 0) markNotificationsAsRead();
-                        }}
-                      >
-                        <span className="flex-1 flex items-center gap-2">
-                          নোটিফিকেশন
-                          {unreadCount > 0 && (
-                            <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">
-                              {unreadCount}
-                            </span>
-                          )}
-                        </span>
-                        <Bell className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-all" />
-                      </button>
-                    </li>
                   </ul>
                 </div>
 
-                {user ? (
-                  <div className="space-y-5">
-                    <div className="flex items-center justify-between px-1">
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                        আপনার অ্যাকাউন্ট
-                      </p>
-                      <div className="h-px flex-1 bg-gray-100 ml-4"></div>
-                    </div>
-                    <div className="p-4 bg-gray-50/80 border border-gray-100 rounded-3xl flex items-center gap-4">
-                      <div className="relative">
-                        <img
-                          src={user.photoURL || ""}
-                          alt=""
-                          className="w-12 h-12 rounded-2xl shadow-sm object-cover"
-                          referrerPolicy="no-referrer"
-                        />
-                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-base text-gray-900 truncate tracking-tight">
-                          {user.displayName}
-                        </p>
-                        <p className="text-[10px] text-gray-400 truncate uppercase font-bold tracking-wider">
-                          {user.email}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Link
-                        href="/profile"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="w-full py-4 text-center border-2 border-gray-100 text-gray-700 rounded-[1.25rem] font-bold text-sm hover:bg-gray-50 transition-all active:scale-[0.98]"
-                      >
-                        প্রোফাইল
-                      </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="w-full py-4 text-center border-2 border-red-50 text-red-500 rounded-[1.25rem] font-bold text-sm hover:bg-red-50 transition-all active:scale-[0.98]"
-                      >
-                        লগআউট
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="pt-2">
-                    <Link
-                      href="/profile"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="w-full py-4 flex items-center justify-center gap-2 border-2 border-gray-100 text-gray-700 rounded-[1.25rem] font-bold text-sm hover:bg-gray-50 transition-all active:scale-[0.98]"
-                    >
-                      <UserCircle className="w-5 h-5" />
-                      লগইন করুন
-                    </Link>
-                  </div>
+                {user && (
+                  <button
+                    onClick={handleLogout}
+                    className="w-full py-4 text-center border-2 border-red-50 text-red-500 rounded-[1.25rem] font-bold text-sm hover:bg-red-50 transition-all active:scale-[0.98]"
+                  >
+                    লগআউট
+                  </button>
                 )}
               </div>
 
