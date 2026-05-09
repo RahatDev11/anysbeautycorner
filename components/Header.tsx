@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useStore } from '@/lib/store';
 import { auth, googleProvider } from '@/lib/firebase';
-import { signInWithPopup, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import Image from 'next/image';
 import { ShoppingBag, Search, Menu, X, UserCircle, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -16,6 +16,7 @@ export default function Header() {
   const cartItemCount = cart.reduce((total, item) => total + (item.quantity || 0), 0);
   const [searchQuery, setSearchQuery] = useState('');
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
   // Scroll lock for mobile menu
   useEffect(() => {
@@ -28,21 +29,6 @@ export default function Header() {
       document.body.style.overflow = 'unset';
     };
   }, [isMobileMenuOpen]);
-
-  const handleLogin = async () => {
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      setUser({
-        uid: result.user.uid,
-        email: result.user.email,
-        displayName: result.user.displayName,
-        photoURL: result.user.photoURL,
-      });
-    } catch (error) {
-      console.error('Login failed', error);
-      alert('লগইন ব্যর্থ হয়েছে।');
-    }
-  };
 
   const handleLogout = async () => {
     if (confirm('আপনি কি লগআউট করতে চান?')) {
@@ -68,7 +54,7 @@ export default function Header() {
             whileHover={{ scale: 1.01 }}
             className="flex items-center"
           >
-            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl mr-3 bg-white overflow-hidden relative shadow-md transform rotate-3 group-hover:rotate-0 transition-transform">
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:mr-3 mr-2 bg-white overflow-hidden relative shadow-md transform rotate-3 group-hover:rotate-0 transition-transform shrink-0">
               <Image 
                 src="/logo.png" 
                 alt="Logo" 
@@ -77,7 +63,7 @@ export default function Header() {
                 referrerPolicy="no-referrer"
               />
             </div>
-            <span className="text-base sm:text-lg md:text-xl font-serif font-semibold whitespace-nowrap hidden xs:block tracking-tight italic">Any&apos;s Beauty Corner</span>
+            <span className="text-[17px] leading-[1.05] min-[380px]:text-[20px] sm:text-2xl md:text-3xl font-serif font-semibold tracking-tight italic max-w-[130px] min-[380px]:max-w-[180px] sm:max-w-none line-clamp-2 sm:line-clamp-none sm:whitespace-nowrap">Any&apos;s Beauty Corner</span>
           </motion.div>
         </Link>
   
@@ -104,7 +90,8 @@ export default function Header() {
             <button 
               className="lg:hidden p-2 text-white hover:bg-white/10 rounded-xl transition" 
               onClick={() => {
-                setIsMobileMenuOpen(true);
+                setIsMobileSearchOpen(!isMobileSearchOpen);
+                setIsMobileMenuOpen(false);
                 setIsCartOpen(false);
               }}
             >
@@ -125,9 +112,9 @@ export default function Header() {
                   <span className="text-[10px] font-bold max-w-[70px] truncate hidden md:block uppercase tracking-wider">{user.displayName?.split(' ')[0]}</span>
                 </button>
               ) : (
-                <button className="flex items-center p-2 hover:bg-white/10 rounded-xl transition text-white" onClick={handleLogin}>
+                <Link href="/profile" className="flex items-center p-2 hover:bg-white/10 rounded-xl transition text-white">
                   <UserCircle className="w-5 h-5" />
-                </button>
+                </Link>
               )}
   
               <AnimatePresence>
@@ -142,7 +129,10 @@ export default function Header() {
                       <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">অ্যাকাউন্ট</p>
                       <p className="text-sm font-bold text-gray-800 truncate">{user?.displayName}</p>
                     </div>
-                    <Link href="/order-track" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition font-bold" onClick={() => setIsUserMenuOpen(false)}>
+                    <Link href="/profile" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition font-bold" onClick={() => setIsUserMenuOpen(false)}>
+                      আমার প্রোফাইল
+                    </Link>
+                    <Link href="/order-track" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition font-bold mt-1" onClick={() => setIsUserMenuOpen(false)}>
                       আমার অর্ডার
                     </Link>
                     <button className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-50 rounded-xl transition font-bold mt-1" onClick={handleLogout}>
@@ -179,6 +169,37 @@ export default function Header() {
             </button>
           </div>
         </div>
+
+        {/* Mobile Search Bar Dropdown */}
+        <AnimatePresence>
+          {isMobileSearchOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="lg:hidden absolute top-full left-0 w-full bg-white shadow-xl overflow-hidden border-t border-gray-100 z-40 origin-top"
+            >
+              <div className="p-4 bg-white">
+                <form onSubmit={(e) => {
+                  handleSearch(e);
+                  setIsMobileSearchOpen(false);
+                }} className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Search className="w-5 h-5 text-gray-400 group-focus-within:text-lipstick transition-colors" />
+                  </div>
+                  <input
+                    type="text"
+                    className="w-full h-12 lg:h-13 pl-12 pr-4 border-2 border-gray-100 rounded-2xl text-gray-800 transition-all focus:outline-none focus:border-lipstick bg-gray-50/50 font-bold text-sm"
+                    placeholder="পণ্য সার্চ করুন..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    autoFocus
+                  />
+                </form>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       <AnimatePresence>
@@ -215,7 +236,7 @@ export default function Header() {
                     />
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-serif italic text-lg leading-none">Any&apos;s Beauty</span>
+                    <span className="font-serif italic text-[17px] leading-none">Any&apos;s Beauty Corner</span>
                     <span className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-70 mt-0.5">Explore Menu</span>
                   </div>
                 </div>
@@ -228,19 +249,6 @@ export default function Header() {
               </div>
               
               <div className="p-6 overflow-y-auto flex-grow space-y-8 bg-white">
-                 <form onSubmit={handleSearch} className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Search className="w-5 h-5 text-gray-400 group-focus-within:text-lipstick transition-colors" />
-                  </div>
-                  <input
-                    type="text"
-                    className="w-full h-13 pl-12 pr-4 border-2 border-gray-100 rounded-[1.25rem] text-gray-800 transition-all focus:outline-none focus:border-lipstick bg-gray-50/50 font-bold text-sm"
-                    placeholder="পণ্য সার্চ করুন..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </form>
-
                 <div className="space-y-5">
                   <div className="flex items-center justify-between px-1">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">প্রধান মেনু</p>
@@ -253,6 +261,7 @@ export default function Header() {
                       { label: 'মেকআপ ও কসমেটিকস', href: '/?filter=cosmetics' },
                       { label: 'হেয়ারকেয়ার টিপস', href: '/?filter=haircare' },
                       { label: 'অর্ডার ট্র্যাক করুন', href: '/order-track' },
+                      { label: 'আমার প্রোফাইল', href: '/profile' },
                     ].map((item, idx) => (
                       <li key={idx}>
                         <Link 
@@ -268,7 +277,7 @@ export default function Header() {
                   </ul>
                 </div>
 
-                {user && (
+                {user ? (
                    <div className="space-y-5">
                      <div className="flex items-center justify-between px-1">
                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">আপনার অ্যাকাউন্ট</p>
@@ -284,12 +293,32 @@ export default function Header() {
                           <p className="text-[10px] text-gray-400 truncate uppercase font-bold tracking-wider">{user.email}</p>
                         </div>
                      </div>
-                     <button 
-                       onClick={handleLogout}
-                       className="w-full py-4 border-2 border-red-50 text-red-500 rounded-[1.25rem] font-bold text-sm hover:bg-red-50 transition-all active:scale-[0.98]"
+                     <div className="grid grid-cols-2 gap-3">
+                       <Link 
+                         href="/profile"
+                         onClick={() => setIsMobileMenuOpen(false)}
+                         className="w-full py-4 text-center border-2 border-gray-100 text-gray-700 rounded-[1.25rem] font-bold text-sm hover:bg-gray-50 transition-all active:scale-[0.98]"
+                       >
+                         প্রোফাইল
+                       </Link>
+                       <button 
+                         onClick={handleLogout}
+                         className="w-full py-4 text-center border-2 border-red-50 text-red-500 rounded-[1.25rem] font-bold text-sm hover:bg-red-50 transition-all active:scale-[0.98]"
+                       >
+                         লগআউট
+                       </button>
+                     </div>
+                   </div>
+                ) : (
+                   <div className="pt-2">
+                     <Link 
+                       href="/profile"
+                       onClick={() => setIsMobileMenuOpen(false)}
+                       className="w-full py-4 flex items-center justify-center gap-2 border-2 border-gray-100 text-gray-700 rounded-[1.25rem] font-bold text-sm hover:bg-gray-50 transition-all active:scale-[0.98]"
                      >
-                       লগআউট
-                     </button>
+                       <UserCircle className="w-5 h-5" />
+                       লগইন করুন
+                     </Link>
                    </div>
                 )}
               </div>
