@@ -56,7 +56,7 @@ export function usePushNotifications(userId?: string) {
           if (Notification.permission === 'granted' && payload.notification) {
             new Notification(payload.notification.title || 'Notification', {
               body: payload.notification.body,
-              icon: '/logo.jpg',
+              icon: '/logo.png',
             });
           }
         });

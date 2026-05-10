@@ -18,7 +18,6 @@ import {
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 export default function Header() {
   const {
@@ -38,9 +37,7 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
-  const { permission, requestPermission } = usePushNotifications(user?.uid);
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   // Scroll lock for mobile menu
@@ -190,7 +187,7 @@ export default function Header() {
           >
             <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:mr-3 mr-2 bg-white overflow-hidden relative shadow-md transform rotate-3 group-hover:rotate-0 transition-transform shrink-0">
               <Image
-                src="/logo.jpg"
+                src="/logo.png"
                 alt="Logo"
                 fill
                 className="object-contain p-1"
@@ -255,13 +252,9 @@ export default function Header() {
             </button>
 
             <div className="relative hidden lg:block">
-              <button
+              <Link
+                href="/notifications"
                 className="bg-white/10 text-white w-9 h-9 sm:w-11 sm:h-11 rounded-[14px] sm:rounded-2xl flex items-center justify-center relative hover:bg-white/20 transition-all p-2 active:scale-95 border border-white/5"
-                onClick={() => {
-                  setIsNotificationsOpen(!isNotificationsOpen);
-                  setIsUserMenuOpen(false);
-                  if (!isNotificationsOpen) markNotificationsAsRead();
-                }}
               >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
@@ -269,103 +262,14 @@ export default function Header() {
                     {unreadCount}
                   </span>
                 )}
-              </button>
+              </Link>
             </div>
-
-            <AnimatePresence>
-              {isNotificationsOpen && (
-                <>
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-black/20 z-[90] lg:hidden backdrop-blur-sm"
-                    onClick={() => setIsNotificationsOpen(false)}
-                  />
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="fixed lg:absolute top-20 lg:top-full mt-3 right-4 left-4 lg:left-auto lg:right-0 lg:w-80 bg-white rounded-[1.5rem] shadow-2xl py-3 z-[100] border border-gray-100 p-2"
-                  >
-                    <div className="px-4 py-3 border-b border-gray-100 mb-2 flex justify-between items-center">
-                      <p className="text-xs font-black text-gray-400 uppercase tracking-widest">
-                        নোটিফিকেশন
-                      </p>
-                      <button 
-                        className="lg:hidden p-1.5 text-gray-400 hover:text-gray-700 bg-gray-50 rounded-full transition-colors active:scale-95"
-                        onClick={() => setIsNotificationsOpen(false)}
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="max-h-[60vh] lg:max-h-80 overflow-y-auto pr-1 space-y-1">
-                      {user && permission !== 'granted' && (
-                        <div className="p-3 mb-2 bg-lipstick/5 rounded-xl border border-lipstick/10">
-                          <p className="text-xs text-gray-700 font-medium mb-2">সরাসরি মোবাইলে নোটিফিকেশন পেতে চান?</p>
-                          <button 
-                            onClick={() => requestPermission()}
-                            className="w-full py-1.5 bg-lipstick text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-lipstick-dark transition-colors"
-                          >
-                            অ্যালাউ করুন
-                          </button>
-                        </div>
-                      )}
-                      {user ? (
-                        notifications.length > 0 ? (
-                          notifications.map((n) => (
-                            <div
-                              key={n.id}
-                              className="p-3 hover:bg-gray-50 rounded-xl transition cursor-pointer"
-                            >
-                              <p className="text-sm font-bold text-gray-800 leading-tight">
-                                {n.message}
-                              </p>
-                              <p className="text-[10px] text-gray-400 mt-1 font-medium">
-                                {new Date(n.timestamp).toLocaleString("bn-BD", {
-                                  hour: "numeric",
-                                  minute: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                })}
-                              </p>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="p-6 text-center">
-                            <Bell className="w-8 h-8 mx-auto text-gray-200 mb-2" />
-                            <p className="text-sm text-gray-500 font-medium">
-                              কোনো নতুন নোটিফিকেশন নেই
-                            </p>
-                          </div>
-                        )
-                      ) : (
-                        <div className="p-6 text-center">
-                          <Bell className="w-8 h-8 mx-auto text-gray-200 mb-2" />
-                          <p className="text-sm text-gray-500 font-medium">
-                            লগইন করুন
-                          </p>
-                          <Link
-                            href="/profile"
-                            onClick={() => setIsNotificationsOpen(false)}
-                            className="mt-3 block w-full py-2 bg-lipstick text-white text-xs font-bold rounded-xl hover:bg-rose-600 transition-colors"
-                          >
-                            প্রোফাইলে যান
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
 
             <button
               className="bg-white text-lipstick w-9 h-9 sm:w-11 sm:h-11 rounded-[14px] sm:rounded-2xl shadow-xl flex items-center justify-center relative hover:scale-105 transition-transform active:scale-95 group"
               onClick={() => {
                 setIsCartOpen(!isCartOpen);
                 setIsMobileMenuOpen(false);
-                setIsNotificationsOpen(false);
               }}
             >
               <ShoppingBag className="w-5 h-5 group-hover:rotate-6 transition-transform" />
@@ -381,7 +285,6 @@ export default function Header() {
               onClick={() => {
                 setIsMobileMenuOpen(!isMobileMenuOpen);
                 setIsCartOpen(false);
-                setIsNotificationsOpen(false);
               }}
             >
               <Menu className="w-6 h-6 sm:w-7 sm:h-7" />
@@ -450,7 +353,7 @@ export default function Header() {
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 bg-white rounded-xl overflow-hidden relative shadow-sm transform -rotate-3">
                     <Image
-                      src="/logo.jpg"
+                      src="/logo.png"
                       alt="Logo"
                       fill
                       className="object-contain p-1"
@@ -477,12 +380,9 @@ export default function Header() {
               <div className="p-6 overflow-y-auto flex-grow space-y-8 bg-white">
                 {user && (
                   <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => {
-                        setIsMobileMenuOpen(false);
-                        setIsNotificationsOpen(true);
-                        if (unreadCount > 0) markNotificationsAsRead();
-                      }}
+                    <Link
+                      href="/notifications"
+                      onClick={() => setIsMobileMenuOpen(false)}
                       className="flex-1 flex items-center justify-center py-3 bg-gray-50 rounded-[1.25rem] border border-gray-100 hover:bg-gray-100 transition-colors"
                     >
                       <div className="relative">
@@ -493,7 +393,7 @@ export default function Header() {
                           </span>
                         )}
                       </div>
-                    </button>
+                    </Link>
 
                     <Link
                       href="/profile"
@@ -568,7 +468,7 @@ export default function Header() {
                 <div className="flex items-center gap-2 mb-4">
                   <div className="h-8 w-8 rounded-xl bg-white overflow-hidden relative shadow-sm">
                     <Image
-                      src="/logo.jpg"
+                      src="/logo.png"
                       alt="Logo"
                       fill
                       className="object-contain p-1"
