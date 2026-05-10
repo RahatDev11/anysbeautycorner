@@ -14,6 +14,7 @@ interface AppState {
   isCartOpen: boolean;
   isMobileMenuOpen: boolean;
   user: any | null;
+  deliveryLocation: 'insideDhaka' | 'outsideDhaka';
   addToCart: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, amount: number) => void;
@@ -21,6 +22,7 @@ interface AppState {
   setIsCartOpen: (isOpen: boolean) => void;
   setIsMobileMenuOpen: (isOpen: boolean) => void;
   setUser: (user: any) => void;
+  setDeliveryLocation: (location: 'insideDhaka' | 'outsideDhaka') => void;
 }
 
 export const useStore = create<AppState>()(
@@ -30,6 +32,7 @@ export const useStore = create<AppState>()(
       isCartOpen: false,
       isMobileMenuOpen: false,
       user: null,
+      deliveryLocation: 'insideDhaka',
       addToCart: (item) => {
         const cart = get().cart;
         const existingItem = cart.find((i) => i.id === item.id);
@@ -55,10 +58,11 @@ export const useStore = create<AppState>()(
       setIsCartOpen: (isOpen) => set({ isCartOpen: isOpen }),
       setIsMobileMenuOpen: (isOpen) => set({ isMobileMenuOpen: isOpen }),
       setUser: (user) => set({ user }),
+      setDeliveryLocation: (location) => set({ deliveryLocation: location }),
     }),
     {
       name: 'anybeauty-store',
-      partialize: (state) => ({ cart: state.cart }),
+      partialize: (state) => ({ cart: state.cart, deliveryLocation: state.deliveryLocation }),
     }
   )
 );

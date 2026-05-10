@@ -8,10 +8,11 @@ import { useEffect } from 'react';
 import { toBengaliNumber } from '@/lib/utils';
 
 export default function CartSidebar() {
-  const { cart, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity } = useStore();
+  const { cart, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, deliveryLocation, setDeliveryLocation } = useStore();
 
   const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const deliveryFee = deliveryLocation === 'outsideDhaka' ? 160 : 70;
 
   // Scroll lock for cart sidebar
   useEffect(() => {
@@ -133,11 +134,39 @@ export default function CartSidebar() {
     
             {cart.length > 0 && (
               <div className="p-6 border-t border-gray-100 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.03)]">
-                <div className="flex justify-between items-center mb-6">
+                <div className="mb-6">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">ডেলিভারি এলাকা</p>
+                  <div className="flex bg-gray-50 p-1 rounded-xl">
+                    <button 
+                      onClick={() => setDeliveryLocation('insideDhaka')}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${deliveryLocation === 'insideDhaka' ? 'bg-white shadow-sm text-lipstick-dark' : 'text-gray-500 hover:text-gray-900'}`}
+                    >
+                      ঢাকার ভেতরে
+                    </button>
+                    <button 
+                      onClick={() => setDeliveryLocation('outsideDhaka')}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${deliveryLocation === 'outsideDhaka' ? 'bg-white shadow-sm text-lipstick-dark' : 'text-gray-500 hover:text-gray-900'}`}
+                    >
+                      ঢাকার বাইরে
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-3 mb-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500 font-medium">সাবটোটাল</span>
+                    <span className="text-sm font-bold text-gray-900">{toBengaliNumber(totalAmount.toLocaleString('en-US'))} ৳</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500 font-medium">{deliveryLocation === 'insideDhaka' ? 'ডেলিভারি চার্জ (ঢাকার ভেতরে)' : 'ডেলিভারি চার্জ (ঢাকার বাইরে)'}</span>
+                    <span className="text-sm font-bold text-gray-900">{toBengaliNumber((deliveryFee).toLocaleString('en-US'))} ৳</span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center mb-6 pt-4 border-t border-gray-100">
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">সবমোট মূল্য</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">সর্বমোট মূল্য</span>
                     <span className="text-3xl font-serif text-lipstick-dark font-medium leading-none">
-                      {toBengaliNumber(totalAmount.toLocaleString('en-US'))} <span className="text-xl italic ml-0.5">৳</span>
+                      {toBengaliNumber((totalAmount + deliveryFee).toLocaleString('en-US'))} <span className="text-xl italic ml-0.5">৳</span>
                     </span>
                   </div>
                   <div className="text-right">

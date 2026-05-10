@@ -10,7 +10,7 @@ import { toBengaliNumber } from '@/lib/utils';
 import LoadingScreen from '@/components/LoadingScreen';
 
 function OrderFormContent() {
-  const { cart, clearCart } = useStore();
+  const { cart, clearCart, deliveryLocation, setDeliveryLocation } = useStore();
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -20,7 +20,7 @@ function OrderFormContent() {
     customerName: '',
     phoneNumber: '',
     address: '',
-    deliveryLocation: 'insideDhaka',
+    deliveryLocation: deliveryLocation || 'insideDhaka',
     outsideDhakaLocation: '',
     deliveryNote: '',
     deliveryPaymentMethod: '',
@@ -43,6 +43,11 @@ function OrderFormContent() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Sync to store if deliveryLocation changes
+    if (name === 'deliveryLocation' && (value === 'insideDhaka' || value === 'outsideDhaka')) {
+      setDeliveryLocation(value);
+    }
   };
 
   const isOutsideDhaka = formData.deliveryLocation === 'outsideDhaka';
@@ -198,7 +203,7 @@ function OrderFormContent() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">जिला ও থানা <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">জেলা ও থানা <span className="text-red-500">*</span></label>
                   <input required type="text" name="outsideDhakaLocation" value={formData.outsideDhakaLocation} onChange={handleInputChange} className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-300 outline-none" />
                 </div>
                 <div>
