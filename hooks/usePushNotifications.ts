@@ -19,29 +19,46 @@ export function usePushNotifications(userId?: string) {
   const requestPermission = async () => {
     try {
       if (typeof window === 'undefined' || !('Notification' in window)) {
+        alert('আপনার ব্রাউজার নোটিফিকেশন সাপোর্ট করে না।');
         return false;
       }
 
-      const permission = await Notification.requestPermission();
-      setPermission(permission);
-
-      if (permission === 'granted') {
-        const messaging = await initMessaging();
-        if (messaging) {
-          const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
-          if (currentToken) {
-            setToken(currentToken);
-            // Save token to DB if user is provided
-            if (userId) {
-              await set(ref(database, `users/${userId}/fcmToken`), currentToken);
+      let permission = Notification.permission;
+      
+      const handlePermission = async (perm: NotificationPermission) => {
+        setPermission(perm);
+        if (perm === 'granted') {
+          try {
+            const messaging = await initMessaging();
+            if (messaging) {
+              const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
+              if (currentToken) {
+                setToken(currentToken);
+                if (userId) {
+                  await set(ref(database, `users/${userId}/fcmToken`), currentToken);
+                }
+                return true;
+              }
             }
-            return true;
+          } catch (e) {
+            console.error('Messaging token error:', e);
+            // Ignore token error so the UI still records granted
           }
+        } else {
+          alert('নোটিফিকেশন পারমিশন দেওয়া হয়নি। ব্রাউজার সেটিংস চেক করুন।');
         }
+        return false;
+      };
+
+      const promise = Notification.requestPermission(handlePermission);
+      if (promise && typeof (promise as any).then === 'function') {
+        permission = await promise;
+        return handlePermission(permission);
       }
       return false;
     } catch (error) {
       console.error('Error requesting notification permission:', error);
+      alert('একটি সমস্যা হয়েছে। এটি যদি কাজ না করে, তবে ব্রাউজারের নতুন ট্যাবে ওপেন করে ট্রাই করুন।');
       return false;
     }
   };
