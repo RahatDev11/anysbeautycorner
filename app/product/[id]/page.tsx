@@ -63,6 +63,34 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
   const images = product?.image ? product.image.split(',').map((img: string) => img.trim()).filter(Boolean) : [];
 
   const [isClickable, setIsClickable] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  const minSwipeDistance = 40;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => setTouchEnd(e.targetTouches[0].clientX);
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    if (isLeftSwipe || isRightSwipe) {
+      if (images.length <= 1) return;
+      if (isLeftSwipe) {
+        const idx = images.indexOf(mainImage);
+        setMainImage(images[(idx + 1) % images.length]);
+      } else if (isRightSwipe) {
+        const idx = images.indexOf(mainImage);
+        setMainImage(images[(idx - 1 + images.length) % images.length]);
+      }
+    }
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -161,7 +189,12 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
           animate={{ opacity: 1, x: 0 }}
           className="lg:col-span-7 space-y-4 md:space-y-6"
         >
-          <div className="relative group bg-white rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-xl shadow-gray-200/40 aspect-square flex items-center justify-center p-4">
+          <div 
+            className="relative group bg-white rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-xl shadow-gray-200/40 aspect-square flex items-center justify-center p-4"
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+          >
             <AnimatePresence mode="wait">
               <motion.img 
                 key={mainImage}
@@ -172,19 +205,7 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
                 src={mainImage || 'https://via.placeholder.com/800'} 
                 alt={product.name} 
                 className="w-full h-full object-contain cursor-grab active:cursor-grabbing"
-                drag={images.length > 1 ? "x" : false}
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.2}
-                onDragEnd={(e, { offset }) => {
-                  if (images.length <= 1) return;
-                  if (offset.x < -50) {
-                    const idx = images.indexOf(mainImage);
-                    setMainImage(images[(idx + 1) % images.length]);
-                  } else if (offset.x > 50) {
-                    const idx = images.indexOf(mainImage);
-                    setMainImage(images[(idx - 1 + images.length) % images.length]);
-                  }
-                }}
+                draggable={false}
               />
             </AnimatePresence>
             

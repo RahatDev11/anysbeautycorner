@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CartSidebar from '@/components/CartSidebar';
 import { Inter, Cormorant_Garamond } from 'next/font/google';
+import NextTopLoader from 'nextjs-toploader';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -27,6 +28,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="en" className={`${inter.variable} ${cormorant.variable}`}>
       <body className="antialiased flex flex-col min-h-screen font-sans bg-[#fcfaf9]" suppressHydrationWarning>
+        <NextTopLoader color="#D92C66" height={3} showSpinner={false} />
         <Providers>
           <Header />
           <CartSidebar />
